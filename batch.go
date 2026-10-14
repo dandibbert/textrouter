@@ -156,7 +156,9 @@ func (Batch) Run(ctx context.Context, settings engine.BatchSettings, items []Bat
 		if err == nil {
 			out := Soap{}.Apply(settings.Cleaner, decodeText(data)).Text
 			dst := s.output(f)
-			if err = os.MkdirAll(filepath.Dir(dst), 0o755); err == nil {
+			if filepath.Clean(dst) == filepath.Clean(f) {
+				err = errors.New("输出路径与原文件相同，已跳过")
+			} else if err = os.MkdirAll(filepath.Dir(dst), 0o755); err == nil {
 				err = os.WriteFile(dst, []byte(out), 0o644)
 			}
 			pr.Output = dst
