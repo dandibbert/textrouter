@@ -31,7 +31,7 @@ func Diff(a, b string) []Seg {
 	}
 	add('=', ra[:p])
 	ma, mb := ra[p:len(ra)-s], rb[p:len(rb)-s]
-	if len(ma)*len(mb) > 4_000_000 {
+	if len(ma)*len(mb) > 1_500_000 {
 		add('-', ma)
 		add('+', mb)
 	} else {

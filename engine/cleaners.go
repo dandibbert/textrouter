@@ -157,6 +157,8 @@ func guessCategory(tok, label string) string {
 	}
 	t := tok
 	switch {
+	case t == "#SCRUB" || t == "#MYSCRUB" || t == "#NOTHING":
+		return "综合清理"
 	case strings.Contains(t, "CASE") || strings.Contains(t, "CAPITALIZE") || strings.Contains(t, "NAME_FIX") || t == "#TITLE_CASE1":
 		return "大小写"
 	case strings.Contains(t, "SPACE") || strings.Contains(t, "TAB") || strings.Contains(t, "WHITESPACE") || strings.Contains(t, "TRIM"):
