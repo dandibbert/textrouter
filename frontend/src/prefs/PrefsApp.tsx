@@ -84,7 +84,7 @@ function PrefsWindow({ boot }: { boot: Boot }) {
       <header className="titlebar">
         <span className="page-title">偏好设置</span>
         <span className="spacer" />
-        <div className="no-drag" style={{ width: 420 }}>
+        <div className="no-drag" style={{ width: 420, minWidth: 0, flexShrink: 1 }}>
           <Segmented
             small
             value={tab}

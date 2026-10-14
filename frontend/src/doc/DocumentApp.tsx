@@ -57,6 +57,9 @@ export function DocumentApp() {
     Document.info().then(setInfo);
     return events.docChanged.on((d) => setInfo((cur) => ({ ...d, text: cur?.text ?? d.text })));
   }, []);
+  useEffect(() => {
+    if (info) document.title = info.name;
+  }, [info?.name]);
   if (!boot || !info) return <div className="doc" />;
   return <DocumentWindow boot={boot} info={info} />;
 }
@@ -214,11 +217,16 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
     setPref(prefs, "sidebarHidden", !v);
   };
 
+  const [focusFind, setFocusFind] = useState(0);
   const showFind = () => {
     if (!sidebar) toggleSidebar(true);
     setTab("find");
-    findRef.current?.focus();
+    setFocusFind((n) => n + 1);
   };
+  // The panel is display:none until the tab switch renders, so focus after it.
+  useEffect(() => {
+    if (focusFind) findRef.current?.focus();
+  }, [focusFind]);
 
   const zoom = (z: number) => setPref(prefs, "zoom", Math.max(50, Math.min(300, z)));
 

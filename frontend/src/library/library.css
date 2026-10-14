@@ -242,28 +242,6 @@
   background: var(--accent);
   margin: -5px 6px 2px;
 }
-.drop-empty {
-  padding: 10px;
-  text-align: center;
-  color: var(--text-3);
-  font-size: 12px;
-  border: 1.5px dashed var(--border-strong);
-  border-radius: 8px;
-}
-.drop-empty.big {
-  padding: 50px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-}
-.drop-empty.big svg {
-  width: 28px;
-  height: 28px;
-  opacity: 0.5;
-}
-
 /* Action forms */
 .af {
   display: grid;

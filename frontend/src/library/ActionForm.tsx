@@ -153,7 +153,7 @@ function FindFields({ a, p, set, ctx }: { a: Action; p: P; set: (k: string, v: u
         <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
           <Check label="区分大小写" value={bool(p.match_case, true)} onChange={(v) => set("match_case", v)} />
           {!regex && (
-            <span className="row">
+            <span className="row" style={{ whiteSpace: "nowrap" }}>
               匹配方式
               <Select value={String(num(p.granularity))} onChange={(v) => set("granularity", Number(v))} options={granularities.map((g, i) => ({ value: String(i), label: g }))} />
             </span>

@@ -11,10 +11,13 @@ function App() {
   const path = location.pathname.replace(/\/+$/, "");
   switch (path) {
     case "/library":
+      document.title = "我的库";
       return <LibraryApp />;
     case "/prefs":
+      document.title = "偏好设置";
       return <PrefsApp />;
     case "/batch":
+      document.title = "批量处理文件";
       return <BatchApp />;
   }
   return <DocumentApp />;

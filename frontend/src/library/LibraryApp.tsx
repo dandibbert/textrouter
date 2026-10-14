@@ -26,6 +26,7 @@ import "./library.css";
 
 const key = (p: Path) => p.join(".");
 const DRAG_PATH = "application/x-textrouter-path";
+const PASSIVE = new Set(["runtime.definelist", "runtime.macro", "runtime.macrolist", "runtime.usernote"]);
 const DRAG_NEW = "application/x-textrouter-action";
 
 export default function LibraryApp() {
@@ -331,7 +332,7 @@ function CleanerEditor({ boot, cleaner }: { boot: Boot; cleaner: CustomCleaner }
                 <span className="spacer" />
                 {info?.support === "rich" && <span className="chip gray">富文本</span>}
                 {info?.support === "unavailable" && <span className="chip gray">不支持</span>}
-                {step && a.enabled && (step.error ? (
+                {step && a.enabled && !PASSIVE.has(a.identifier) && (step.error ? (
                   <span className="badge err" title={step.error}>出错</span>
                 ) : step.output === before ? (
                   <span className="badge none">无变化</span>
