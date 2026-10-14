@@ -1,0 +1,402 @@
+[
+ {
+  "id": "ch-find-basic",
+  "input": "a,b,c",
+  "note": "literal find/replace through a cleaner",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": ",",
+     "replace": ";",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "a;b;c"
+ },
+ {
+  "id": "ch-find-regex",
+  "input": "one two",
+  "note": "regex capture backreference",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "([A-Za-z]+)",
+     "replace": "<$1>",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "<one> <two>"
+ },
+ {
+  "id": "ch-find-delete",
+  "input": "keep drop keep",
+  "note": "replace with an empty template == delete",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "drop ",
+     "replace": "",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "keep keep"
+ },
+ {
+  "id": "ch-chain-two-finds",
+  "input": "a  b  c",
+  "note": "two find actions in sequence: order matters",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "  ",
+     "replace": " ",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   },
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": " ",
+     "replace": "_",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "a_b_c"
+ },
+ {
+  "id": "ch-chain-two-finds-reversed",
+  "input": "a  b  c",
+  "note": "the same two actions reversed: compare with the previous case",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": " ",
+     "replace": "_",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   },
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "  ",
+     "replace": " ",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "a__b__c"
+ },
+ {
+  "id": "ch-chain-three",
+  "input": "a,,b,,c",
+  "note": "three chained finds, each seeing the previous output",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": ",",
+     "replace": "|",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   },
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "\\|\\|",
+     "replace": "#",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   },
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "#",
+     "replace": "!",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "a!b!c"
+ },
+ {
+  "id": "ch-find-no-match",
+  "input": "hello",
+  "note": "no match: untouched",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "zzz",
+     "replace": "!",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "hello"
+ },
+ {
+  "id": "ch-find-dollarish",
+  "input": "price 5",
+  "note": "chain-level check of the $$ template",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "5",
+     "replace": "$$",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "price "
+ },
+ {
+  "id": "ch-find-case-u",
+  "input": "the big brown fox jumped over the blue cow",
+  "note": "the $u capitalisation behaviour, end to end",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "(blue)",
+     "replace": "$u$1",
+     "type": 1,
+     "granularity": 0,
+     "match_case": false,
+     "regex_options": "i",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "the big brown fox jumped over the Blue cow"
+ },
+ {
+  "id": "ch-group-empty",
+  "input": "x  y",
+  "note": "an empty container must be a no-op",
+  "actions": [
+   {
+    "identifier": "runtime.group",
+    "parameters": {},
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 0.0
+   }
+  ],
+  "output": "x  y"
+ },
+ {
+  "id": "ch-unknown-action",
+  "input": "abc",
+  "note": "CONTROL: an unknown action id must not corrupt the text",
+  "actions": [
+   {
+    "identifier": "definitely.not.an.action",
+    "parameters": {},
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 0.0
+   }
+  ],
+  "output": "abc"
+ },
+ {
+  "id": "ch-line-sort",
+  "input": "c\na\nb",
+  "note": "line.sort default parameters, measured rather than guessed",
+  "actions": [
+   {
+    "identifier": "line.sort",
+    "parameters": {},
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 0.0
+   }
+  ],
+  "output": "a\nb\nc\n"
+ },
+ {
+  "id": "ch-text-wrap",
+  "input": "a b c d e",
+  "note": "text.wrap: the width key is undocumented; the output reveals the default",
+  "actions": [
+   {
+    "identifier": "text.wrap",
+    "parameters": {},
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 0.0
+   }
+  ],
+  "output": "a b c d e"
+ },
+ {
+  "id": "ch-remove-extra-spaces",
+  "input": "a   b",
+  "note": "a documented-cleaner action used directly",
+  "actions": [
+   {
+    "identifier": "text.remove.extra.spaces",
+    "parameters": {},
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 0.0
+   }
+  ],
+  "output": "a   b"
+ },
+ {
+  "id": "ch-two-actions-independent",
+  "input": "A b",
+  "note": "two non-overlapping replaces",
+  "actions": [
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "A",
+     "replace": "X",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   },
+   {
+    "identifier": "find",
+    "parameters": {
+     "find": "b",
+     "replace": "Y",
+     "type": 1,
+     "granularity": 0,
+     "match_case": true,
+     "regex_options": "",
+     "list_name": ""
+    },
+    "enabled": true,
+    "show_children": true,
+    "show_details": true,
+    "height": 145.0
+   }
+  ],
+  "output": "X Y"
+ }
+]

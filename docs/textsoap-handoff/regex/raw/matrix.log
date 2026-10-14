@@ -1,0 +1,1364 @@
+(lldb) process attach --pid 502
+Process 502 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x0000000195879c34 libsystem_kernel.dylib`mach_msg2_trap + 8
+libsystem_kernel.dylib`mach_msg2_trap:
+->  0x195879c34 <+8>: ret    
+
+libsystem_kernel.dylib`macx_swapon:
+    0x195879c38 <+0>: mov    x16, #-0x30               ; =-48 
+    0x195879c3c <+4>: svc    #0x80
+    0x195879c40 <+8>: ret    
+Target 0: (textsoap9) stopped.
+Executable binary set to "/Applications/textsoap9.app/Contents/MacOS/textsoap9".
+Architecture set to: arm64-apple-macosx-.
+(lldb) command source -s 0 'lldb_cmds/matrix.lldb'
+Executing commands in '/Users/suzu/Documents/projects/pixpin/recon/textsoap/lldb_cmds/matrix.lldb'.
+(lldb) expr -l objc -- id $t = (id)[(id)objc_getClass("TSText") performSelector:(SEL)sel_registerName("new")]
+(lldb) expr -l objc -O -- @"@@@ Scrub || extra-spaces"
+@@@ Scrub || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || forwarding"
+@@@ Scrub || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || broken-para"
+@@@ Scrub || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one line two
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || multi-return"
+@@@ Scrub || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || tabs"
+@@@ Scrub || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || mime"
+@@@ Scrub || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b,c
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || trim"
+@@@ Scrub || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+lead and trail 
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || smart-quotes"
+@@@ Scrub || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+"hi" and 'x'
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || ctrl-char"
+@@@ Scrub || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || nbsp"
+@@@ Scrub || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || two-paras"
+@@@ Scrub || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Scrub || wrap-long"
+@@@ Scrub || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Scrub"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || extra-spaces"
+@@@ Remove Extra Spaces || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || forwarding"
+@@@ Remove Extra Spaces || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || broken-para"
+@@@ Remove Extra Spaces || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || multi-return"
+@@@ Remove Extra Spaces || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || tabs"
+@@@ Remove Extra Spaces || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || mime"
+@@@ Remove Extra Spaces || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || trim"
+@@@ Remove Extra Spaces || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+lead and trail 
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || smart-quotes"
+@@@ Remove Extra Spaces || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || ctrl-char"
+@@@ Remove Extra Spaces || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || nbsp"
+@@@ Remove Extra Spaces || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || two-paras"
+@@@ Remove Extra Spaces || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Spaces || wrap-long"
+@@@ Remove Extra Spaces || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || extra-spaces"
+@@@ Remove Forwarding (>) Characters || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || forwarding"
+@@@ Remove Forwarding (>) Characters || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || broken-para"
+@@@ Remove Forwarding (>) Characters || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || multi-return"
+@@@ Remove Forwarding (>) Characters || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || tabs"
+@@@ Remove Forwarding (>) Characters || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || mime"
+@@@ Remove Forwarding (>) Characters || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || trim"
+@@@ Remove Forwarding (>) Characters || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || smart-quotes"
+@@@ Remove Forwarding (>) Characters || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || ctrl-char"
+@@@ Remove Forwarding (>) Characters || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || nbsp"
+@@@ Remove Forwarding (>) Characters || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || two-paras"
+@@@ Remove Forwarding (>) Characters || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove Forwarding (>) Characters || wrap-long"
+@@@ Remove Forwarding (>) Characters || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Forwarding (>) Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || extra-spaces"
+@@@ Convert MIME-encoded Characters || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || forwarding"
+@@@ Convert MIME-encoded Characters || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || broken-para"
+@@@ Convert MIME-encoded Characters || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || multi-return"
+@@@ Convert MIME-encoded Characters || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || tabs"
+@@@ Convert MIME-encoded Characters || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || mime"
+@@@ Convert MIME-encoded Characters || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b,c
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || trim"
+@@@ Convert MIME-encoded Characters || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || smart-quotes"
+@@@ Convert MIME-encoded Characters || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || ctrl-char"
+@@@ Convert MIME-encoded Characters || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || nbsp"
+@@@ Convert MIME-encoded Characters || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || two-paras"
+@@@ Convert MIME-encoded Characters || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Convert MIME-encoded Characters || wrap-long"
+@@@ Convert MIME-encoded Characters || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert MIME-encoded Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || extra-spaces"
+@@@ Make Paragraphs || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || forwarding"
+@@@ Make Paragraphs || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || broken-para"
+@@@ Make Paragraphs || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one line two
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || multi-return"
+@@@ Make Paragraphs || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || tabs"
+@@@ Make Paragraphs || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || mime"
+@@@ Make Paragraphs || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || trim"
+@@@ Make Paragraphs || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || smart-quotes"
+@@@ Make Paragraphs || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || ctrl-char"
+@@@ Make Paragraphs || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || nbsp"
+@@@ Make Paragraphs || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || two-paras"
+@@@ Make Paragraphs || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Make Paragraphs || wrap-long"
+@@@ Make Paragraphs || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Make Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || extra-spaces"
+@@@ Remove Extra Returns || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || forwarding"
+@@@ Remove Extra Returns || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || broken-para"
+@@@ Remove Extra Returns || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || multi-return"
+@@@ Remove Extra Returns || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || tabs"
+@@@ Remove Extra Returns || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || mime"
+@@@ Remove Extra Returns || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || trim"
+@@@ Remove Extra Returns || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || smart-quotes"
+@@@ Remove Extra Returns || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || ctrl-char"
+@@@ Remove Extra Returns || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || nbsp"
+@@@ Remove Extra Returns || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || two-paras"
+@@@ Remove Extra Returns || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove Extra Returns || wrap-long"
+@@@ Remove Extra Returns || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Extra Returns"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || extra-spaces"
+@@@ Remove All Tabs || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || forwarding"
+@@@ Remove All Tabs || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || broken-para"
+@@@ Remove All Tabs || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || multi-return"
+@@@ Remove All Tabs || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || tabs"
+@@@ Remove All Tabs || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || mime"
+@@@ Remove All Tabs || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || trim"
+@@@ Remove All Tabs || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || smart-quotes"
+@@@ Remove All Tabs || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || ctrl-char"
+@@@ Remove All Tabs || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || nbsp"
+@@@ Remove All Tabs || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || two-paras"
+@@@ Remove All Tabs || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove All Tabs || wrap-long"
+@@@ Remove All Tabs || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove All Tabs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || extra-spaces"
+@@@ Straighten Quotes || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || forwarding"
+@@@ Straighten Quotes || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || broken-para"
+@@@ Straighten Quotes || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || multi-return"
+@@@ Straighten Quotes || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || tabs"
+@@@ Straighten Quotes || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || mime"
+@@@ Straighten Quotes || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || trim"
+@@@ Straighten Quotes || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || smart-quotes"
+@@@ Straighten Quotes || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+"hi" and 'x'
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || ctrl-char"
+@@@ Straighten Quotes || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || nbsp"
+@@@ Straighten Quotes || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || two-paras"
+@@@ Straighten Quotes || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Straighten Quotes || wrap-long"
+@@@ Straighten Quotes || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Straighten Quotes"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || extra-spaces"
+@@@ Remove Whitespace Before Paragraphs || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+    b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || forwarding"
+@@@ Remove Whitespace Before Paragraphs || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || broken-para"
+@@@ Remove Whitespace Before Paragraphs || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || multi-return"
+@@@ Remove Whitespace Before Paragraphs || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || tabs"
+@@@ Remove Whitespace Before Paragraphs || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || mime"
+@@@ Remove Whitespace Before Paragraphs || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || trim"
+@@@ Remove Whitespace Before Paragraphs || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || smart-quotes"
+@@@ Remove Whitespace Before Paragraphs || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || ctrl-char"
+@@@ Remove Whitespace Before Paragraphs || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || nbsp"
+@@@ Remove Whitespace Before Paragraphs || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || two-paras"
+@@@ Remove Whitespace Before Paragraphs || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove Whitespace Before Paragraphs || wrap-long"
+@@@ Remove Whitespace Before Paragraphs || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Whitespace Before Paragraphs"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || extra-spaces"
+@@@ Remove Control Characters || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || forwarding"
+@@@ Remove Control Characters || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || broken-para"
+@@@ Remove Control Characters || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || multi-return"
+@@@ Remove Control Characters || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || tabs"
+@@@ Remove Control Characters || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || mime"
+@@@ Remove Control Characters || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || trim"
+@@@ Remove Control Characters || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || smart-quotes"
+@@@ Remove Control Characters || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || ctrl-char"
+@@@ Remove Control Characters || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || nbsp"
+@@@ Remove Control Characters || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || two-paras"
+@@@ Remove Control Characters || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Remove Control Characters || wrap-long"
+@@@ Remove Control Characters || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Remove Control Characters"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || extra-spaces"
+@@@ Convert Non-Breaking Spaces || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || forwarding"
+@@@ Convert Non-Breaking Spaces || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || broken-para"
+@@@ Convert Non-Breaking Spaces || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || multi-return"
+@@@ Convert Non-Breaking Spaces || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || tabs"
+@@@ Convert Non-Breaking Spaces || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || mime"
+@@@ Convert Non-Breaking Spaces || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || trim"
+@@@ Convert Non-Breaking Spaces || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail   
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || smart-quotes"
+@@@ Convert Non-Breaking Spaces || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || ctrl-char"
+@@@ Convert Non-Breaking Spaces || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || nbsp"
+@@@ Convert Non-Breaking Spaces || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || two-paras"
+@@@ Convert Non-Breaking Spaces || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Convert Non-Breaking Spaces || wrap-long"
+@@@ Convert Non-Breaking Spaces || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Convert Non-Breaking Spaces"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || extra-spaces"
+@@@ Trim Lines || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || forwarding"
+@@@ Trim Lines || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || broken-para"
+@@@ Trim Lines || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one<LF>line two
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || multi-return"
+@@@ Trim Lines || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || tabs"
+@@@ Trim Lines || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || mime"
+@@@ Trim Lines || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || trim"
+@@@ Trim Lines || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+lead and trail
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || smart-quotes"
+@@@ Trim Lines || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || ctrl-char"
+@@@ Trim Lines || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || nbsp"
+@@@ Trim Lines || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || two-paras"
+@@@ Trim Lines || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Trim Lines || wrap-long"
+@@@ Trim Lines || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Trim Lines"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today.
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || extra-spaces"
+@@@ Uppercase || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+A    B
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || forwarding"
+@@@ Uppercase || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> QUOTED TEXT
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || broken-para"
+@@@ Uppercase || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+LINE ONE<LF>LINE TWO
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || multi-return"
+@@@ Uppercase || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+A<LF><LF><LF><LF>B
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || tabs"
+@@@ Uppercase || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+A		B
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || mime"
+@@@ Uppercase || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+A%20B%2CC
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || trim"
+@@@ Uppercase || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   LEAD AND TRAIL   
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || smart-quotes"
+@@@ Uppercase || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“HI” AND ‘X’
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || ctrl-char"
+@@@ Uppercase || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+AB
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || nbsp"
+@@@ Uppercase || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+A B
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || two-paras"
+@@@ Uppercase || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+FIRST PARAGRAPH HERE<LF><LF>SECOND PARAGRAPH HERE
+
+(lldb) expr -l objc -O -- @"@@@ Uppercase || wrap-long"
+@@@ Uppercase || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Uppercase"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG AND KEEPS ON RUNNING PAST THE FENCE AND INTO THE WOODS TODAY.
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || extra-spaces"
+@@@ Rewrap Text || extra-spaces
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a    b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a    b
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || forwarding"
+@@@ Rewrap Text || forwarding
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"> quoted text"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+> quoted text
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || broken-para"
+@@@ Rewrap Text || broken-para
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"line one\nline two"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+line one line two
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || multi-return"
+@@@ Rewrap Text || multi-return
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\n\n\n\nb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF><LF><LF><LF>b
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || tabs"
+@@@ Rewrap Text || tabs
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\t\tb"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a		b
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || mime"
+@@@ Rewrap Text || mime
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a%20b%2Cc"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a%20b%2Cc
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || trim"
+@@@ Rewrap Text || trim
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"   lead and trail   "]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+   lead and trail
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || smart-quotes"
+@@@ Rewrap Text || smart-quotes
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"\u201chi\u201d and \u2018x\u2019"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+“hi” and ‘x’
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || ctrl-char"
+@@@ Rewrap Text || ctrl-char
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u0001b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || nbsp"
+@@@ Rewrap Text || nbsp
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\u00a0b"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a b
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || two-paras"
+@@@ Rewrap Text || two-paras
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"first paragraph here\n\nsecond paragraph here"]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+first paragraph here<LF><LF>second paragraph here
+
+(lldb) expr -l objc -O -- @"@@@ Rewrap Text || wrap-long"
+@@@ Rewrap Text || wrap-long
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."]
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("applyCleaner:") withObject:@"Rewrap Text"]
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+The quick brown fox jumps over the lazy dog and keeps on running past<LF>the fence and into the woods today.
+
+(lldb) detach
+Process 502 detached
+(lldb) quit

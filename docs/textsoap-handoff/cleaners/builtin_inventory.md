@@ -1,0 +1,208 @@
+# Built-in cleaner inventory
+
+194 entries. `#LABEL:` rows are group headers, not cleaners.
+
+- `#SCRUB` **Scrub** **(measured)** — Addresses typical text cleaning needs. Combines stripping spaces, forwarding characters, MIME encoded characters, and paragraphs. SCRUB calls the cleaners in a specific order to insure best results.
+- `#MYSCRUB` **MyScrub** **(measured)** — A shortcut to a user selected custom cleaner. Specify in Preferences > General.
+- `#REMOVE_EXTRA_SPACES` **Remove Extra Spaces** **(measured)** — Replaces multiple spaces with a single space. Note: Leading spaces at beginning of a line are also removed.
+- `#REMOVE_WHITESPACE_AT_BEGINNING` **Remove Whitespace Before Paragraphs** — Removes whitespace (spaces,tabs) at the beginning of a paragraph (line).
+- `#REMOVE_FORWARDING_CHARS` **Remove Forwarding (>) Characters** **(measured)** — Removes leading '>' (forwarding) marks from a line that are used in some emails.
+- `#CONVERT_MIME` **Convert MIME-encoded Characters** **(measured)** — Converts either %Hex or =Hex characters to their appropriate ASCII character. Example: a %20 or a =20, is converted to a space.
+- `#MAKE_PARAGRAPHS` **Make Paragraphs** **(measured)** — Converts multi-line paragraph with hard returns <CR> into a single paragraph. New paragraphs are marked by two successive returns.
+- `#REMOVE_ALL_TABS` **Remove All Tabs** **(measured)** — Delete all tab characters.
+- `#REMOVE_ALL_SPACES` **Remove All Spaces** **(measured)** — Delete all space characters.
+- `#REMOVE_ALL_WHITESPACE` **Remove All Whitespace** **(measured)** — Delete all whitespace (spaces,tabs) chcaraters.
+- `#REMOVE_CONTROL_CHARS` **Remove Control Characters** **(measured)** — Delete control characters (ASCII value less than 32) with exception of tab or return.
+- `#REMOVE_EXTRA_RETURNS` **Remove Extra Returns** **(measured)** — Converts multiple successive returns into a single return. Same as 'Multiple Returns to 2 Returns'
+- `#UPPERCASE` **Uppercase** **(measured)** — Convert text to “UPPERCASE”.
+- `#LOWERCASE` **Lowercase** **(measured)** — Convert text to “lowercase”.
+- `#CAPITALIZE_SENTENCES` **Capitalize Sentences** **(measured)** — Capitalize first character of each sentence, with changing existing case of text.
+- `#CAPITALIZE_SENTENCES_ALT` **Capitalize Sentences with Lowercasing** — Convert text to lowercase, then capitalize first character of each sentence.
+- `#TITLE_CASE1` **Capitalize with Title Case** **(measured)** — Capitalize words using basic Title Case rules.
+- `#CAPITALIZE_WORDS` **Capitalize Words** **(measured)** — Capitalize each word.
+- `#CAPITALIZE_COMMON_TECH_NAMES` **Capitalize Common Tech Names** — Capitalize common industry names.
+- `#CAPITALIZE_LINES` **Capitalize Lines** — Convert text line to lowercase, then capitalize first character of each line.
+- `#CAPITALIZE_LINES_ALT` **Capitalize Lines with Lowercasing** — #CAPITALIZE_LINES_ALT_INFO
+- `#RANDOMCASE` **Randomcase** — Randomize text capitalization.
+- `#MACOS_NAME_FIX` **Fixup macOS Name** — Convert 'Mac OS X', 'OS X', 'MacOS' to 'macOS'.
+- `#APPLE_NAME_FIX` **Capitalize Apple Names** — Capitalize Apple-related names.
+- `#REVERSE_CHARACTERS` **Reverse All Characters** — Reverse each of the characters.
+- `#REVERSE_WORDORDER` **Reverse Word Order** — Reverse the word order of the text.
+- `#REVERSE_CHARS_INEACHWORD` **Reverse Characters in Each Word** — Reverse the characters in each word.
+- `#STRIP_DIACRITICS` **Strip Diacritic Marks** — Strip diacritic marks.
+- `#MAKE_UNICODENAMES` **Make Unicode Names** — Convert characters to their Unicode Names.
+- `#CONVERT_TO_ASCII` **Convert to ASCII** — Convert Latin characters to ASCII characters.
+- `#CONVERT_BULLETS` **Convert Bullets to ASCII** **(measured)** — Convert bullets to standard dashes ASCII.
+- `#STRAIGHTEN_QUOTES` **Straighten Quotes** **(measured)** — Convert single and double smart (curly) quotes to straight quotes.
+- `#SMARTEN_QUOTES` **Smarten Quotes** **(measured)** — Convert single and double straight quotes to smart (or curly) quotes.
+- `#EXPAND_TABS` **Expand Tabs** **(measured)** — Convert tabs (hex 0x09) into four (4) spaces.
+- `#REWRAP_TEXT` **Rewrap Text** **(measured)** — Fix any paragraphs (see Make Paragraphs), then rewrap text at 70 characters per line. (see Wrap At 70).
+- `#QUOTE_TEXT` **Quote Text** **(measured)** — Rewrap text and insert forwarding marks (‘>’) at beginning of each line. Put a hard return at the end of each line to ensure proper wrapping.
+- `#WRAP_AT_50` **Wrap At 50** **(measured)** — Fix any paragraphs (see Make Paragraphs), then rewrap text at 50 characters per line.
+- `#WRAP_AT_60` **Wrap At 60** **(measured)** — Fix any paragraphs (see Make Paragraphs), then rewrap text at 60 characters per line.
+- `#WRAP_AT_70` **Wrap At 70** **(measured)** — Fix any paragraphs (see Make Paragraphs), then rewrap text at 70 characters per line.
+- `#QUOTE_L1` **Quote Text L1** — Rewrap text, placing single forward mark at beginning of each line.
+- `#QUOTE_L2` **Quote Text L2** — Rewrap text, placing two forward marks at beginning of each line.
+- `#QUOTE_L3` **Quote Text L3** — Rewrap text, placing three forward marks at beginning of each line.
+- `#QUOTE_L4` **Quote Text L4** — Rewrap text, placing four forward marks at beginning of each line.
+- `#QUOTE_BASED_FIRST_LINE` **Quote Based on First Line** — Quote text based on first line. If no forward marks found, simply rewrap. If forward marks are found, use them determine quote level.
+- `#INCREASE_QUOTE_LEVEL` **Increase Quote Level** — Increase the quote level of a selection by one, adding a forwarding mark (>) to the beginning of each line.
+- `#NETTEXT` **Internet Friendly Text** **(measured)** — Convert to Internet Friendly Text
+- `#REMOVE_HIASCII` **Remove All High Ascii Characters** **(measured)** — Remove All High Ascii Characters
+- `#1CR_TO_2CR` **1 Return to 2 Returns** — Convert each return to two (2) returns.
+- `#1CR_TO_SPACE` **1 Return to Space** — Convert each return to a space.
+- `#STRIP_GT_1CR` **Strip 2 or more Returns** — Strip two (2) or more consecutive returns to a single (1) return.
+- `#STRIP_GT_1SPACE` **Strip 2 or more Spaces** **(measured)** — Strip two (2) or more consecutive spaces to a single (1) space.
+- `#STRIP_GT_1TAB` **Strip 2 or more Tabs** — Strip two (2) or more consecutive tabs to a single (1) tab.
+- `#STRIP_GT_2CR` **Strip 3 or more Returns** — Strip three (3) or more consecutive returns to a single (1) return.
+- `#STRIP_GT_2SPACE` **Strip 3 or more Spaces** — Strip three (3) or more consecutive spaces to a single (1) space.
+- `#STRIP_GT_2TAB` **Strip 3 or more Tabs** — Strip three (3) or more consecutive tabs to a single (1) tab.
+- `#STRIP_GT_3CR` **Strip 4 or more Returns** — Strip four (4) or more consecutive returns to a single (1) return.
+- `#STRIP_GT_3SPACE` **Strip 4 or more Spaces** — Strip four (4) or more consecutive spaces to a single (1) space.
+- `#STRIP_GT_3TAB` **Strip 4 or more Tabs** — Strip four (4) or more consecutive tabs to a single (1) tab.
+- `#STRIP_QUOTING_CHARS` **Strip Quoting (>) Characters** — Removes forwarding characters from beginning of a line.
+- `#MULTIPLE_CR_TO_1CR` **Multiple Returns to 1 Return** **(measured)** — Convert multiple returns to a single (1) return.
+- `#MULTIPLE_CR_TO_2CR` **Multiple Returns to 2 Returns** — Convert multiple returns to two (2) returns.
+- `#ELLIPSIS_TO_3PERIODS` **Ellipsis to Three periods** — Convert ellipsis to three periods.
+- `#EM_DASH_TO_2HYPHENS` **Em Dash to 2 Hyphens** — Convert Em Dash to two hyphens.
+- `#EN_DASH_TO_SPACE_DASH_SPACE` **En Dash to Space-Space** — Convert En Dash to a space dash space (' - ').
+- `#3PERIODS_TO_ELLIPSIS` **Three periods to Ellipsis** — Convert three periods to an ellipsis.
+- `#2HYPHENS_TO_EM_DASH` **2 Hyphens to Em Dash** — Convert two hyphens to an Em Dash.
+- `#SPACE_DASH_SPACE_TO_EN_DASH` **Space-Space to En Dash** — Convert a space-dash-space to an En Dash.
+- `#ENABLE_LIGATURES` **Enable Ligatures** — Enable Ligatures
+- `#DISABLE_LIGATURES` **Disable Ligatures** — Disable Ligatures
+- `#REMOVE_FORWARDED_TEXT` **Remove Forwarded Text** — Delete any quoted text. Remove any lines of text preceded by a forwarding mark (>).
+- `#LINE_ENDING_LF` **Unix (LF) Line Endings** — Convert text to use Unix (LF) Line Endings. - Obsolete
+- `#LINE_ENDING_CR` **Mac (CR) Line Endings** — Convert text to use old-style Mac (CR) Line Endings. - Obsolete
+- `#LINE_ENDING_CRLF` **DOS (CR+LF) Line Endings** — Convert text to use DOS (CR+LF) Line Endings. - Obsolete
+- `#TRIM_BEGINNING_OF_LINES` **Trim Beginning of Lines** **(measured)** — Remove extra spaces from beginning of lines.
+- `#TRIM_END_OF_LINES` **Trim End of Lines** **(measured)** — Remove extra spaces from end of lines.
+- `#TRIM_LINES` **Trim Lines** **(measured)** — Remove extra spaces from both beginning and end of lines.
+- `#CONVERT_NON_BREAKING_SPACES` **Convert Non-Breaking Spaces** **(measured)** — Convert Non-Breaking Spaces to standard spaces.
+- `#URL_EXTRACT_BY_REPLACING` **Extract URLs by Replacing** — Extracts any URLs found, replacing original text.
+- `#URL_EXTRACT_BY_APPENDING` **Extract URLs by Appending** — Extract any URLs found, appending to original text.
+- `#REMOVE_EXTRA_SPACES_ORIG` **Remove Extra Spaces (Original)** — Replaces multiple spaces with a single space. Note: Leading spaces at beginning of a line are also removed.
+- `#NOTHING` **Do Nothing** — Do nothing.
+- `#LINE_SORT_ASCENDING` **Sort Lines in Ascending Order** — Sort lines in increasing order.
+- `#LINE_SORT_DESCENDING` **Sort Lines in Descending Order** — Sort in decreasing order.
+- `#LINE_REVERSE` **Reverse Line Order** — Reverse order of selected lines.
+- `#LINE_RANDOMIZE` **Randomize Lines (Unsort)** — Radomize order of lines.
+- `#REMOVE_DUPLICATE_LINES` **Remove Duplicate Lines** **(measured)** — Remove duplicate lines.
+- `#REMOVE_LINENUMBERS` **Remove Line Numbers** — Remove line numbers at beginning of each line.
+- `#LINESPACE_10` **Ruler: Line Spacing 1.0** — Set paragraph ruler to single (1.0) spacing.
+- `#LINESPACE_12` **Ruler: Line Spacing 1.2** — Set paragraph ruler to 1.2 line spacing.
+- `#LINESPACE_15` **Ruler: Line Spacing 1.5** — Set paragraph ruler to 1.5 line spacing.
+- `#LINESPACE_20` **Ruler: Line Spacing 2.0** — Set paragraph ruler to double (2.0) spacing.
+- `#PARAGRAPH_SINGLESPACE` **Ruler: Default Spacing** — Apply a single-space paragraph style.
+- `#PARAGRAPH_ALIGN_LEFT` **Ruler: Left Aligned Text** — Left align text in paragraph.
+- `#PARAGRAPH_ALIGN_RIGHT` **Ruler: Right Aligned Text** — Right align text in paragraph.
+- `#PARAGRAPH_ALIGN_CENTER` **Ruler: Centered Text** — Center text in paragraph.
+- `#PARAGRAPH_ALIGN_FULL` **Ruler: Justified Text** — Justify text in paragraph.
+- `#PARAGRAPH_CLEARTABSTOPS` **Ruler: Clear All Tab Stops** — Clear all tab stops from selected paragraph rulers.
+- `#PARAGRAPH_RESETTABSTOPS` **Ruler: Reset Tab Stops** — Reset tab stops to default for the selected paragraph rulers.
+- `#REMOVE_STYLE_FROM_TEXT` **Remove Style from Text** — Remove all style information.
+- `#MAKE_PLAIN_TEXT` **Convert to Plain Text** — Convert any rich text to plain text.
+- `#REMOVE_FORECOLOR_FROM_TEXT` **Remove Foreground Color from Text** — Remove foreground color.
+- `#REMOVE_BACKCOLOR_FROM_TEXT` **Remove Background Color from Text** — Remove background color.
+- `#REMOVE_HYPERLINKING_FROM_TEXT` **Remove Hyperlinks from Text** — Remove hyperlink attribute from URLs.
+- `#URL_MAKECLICKABLE` **Convert URLs to Hyperlinks** — Convert found URLs into clickable hyperlinks.
+- `#NORMALIZE_DATE_SHORTFORM` **Normalize Dates to Short Format** — Normalize Dates to Short format (format is based on System Text Preferences)
+- `#NORMALIZE_DATE_MEDIUMFORM` **Normalize Dates to Medium Format** — Normalize Dates to Medium format (format is based on System Text Preferences)
+- `#NORMALIZE_DATE_LONGFORM` **Normalize Dates to Long Format** — Normalize Dates to Long format (format is based on System Text Preferences)
+- `#NORMALIZE_DATE_FULLFORM` **Normalize Dates to Full Format** — Normalize Dates to Full format (format is based on System Text Preferences)
+- `#DATEFORMAT_US` **Normalize Dates to MM-DD-YYYY** — Normalize Dates to MM-DD-YYYY format
+- `#DATEFORMAT_UK` **Normalize Dates to DD-MM-YYYY** — Normalize Dates to DD-MM-YYYY format
+- `#DATEFORMAT_YEARFIRST` **Normalize Dates to YYYY-MM-DD** — Normalize Dates to YYYY-MM-DD format
+- `#DATENOW` **DateNow Expansion** — Expand '${DATENOW}' with today's date. See online help for additional formatting options
+- `#ENCRYPT_WITH_ROT13` **ROT 13 Encryption** — Apply a very rudimentary encryption.
+- `#STRING_TO_HEX` **String to Hexadecimal** — Convert a string of characters to a hexadecimal sequence.
+- `#HEX_TO_STRING` **Hexadecimal to String** — Convert a hexadecimal sequence to a string of characters.
+- `#REPLACE_AT_SIGN` **Replace @ with (AT)** — Replace “@” with “(AT)”.
+- `#NOTIFY_STATS` **Word Count - Notification** — Calculate word count and uses System Notification to display results.
+- `#NOTIFY_STATS_REMOVE` **Word Count - Clear Notification** — Remove word count notification from System Notification.
+- `#FIX_JAMMED_WORDS` **Fix Jammed Words** — Find and correct misspelled words spell checker considers potentially 'jammed together' words (requiring a space between them).
+
+## Markdown Cleaners
+
+- `#MARKDOWN_TEXT` **Markdown to HTML** — Transform Markdown text to HTML.
+- `#MARKDOWN_TEXT_RTF` **Markdown to RTF** — Transform Markdown text to RTF using CSS.
+- `#MARKDOWN_TEXT_APPEND` **Append Markdown to HTML** — Transform Markdown text to HTML, appending to original text.
+- `#MARKDOWN_TEXT_PREVIEW` **Markdown Preview** — Transform Markdown text to HTML and preview in browser.
+- `#MARKDOWN_TEXT_MARKED2` **Preview in Marked2** — Send Markdown text to Marked2's Streaming Preview.
+- `#MIXED_MARKDOWN` **Mixed-in Markdown** — Process Markdown text between tags: <markdown> and </markdown>
+- `#HTML_TO_MARKDOWN_TEXT` **HTML Source to Markdown** — Transform HTML Source to Markdown text.
+
+## HTML Cleaners
+
+- `#EXTRACT_TEXT_FROM_HTML` **Extract Text from HTML Source** **(measured)** — Clean up HTML raw text. Will strip out anything between ‘<’ and ‘>’. Useful to extract text contents from HTML source, handling HTML entities. Finally, remove tab characters and remove multiple returns.
+- `#HTML_TEXT_TO_RTF` **Convert HTML Source to Rich Text** — Convert HTML source to Rich Text. Convert links to Hyperlinks and maintain some additional formatting when possible.
+- `#HTML_ENTITY_TO_TEXT` **HTML Entity to Text** — Convert known HTML entities to their text equivalent.
+- `#TEXT_TO_NAMED_HTML_ENTITY` **Text to Named HTML Entity** — Convert non-ASCII text to HTML Entities. Try to use a named entity if one exists, otherwise revert to numeric HTML entity. Will not convert '<', '>', '&' characters.
+- `#TEXT_TO_NAMED_HTML_ENTITY_ALT` **Text to Named HTML Entity (Alt)** — Convert non-ASCII text to HTML Entities. Try to use a named entity if one exists, otherwise revert to numeric HTML entity. Will also convert '<', '>', '&' characters.
+- `#TEXT_TO_NUMERIC_HTML_ENTITY` **Text to Numeric HTML Entity** — Convert non-ASCII text to HTML Entities, defaulting to Numeric Entities
+- `#ALL_TEXT_TO_NUMERIC_HTML_ENTITIES` **All Text to Numeric HTML Entities** — Convert all standard ASCII, as well as non-ASCII, characters to Numeric Entities.
+- `#HTML_CREATE_OL` **HTML: Create Ordered List** — Convert a series of lines into an HTML-based ordered list
+- `#HTML_CREATE_UL` **HTML: Create Unordered List** — Convert a series of lines into an HTML-based unordered list
+- `#HTML_SMARTEN_QUOTES` **Smarten Quotes in HTML Text** — Apply smarten quotes cleaner to the text of raw HTML (skip text in tags).
+- `#HTML_TAG_BOLD` **HTML Tag: Bold** **(measured)** — Wrap text in given tag: <b>{text}</b>
+- `#HTML_TAG_ITALIC` **HTML Tag: Italic** — Wrap text in given tag: <i>{text}</i>
+- `#HTML_TAG_STRONG` **HTML Tag: Strong** — Wrap text in given tag: <strong>{text}</strong>
+- `#HTML_TAG_EMPHASIZED` **HTML Tag: Emphasized** — Wrap text in given tag: <em>{text}</em>
+- `#HTML_TAG_UNDERLINE` **HTML Tag: Underline** — Wrap text in given tag: <u>{text}</u>
+- `#HTML_TAG_PREFORMATTED` **HTML Tag: Preformatted** — Wrap text in given tag: <pre>{text}</pre>
+- `#HTML_TAG_BREAK` **HTML Tag: Break** — Insert <br/>
+- `#HTML_TAG_HORIZONTAL_RULE` **HTML Tag: Horizontal Rule** — Insert <hr/>
+- `#HTML_TAG_DIV` **HTML Tag: div** — Wrap text in given tag: <div>{text}</div>
+- `#HTML_TAG_PARAGRAPH` **HTML Tag: Paragraph** — Wrap text in given tag: <p>{text}</p>
+- `#HTML_TAG_SPAN` **HTML Tag: span** — Wrap text in given tag: <span>{text}</span>
+- `#HTML_TAG_BLOCKQUOTE` **HTML Tag: Blockquote** — Wrap text in given tag: <blockquote>{text}</blockquote>
+- `#HTML_TAG_CITE` **HTML Tag: Cite** — Wrap text in given tag: <cite>{text}</cite>
+- `#HTML_TAG_H1` **HTML Tag: h1** — Wrap text in given tag: <h1>{text}</h1>
+- `#HTML_TAG_H2` **HTML Tag: h2** — Wrap text in given tag: <h2>{text}</h2>
+- `#HTML_TAG_H3` **HTML Tag: h3** — Wrap text in given tag: <h3>{text}</h3>
+- `#HTML_TAG_H4` **HTML Tag: h4** — Wrap text in given tag: <h4>{text}</h4>
+- `#HTML_TAG_H5` **HTML Tag: h5** — Wrap text in given tag: <h5>{text}</h5>
+- `#HTML_TAG_H6` **HTML Tag: h6** — Wrap text in given tag: <h6>{text}</h6>
+- `#HTML_TAG_UL` **HTML Tag: Unordered List** — Wrap text in given tag: <ul>{text}</ul>
+- `#HTML_TAG_OL` **HTML Tag: Ordered List** — Wrap text in given tag: <ol>{text}</ol>
+- `#HTML_TAG_LI` **HTML Tag: List Item** — Wrap text in given tag: <li>{text}</li>
+- `#HTML_TAG_TABLE` **HTML Tag: Table** — Wrap text in given tag: <table>{text}</table>
+- `#HTML_TAG_TABLEROW` **HTML Tag: Table Row** — Wrap text in given tag: <tr>{text}</tr>
+- `#HTML_TAG_TABLECELL` **HTML Tag: Table Cell** — Wrap text in given tag: <td>{text}</td>
+- `#HTML_TAG_LINK` **HTML Tag: Link** — Wrap text in given tag: <a href="http://www.unmarked.com">http://www.unmarked.com</a>
+
+## Plist Cleaners
+
+- `#PLIST_TAG_ARRAY` **PLIST Tag: Array** — Wrap text in given tag: <array>{text}</array>
+- `#PLIST_TAG_DICTIONARY` **PLIST Tag: Dictionary** — Wrap text in given tag: <dict>{text}</dict>
+- `#PLIST_TAG_KEY` **PLIST Tag: Key** — Wrap text in given tag: <key>{text}</key>
+- `#PLIST_TAG_STRING` **PLIST Tag: String** **(measured)** — Wrap text in given tag: <string>{text}</string>
+- `#PLIST_TAG_INTEGER` **PLIST Tag: Integer** — Wrap text in a given tag: <integer>{text}</integer>
+- `#PLIST_TAG_FLOAT` **PLIST Tag: Float** — Wrap text in a given tag: <float>{text}</float>
+- `#PLIST_TAG_TRUE` **PLIST Tag: True** — Insert <true/>
+- `#PLIST_TAG_FALSE` **PLIST Tag: False** — Insert <false/>
+
+## BBCode Cleaners
+
+- `#BBCODE_TAG_BOLD` **BBCode: Bold** **(measured)** — [b]{text}[/b] - Bold {text}
+- `#BBCODE_TAG_ITALIC` **BBCode: Italic** — [i]{text}[/i] - Italicizes {text}
+- `#BBCODE_TAG_UNDERLINE` **BBCode: Underline** — [u]{text}[/u] - Underlines {text}
+- `#BBCODE_TAG_STRIKETHROUGH` **BBCode: Strike-through** — [s]{text}[/s] - Line-through {text}
+- `#BBCODE_TAG_CENTERTEXT` **BBCode: Center text** — [center]{text}[/center] - Centers {text}
+- `#BBCODE_TAG_QUOTE` **BBCode: Quote** — [quote]{text}[/quote] - Quotation box containing {text}
+- `#BBCODE_TAG_IMAGE` **BBCode: Image** — [img]{url}[/img] - Image using {url}
+- `#BBCODE_TAG_CODE` **BBCode: Code** — [code]{text}[/code] - Renders {text}, maintaining white space
+- `#BBCODE_TAG_UL` **BBCode: List** — [ul]{items}[/ul] - Unordered list of {items}
+- `#BBCODE_TAG_OL` **BBCode: Ordered List** — [ol]{items}[/ol] - Ordered list of {items}
+- `#BBCODE_TAG_LI` **BBCode: List Item** — [li]{text}[/li] - Species individual {item} within a list
+- `#BBCODE_TAG_TABLE` **BBCode: Table** — [table]{rows}[/table] - Table with {rows}
+- `#BBCODE_TAG_TABLEROW` **BBCode: Table Row** — [tr]{cells}[/tr] - Table row containing {cells}
+- `#BBCODE_TAG_TABLEHEADERCELL` **BBCode: Header Cell** — [th]{content}[/th] - Table Heading cell with {content}
+- `#BBCODE_TAG_TABLECELL` **BBCode: Content Cell** — [td]{content}[/td] - Table cell with {content}
+- `#BBCODE_TAG_YOUTUBE` **BBCode: YouTube Video** — [youtube]{id}[/youtube] - YouTube video indicated by {id}
+- `#BBCODE_TAG_GOOGLEVIDEO` **BBCode: Google Video** — [gvideo]{id}[/gvideo] - Google video indicated by {id}
+
+## Deprecated
+
+- `#CONVERT_TO_UPPERCASE` **Convert to Uppercase** — Deprecated - Use 'Uppercase' cleaner
+- `#CONVERT_TO_LOWERCASE` **Convert to Lowercase** — Deprecated - Use 'Lowercase' cleaner

@@ -19,13 +19,27 @@ import (
 //   - Replacement tokens: $0-$9 (single digit), $u $U $l $L case changes,
 //     $E/$e end case change (substitute empty), "\x" literal x, any other
 //     "$x" pair is dropped, a bare trailing "$" is dropped. No ${1}.
+//
+// Text (non-regex) fields understand \\ \t \n \s and \x{hhhh}, as the vendor
+// help documents for "Find and Replace Text". Granularity applies to text
+// finds only: 0 contains, 1 starts with (word start), 2 whole words, 3 ends
+// with (word end). Measured: it has no effect on regex finds.
 type FindOptions struct {
 	Find         string `json:"find"`
 	Replace      string `json:"replace"`
 	Regex        bool   `json:"regex"`
 	MatchCase    bool   `json:"matchCase"`
 	RegexOptions string `json:"regexOptions,omitempty"`
+	Granularity  int    `json:"granularity,omitempty"`
 }
+
+// Granularity values of text finds.
+const (
+	GranContains = iota
+	GranStartsWith
+	GranWholeWord
+	GranEndsWith
+)
 
 // Multiline reports whether the m option letter is set.
 func (o FindOptions) Multiline() bool { return strings.ContainsRune(o.RegexOptions, 'm') }
@@ -47,11 +61,31 @@ type Group struct {
 	Ok         bool
 }
 
+// AllowComments reports whether the x option letter is set.
+func (o FindOptions) AllowComments() bool { return strings.ContainsRune(o.RegexOptions, 'x') }
+
+// Pattern returns the regexp2 pattern the options compile to.
+func (o FindOptions) Pattern() (string, error) {
+	if !o.Regex {
+		pat := regexp2.Escape(UnescapeText(o.Find))
+		switch o.Granularity {
+		case GranStartsWith:
+			pat = `(?<![\w])` + pat
+		case GranWholeWord:
+			pat = `(?<![\w])` + pat + `(?![\w])`
+		case GranEndsWith:
+			pat = pat + `(?![\w])`
+		}
+		return pat, nil
+	}
+	return translateICU(o.Find, o.DotAll())
+}
+
 // Compile builds the matcher. Literal patterns are escaped.
 func (o FindOptions) Compile() (*regexp2.Regexp, error) {
-	pat := o.Find
-	if !o.Regex {
-		pat = regexp2.Escape(pat)
+	pat, err := o.Pattern()
+	if err != nil {
+		return nil, err
 	}
 	var opt regexp2.RegexOptions
 	if !o.MatchCase {
@@ -62,6 +96,9 @@ func (o FindOptions) Compile() (*regexp2.Regexp, error) {
 	}
 	if o.Regex && o.DotAll() {
 		opt |= regexp2.Singleline
+	}
+	if o.Regex && o.AllowComments() {
+		opt |= regexp2.IgnorePatternWhitespace
 	}
 	re, err := regexp2.Compile(pat, opt)
 	if err != nil {
@@ -83,7 +120,7 @@ func (o FindOptions) FindAll(text string, limit int) ([]Match, error) {
 	}
 	tmpl := ParseTemplate(o.Replace)
 	if !o.Regex {
-		tmpl = Template{{Kind: TokLiteral, Text: o.Replace}}
+		tmpl = Template{{Kind: TokLiteral, Text: UnescapeText(o.Replace)}}
 	}
 	var out []Match
 	m, err := re.FindStringMatch(text)
@@ -172,8 +209,9 @@ func ParseTemplate(s string) Template {
 		c := r[i]
 		switch {
 		case c == '\\' && i+1 < len(r):
-			i++
-			lit.WriteRune(r[i])
+			s, n := textEscape(r, i)
+			lit.WriteString(s)
+			i += n - 1
 		case c == '$':
 			flush()
 			if i+1 >= len(r) {
@@ -246,6 +284,63 @@ func (t Template) Expand(groups []Group) string {
 		case TokEnd:
 			mode, next = TokEnd, TokEnd
 		}
+	}
+	return b.String()
+}
+
+// textEscape decodes the escape at r[i] == '\\': \t tab, \n return, \s
+// space, \x{hhhh} a code point; any other \c is c (measured: "\U" is "U",
+// "\$" is "$"). It returns the text and the runes consumed.
+func textEscape(r []rune, i int) (string, int) {
+	if i+1 >= len(r) {
+		return `\`, 1
+	}
+	switch c := r[i+1]; c {
+	case 't':
+		return "\t", 2
+	case 'n':
+		return "\n", 2
+	case 's':
+		return " ", 2
+	case 'x':
+		if i+2 < len(r) && r[i+2] == '{' {
+			if end := indexRune(r, i+3, '}'); end > i+3 {
+				var v rune
+				ok := true
+				for _, h := range r[i+3 : end] {
+					d := strings.IndexRune("0123456789abcdef", unicode.ToLower(h))
+					if d < 0 {
+						ok = false
+						break
+					}
+					v = v*16 + rune(d)
+				}
+				if ok && utf8.ValidRune(v) {
+					return string(v), end + 1 - i
+				}
+			}
+		}
+		return "x", 2
+	default:
+		return string(c), 2
+	}
+}
+
+// UnescapeText decodes the escapes text fields accept (see textEscape).
+func UnescapeText(s string) string {
+	if !strings.ContainsRune(s, '\\') {
+		return s
+	}
+	r := []rune(s)
+	var b strings.Builder
+	for i := 0; i < len(r); i++ {
+		if r[i] == '\\' {
+			t, n := textEscape(r, i)
+			b.WriteString(t)
+			i += n - 1
+			continue
+		}
+		b.WriteRune(r[i])
 	}
 	return b.String()
 }
