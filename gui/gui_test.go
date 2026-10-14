@@ -152,13 +152,6 @@ func TestLineOperations(t *testing.T) {
 	}
 }
 
-func TestInvisibleInlays(t *testing.T) {
-	in := invisibleInlays("a\u00a0b\u3000c\n")
-	if len(in) != 3 || in[0].Text != "⍽" || in[1].Text != "□" || in[2].Text != "¬" {
-		t.Fatalf("%+v", in)
-	}
-}
-
 func TestPaletteSearchAndRun(t *testing.T) {
 	a, tt := newApp(t, "hello world")
 	tt.Key(ui.Cmd, ui.KeyK)

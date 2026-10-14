@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"github.com/dandibbert/textrouter/engine"
+	"github.com/dandibbert/textrouter/internal/fontlist"
 	"image"
 	"image/color"
 	"image/draw"
@@ -9,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 )
@@ -60,6 +63,38 @@ func TestSnapshots(t *testing.T) {
 			os.WriteFile(p, []byte("# Release notes\n\n- Faster  find  panel\n- Document tabs: clipboard and files side by side\n- Batch replace as a sheet\n"), 0o644)
 			a.loadFile(p)
 			a.view.lineNumbers = true
+		}},
+		{"change-highlight", func(a *App, tt *ui.Tester) {
+			a.freezeChanges = true
+			rs := a.Lib.RuleSets[0]
+			a.Text += "\nMy favourite colour is centre grey — organise it."
+			tt.Frame()
+			cl := engine.CleanerByName("Straighten Quotes")
+			a.Transform("批量替换 + 直引号", func(s string) string {
+				out, _, _ := engine.ApplyRules(s, rs.Rules)
+				return cl.Fn(strings.ReplaceAll(out, "  ", " "))
+			})
+		}},
+		{"invisibles", func(a *App, tt *ui.Tester) {
+			a.Text = "全角空格\u3000在这里，NBSP\u00a0在这里。\n零宽空格\u200b藏在这里，回车\r在这里。\n\t制表符缩进   行尾空格   \n最后一行"
+			a.view.invisibles = true
+		}},
+		{"settings-fonts", func(a *App, tt *ui.Tester) {
+			fontlist.System()
+			fontlist.Load(nil)
+			for i := 0; i < 50; i++ {
+				if _, ok := fontlist.Ready(); ok {
+					break
+				}
+				time.Sleep(20 * time.Millisecond)
+			}
+			a.Lib.Settings.View.EditorFont = "Source Serif Pro"
+			a.Lib.Settings.View.CJKFont = "Noto Serif CJK SC"
+			a.Lib.Settings.View.FontSize = 16
+			a.OpenTool(PageSettings)
+			tt.Frame()
+			a.fontUI.open = "editor"
+			a.fontUI.query = "serif"
 		}},
 		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
 		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},

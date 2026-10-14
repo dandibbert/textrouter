@@ -13,6 +13,7 @@ import (
 	"image/png"
 	"log"
 	"runtime"
+	"time"
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/dandibbert/textrouter/gui"
@@ -100,8 +101,8 @@ func main() {
 	mygo.App.WhenReady(func() {
 		d.win = mygo.NewWindow(mygo.WindowOptions{
 			Title:     "TextRouter",
-			Width:     1120,
-			Height:    720,
+			Width:     lib.Settings.View.WindowW,
+			Height:    lib.Settings.View.WindowH,
 			MinWidth:  820,
 			MinHeight: 520,
 			StateKey:  "main",
@@ -123,6 +124,17 @@ func main() {
 			d.win.Focus()
 			mygo.App.Focus()
 		}
+		// Remember the window size in the settings, once resizing settles.
+		var resizeTimer *time.Timer
+		d.win.OnResize(func() {
+			w, h := d.win.Size()
+			if resizeTimer != nil {
+				resizeTimer.Stop()
+			}
+			resizeTimer = time.AfterFunc(400*time.Millisecond, func() {
+				d.win.Update(func() { a.SetWindowSize(w, h) })
+			})
+		})
 		d.win.OnClose(func(e *mygo.CloseEvent) {
 			if !quitting {
 				e.PreventDefault()

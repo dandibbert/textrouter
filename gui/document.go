@@ -56,7 +56,7 @@ func (a *App) switchDoc(i int) {
 	n := a.docs[i]
 	a.cur = i
 	a.Text, a.ed, a.edVer, a.edSynced, a.last = n.text, n.ed, n.edVer, n.edSynced, n.last
-	a.invisOn = false
+	a.changes = nil
 	a.syncEditor()
 }
 
@@ -234,9 +234,9 @@ func (a *App) documentView(c *ui.Context, k tokens) {
 	a.syncEditor()
 	a.configureEditor(c, k)
 	c.OnShortcut(ui.Cmd, ui.KeyEnter, a.done)
-	c.OnShortcut(ui.Cmd, ui.KeyEqual, func() { a.view.fontSize = min(a.view.fontSize+1, 32) })
-	c.OnShortcut(ui.Cmd, ui.KeyMinus, func() { a.view.fontSize = max(a.view.fontSize-1, 10) })
-	c.OnShortcut(ui.Cmd, ui.Key0, func() { a.view.fontSize = 15 })
+	c.OnShortcut(ui.Cmd, ui.KeyEqual, func() { a.zoomBy(1) })
+	c.OnShortcut(ui.Cmd, ui.KeyMinus, func() { a.zoomBy(-1) })
+	c.OnShortcut(ui.Cmd, ui.Key0, func() { a.view.zoom = 1 })
 	c.OnShortcut(ui.Cmd, ui.KeyO, a.openFile)
 	c.OnShortcut(ui.Cmd, ui.KeyS, a.saveFile)
 	c.OnShortcut(ui.Cmd|ui.Alt, ui.KeyI, func() { a.view.invisibles = !a.view.invisibles })
@@ -251,7 +251,6 @@ func (a *App) documentView(c *ui.Context, k tokens) {
 			editor.View(c, a.ed).Grow(1).FillHeight().AutoFocus()
 		})
 	})
-	a.updateInvisibles()
 	a.syncEditor()
 }
 
@@ -552,6 +551,7 @@ func (a *App) replaceOne(o engine.FindOptions, res findResult, i int) {
 	}
 	a.syncEditor()
 	a.last = &lastOp{label: "替换一处", before: before, after: a.Text, scope: "一处"}
+	a.markChanges(before, a.Text)
 	a.status = "已替换 1 处"
 }
 
@@ -569,6 +569,7 @@ func (a *App) replaceAllFind(o engine.FindOptions) {
 	}
 	a.syncEditor()
 	a.last = &lastOp{label: "全部替换", before: before, after: a.Text, scope: "全文"}
+	a.markChanges(before, a.Text)
 	a.ed.DiffBase = editor.NewBuffer(before)
 	a.status = fmt.Sprintf("已替换 %d 处", n)
 	a.toast, a.toastUndo = fmt.Sprintf("已替换 %d 处", n), true

@@ -19,7 +19,7 @@ type editorPrefs struct {
 	wrap        bool
 	invisibles  bool
 	mono        bool
-	fontSize    float32
+	zoom        float32 // 1 = 100%
 }
 
 // ---------------------------------------------------------------- text sync
@@ -195,15 +195,16 @@ func editorTheme(c *ui.Context, k tokens) *editor.Theme {
 func (a *App) configureEditor(c *ui.Context, k tokens) {
 	st := a.ed
 	v := &a.view
-	if v.fontSize == 0 {
-		v.fontSize = 15
+	if v.zoom <= 0 {
+		v.zoom = 1
 	}
-	family, size := editorFont, v.fontSize
+	vs := &a.Lib.Settings.View
+	family, size := a.editorFamily(), float32(vs.FontSize)*v.zoom
 	if v.mono {
-		family, size = monoFont, v.fontSize-1.5
+		family, size = a.monoFamily(), size-1.5
 	}
 	st.Font = ui.Font{Family: family, Size: size}
-	st.LineHeight = 1.6
+	st.LineHeight = float32(vs.LineHeight)
 	st.SoftWrap = v.wrap
 	st.LineNumbers = editor.LineNumbersOff
 	if v.lineNumbers {
@@ -213,6 +214,8 @@ func (a *App) configureEditor(c *ui.Context, k tokens) {
 	if v.invisibles {
 		st.Whitespace = editor.WhitespaceAll
 	}
+	st.Invisibles = v.invisibles
+	a.updateHighlights(c, k)
 	st.NoIndentGuides = true
 	st.NoFolding = true
 	st.TabSize = 4
@@ -234,45 +237,6 @@ func (a *App) configureEditor(c *ui.Context, k tokens) {
 	}
 	st.RenderFindBar = a.renderFindBar
 	st.RenderGoToLine = a.renderGoToLine
-}
-
-// updateInvisibles refreshes the invisible-character marks after the
-// editor has attached its buffer.
-func (a *App) updateInvisibles() {
-	st := a.ed
-	if a.view.invisibles {
-		if ver := st.Buffer.Version(); !a.invisOn || ver != a.invisVer {
-			st.SetInlays(invisibleInlays(st.Buffer.String()))
-			a.invisVer, a.invisOn = ver, true
-		}
-	} else if a.invisOn {
-		st.SetInlays(nil)
-		a.invisOn = false
-	}
-}
-
-// invisibleInlays marks line breaks, NBSP, full-width spaces and other
-// invisible characters with visible glyphs (shown, never inserted).
-func invisibleInlays(s string) []editor.Inlay {
-	var out []editor.Inlay
-	if len(s) > 2_000_000 {
-		return nil
-	}
-	for i, r := range s {
-		switch r {
-		case '\n':
-			out = append(out, editor.Inlay{Offset: i, Text: "¬"})
-		case '\u00a0':
-			out = append(out, editor.Inlay{Offset: i, Text: "⍽"})
-		case '\u3000':
-			out = append(out, editor.Inlay{Offset: i, Text: "□"})
-		case '\u200b', '\u200c', '\u200d', '\ufeff':
-			out = append(out, editor.Inlay{Offset: i, Text: "‸"})
-		case '\r':
-			out = append(out, editor.Inlay{Offset: i, Text: "␍"})
-		}
-	}
-	return out
 }
 
 // scopePill shows what the next action will apply to.

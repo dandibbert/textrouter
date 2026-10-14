@@ -364,6 +364,7 @@ func (a *App) settingsView(c *ui.Context) {
 					}
 				})
 			})
+			a.fontSettings(c, k, row, group)
 			group("行为", func() {
 				row("「复制并完成」后自动收起窗口", "焦点回到之前的应用，直接 ⌘V 粘贴", false, func() {
 					if ui.Switch(c, &st.CopyOnDone).Label("「复制并完成」后自动收起窗口").Changed() {

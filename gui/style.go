@@ -30,9 +30,10 @@ const (
 	rLg = 12
 	rXl = 14
 
-	sidebarW   = 224
-	titleBarH  = 52
-	uiFont     = "Inter, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Microsoft YaHei"
+	sidebarW  = 224
+	titleBarH = 52
+	uiFont    = "Inter, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Microsoft YaHei"
+
 	editorFont = "Inter, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC"
 	monoFont   = "SF Mono, JetBrains Mono, Menlo, Noto Sans Mono CJK SC, monospace"
 )
@@ -105,7 +106,7 @@ func applyTheme(c *ui.Context) tokens {
 	t.Focus = k.accent.Alpha(0.55)
 	t.Radius = rMd
 	t.FontSize = 13
-	t.Font = uiFont
+	t.Font = uiFontFamily
 	t.ScrollbarWidth = 6
 	if k.dark {
 		t.Inverse, t.InverseText = ui.Hex("#2C2C31"), ui.Hex("#F4F4F5")

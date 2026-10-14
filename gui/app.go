@@ -6,6 +6,7 @@ package gui
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/dandibbert/textrouter/engine"
@@ -57,19 +58,23 @@ type App struct {
 
 	last *lastOp
 
-	ed         *editor.State // the Clipboard Space editor; its buffer holds Text
-	edVer      uint64
-	edSynced   string
-	invisVer   uint64
-	invisOn    bool
-	view       editorPrefs
-	sideOpen   bool
-	docs       []*document
-	cur        int
-	inspector  string // "", "cleaners" or "find"
-	insp       inspectorState
-	sheetFresh string
-	fakeMenu   []string // screenshots only: stand-in for the native popup menu
+	ed            *editor.State // the Clipboard Space editor; its buffer holds Text
+	edVer         uint64
+	edSynced      string
+	view          editorPrefs
+	sideOpen      bool
+	docs          []*document
+	cur           int
+	inspector     string // "", "cleaners" or "find"
+	insp          inspectorState
+	sheetFresh    string
+	fakeMenu      []string
+	changes       []changeSpan
+	changesVer    uint64
+	changesAt     time.Time
+	viewSaved     bool
+	fontUI        fontUI
+	freezeChanges bool // screenshots: no fade // screenshots only: stand-in for the native popup menu
 
 	paletteOpen  bool
 	paletteQuery string
@@ -114,7 +119,7 @@ func New(lib *engine.Library, p Platform) *App {
 	}
 	a.clean.category = "全部"
 	a.batch.showDiff = true
-	a.view = editorPrefs{lineNumbers: true, wrap: true, fontSize: 15}
+	a.restoreView()
 	return a
 }
 
@@ -143,6 +148,7 @@ func (a *App) Transform(label string, fn func(string) string) {
 	}
 	a.last = &lastOp{label: label, before: before, after: after, scope: scope}
 	a.ed.DiffBase = editor.NewBuffer(before)
+	a.markChanges(before, after)
 	ins, del := engine.DiffStats(engine.Diff(before, after))
 	a.status = fmt.Sprintf("已对%s应用「%s」：+%d −%d 字符", scope, label, ins, del)
 	a.toast, a.toastUndo = fmt.Sprintf("「%s」· %s · +%d −%d", label, scope, ins, del), true
@@ -205,9 +211,11 @@ var tools = []navItem{
 // opened file) with the cleaner/find inspector on the right.
 func (a *App) View(c *ui.Context) {
 	registerFonts()
+	uiFontFamily = a.uiFamily()
 	k := applyTheme(c)
 	a.writeClip = c.WriteClipboard
 	a.ensureDocs()
+	a.persistView()
 	if a.Page == PageFind {
 		a.Page = PageClipboard
 		a.showFind()
@@ -267,11 +275,11 @@ func (a *App) statusBar(c *ui.Context) {
 			return b.Clicked()
 		}
 		if small("zout", "minus", "缩小 ⌘-", false) {
-			a.view.fontSize = max(a.view.fontSize-1, 10)
+			a.zoomBy(-1)
 		}
-		ui.Textf(c, "%d%%", int(a.view.fontSize/15*100+0.5)).FontSize(11).TextColor(k.muted).FontFeatures("tnum").Width(36).TextAlign(ui.Center)
+		ui.Textf(c, "%d%%", int(a.view.zoom*100+0.5)).FontSize(11).TextColor(k.muted).FontFeatures("tnum").Width(36).TextAlign(ui.Center)
 		if small("zin", "plus", "放大 ⌘+", false) {
-			a.view.fontSize = min(a.view.fontSize+1, 32)
+			a.zoomBy(1)
 		}
 		ui.Box(c).Size(1, 14).Background(k.hair).Margin(0, sp1)
 		if small("lnum", "list-ordered", "行号", a.view.lineNumbers) {
