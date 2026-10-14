@@ -104,6 +104,7 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 		}
 		ui.Spacer(c)
 		a.scopePill(c, k)
+		a.pendingClipPill(c, k)
 		ui.Box(c).Width(sp2)
 		if ghost(c, "scrub", "一键清理", "sparkles", false).Tooltip("应用「一键清理 Scrub」（可在设置中更换）").Clicked() {
 			if cl := engine.CleanerByName("Scrub"); cl != nil {
@@ -652,4 +653,22 @@ func (a *App) fakeMenuView(c *ui.Context, k tokens) {
 			}
 		})
 	})
+}
+
+// pendingClipPill offers a newer clipboard that was not loaded because the
+// 剪贴板 document has edits. Subtle and non-blocking; loads on click.
+func (a *App) pendingClipPill(c *ui.Context, k tokens) {
+	if !a.clipHasPending || a.cur != 0 {
+		return
+	}
+	b := ui.ButtonBase(c.Key("clip-pending")).Height(24).Padding(0, 10).Radius(12).Gap(6).AlignItems(ui.Center).
+		Label("剪贴板有新内容 · 载入").Tooltip("载入后仍可 ⌘Z 找回当前的编辑")
+	pressable(c, b, k, k.accentSoft)
+	b.Children(func() {
+		ui.Box(c).Size(6, 6).Radius(3).Background(k.accent)
+		ui.Text(c, "剪贴板有新内容 · 载入").FontSize(11.5).FontWeight(500).TextColor(k.accent)
+	})
+	if b.Clicked() {
+		a.LoadPendingClipboard()
+	}
 }

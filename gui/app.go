@@ -99,6 +99,10 @@ type App struct {
 	clipSeen   bool
 	clipLoaded string
 	clipPrev   string
+	// clipPending is a newer clipboard not loaded because the document
+	// had edits; the toolbar offers it.
+	clipPending    string
+	clipHasPending bool
 }
 
 type lastOp struct {
@@ -134,9 +138,10 @@ func New(lib *engine.Library, p Platform) *App {
 //
 //   - Clipboard unchanged since it was last loaded or copied from here:
 //     the document is left alone (carets, undo history, edits).
-//   - Changed: it replaces the document as one undoable edit. When the
-//     document had edits of its own (it differs from what was last loaded
-//     or copied), a toast offers to undo the load.
+//   - Changed, document unedited: replaced silently (one undoable edit).
+//   - Changed, document has edits not yet copied out: the document is
+//     kept exactly as is (text, carets, undo); a pill in the toolbar,
+//     「剪贴板有新内容 · 载入」, loads it on click as an undoable edit.
 //   - Auto-read off in the settings: only switches to the document.
 //
 // It reports whether the document was replaced.
@@ -152,29 +157,49 @@ func (a *App) LoadClipboard(s string) bool {
 	first := !a.clipSeen
 	a.clipSeen, a.clipLoaded = true, s
 	if s == a.Text {
+		a.clipHasPending, a.clipPending = false, ""
 		return false
 	}
 	edited := !first && a.Text != a.clipPrev && a.Text != ""
-	before := a.Text
+	if edited {
+		// Edits not yet copied out: keep the document exactly as it is and
+		// offer the new clipboard in a pill instead.
+		a.clipPending, a.clipHasPending = s, true
+		return false
+	}
+	a.applyClipboard(s)
+	a.status = "已读取剪贴板"
+	return true
+}
+
+// applyClipboard loads s into the 剪贴板 document as one undoable edit.
+func (a *App) applyClipboard(s string) {
+	a.clipHasPending, a.clipPending = false, ""
 	a.replaceAll(s)
 	a.clipPrev = a.Text
 	a.clearDiffBase()
 	a.changes = nil
-	if edited {
-		a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
-		a.toast, a.toastUndo = "已载入新剪贴板", true
-		a.status = "已载入新剪贴板（之前的编辑可撤销找回）"
-	} else {
-		a.last = nil
-		a.status = "已读取剪贴板"
+	a.last = nil
+}
+
+// LoadPendingClipboard loads the clipboard the pill offers (undoable).
+func (a *App) LoadPendingClipboard() {
+	if !a.clipHasPending {
+		return
 	}
-	return true
+	a.ShowClipboard()
+	a.syncEditor()
+	before := a.Text
+	a.applyClipboard(a.clipPending)
+	a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
+	a.status = "已载入新剪贴板（⌘Z 可找回之前的编辑）"
 }
 
 // noteCopied records text this app put on the clipboard, so the next
 // activation sees nothing new and leaves the document alone.
 func (a *App) noteCopied(s string) {
 	a.clipSeen, a.clipLoaded = true, s
+	a.clipHasPending, a.clipPending = false, ""
 	if a.cur == 0 {
 		a.syncEditor()
 		a.clipPrev = a.Text

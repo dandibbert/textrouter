@@ -28,13 +28,34 @@ func TestActivationLoadsClipboard(t *testing.T) {
 		t.Fatalf("new clipboard: %q toast %q", a.Text, a.toast)
 	}
 	tt.Frame()
-	// Edit the document, then a new clipboard arrives: loaded, undoable, toast.
+	// Edit the document, then a new clipboard arrives: nothing changes,
+	// only the pill appears.
 	a.Text = "second copy, edited by me"
 	tt.Frame()
-	if !a.LoadClipboard("third copy") || a.Text != "third copy" || a.toast != "已载入新剪贴板" || !a.toastUndo {
-		t.Fatalf("edited: %q toast %q", a.Text, a.toast)
+	a.ed.Select(3, 6)
+	ver = a.ed.Buffer.Version()
+	if a.LoadClipboard("third copy") || a.Text != "second copy, edited by me" || a.ed.Buffer.Version() != ver || a.toast != "" {
+		t.Fatalf("edited doc was touched: %q", a.Text)
+	}
+	if s := a.ed.Selection(); s.Start() != 3 || s.End() != 6 {
+		t.Fatalf("selection moved: %+v", s)
 	}
 	tt.Frame()
+	if !tt.HasText("剪贴板有新内容 · 载入") {
+		t.Fatal("pill missing")
+	}
+	// Activating again with the same clipboard: still untouched.
+	if a.LoadClipboard("third copy") || a.Text != "second copy, edited by me" {
+		t.Fatal("second activation loaded")
+	}
+	// Clicking the pill loads it, undoably.
+	if err := tt.Click("剪贴板有新内容 · 载入"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.Text != "third copy" || tt.HasText("剪贴板有新内容 · 载入") {
+		t.Fatalf("pill load: %q", a.Text)
+	}
 	a.Undo()
 	if a.Text != "second copy, edited by me" {
 		t.Fatalf("undo load: %q", a.Text)
