@@ -105,7 +105,12 @@ func main() {
 			MinWidth:  820,
 			MinHeight: 520,
 			StateKey:  "main",
-			Content:   ui.View(a.View),
+			// Inset title bar: the traffic lights float over the sidebar,
+			// which shows the window's sidebar material (macOS).
+			TitleBarStyle:  mygo.TitleBarHiddenInset,
+			TitleBarHeight: 52,
+			Vibrancy:       mygo.VibrancySidebar,
+			Content:        ui.View(a.View),
 		})
 		// Open Clipboard Space with the current clipboard: from the Dock,
 		// the menu bar icon or the global shortcut.

@@ -44,7 +44,7 @@ func (a *App) runRules(rules []engine.Rule) batchResult {
 }
 
 func (a *App) batchView(c *ui.Context) {
-	t := c.Theme()
+	k := tok(c)
 	b := &a.batch
 	rs := a.currentRuleSet()
 	if rs == nil && len(a.Lib.RuleSets) > 0 {
@@ -55,14 +55,14 @@ func (a *App) batchView(c *ui.Context) {
 	if rs != nil {
 		res = a.runRules(rs.Rules)
 	}
-	header(c, "批量替换", "每一行是一条规则：左边找什么，右边换成什么。从上到下依次执行，下一条作用于上一条的结果。拖动行可调整顺序。", func() {
-		if rs != nil && ui.PrimaryButton(c, "应用到剪贴板空间").Disabled(res.out == a.Text).Clicked() {
+	pageHeader(c, "批量替换", "从上到下依次执行，每条作用于上一条的结果", func() {
+		if rs != nil && primary(c, "applybatch", "应用到剪贴板空间", "play", "", res.out == a.Text).Clicked() && res.out != a.Text {
 			out := res.out
 			a.Transform("批量替换："+rs.Name, func(string) string { return out })
 		}
 	})
-	// Rule set picker row.
-	ui.Row(c).PaddingX(20).Gap(8).AlignItems(ui.Center).Children(func() {
+	// Rule set bar.
+	ui.Row(c).Padding(0, sp5, sp3, sp5).Gap(6).AlignItems(ui.Center).Children(func() {
 		var names []string
 		sel := ""
 		for _, r := range a.Lib.RuleSets {
@@ -71,14 +71,14 @@ func (a *App) batchView(c *ui.Context) {
 				sel = r.Name
 			}
 		}
-		if len(names) > 0 && ui.Select(c, &sel, names).Label("规则集").Width(220).Changed() {
+		if len(names) > 0 && ui.Select(c, &sel, names).Label("规则集").Width(220).Height(30).Changed() {
 			for _, r := range a.Lib.RuleSets {
 				if r.Name == sel {
 					b.setID = r.ID
 				}
 			}
 		}
-		if ui.Button(c, "新建规则集").Clicked() {
+		if iconButton(c, "newset", "plus", "新建规则集", "新建规则集").Clicked() {
 			a.Lib.RuleSets = append(a.Lib.RuleSets, engine.RuleSet{ID: engine.NewID(), Name: fmt.Sprintf("规则集 %d", len(a.Lib.RuleSets)+1),
 				Rules: []engine.Rule{{MatchCase: true}}})
 			b.setID = a.Lib.RuleSets[len(a.Lib.RuleSets)-1].ID
@@ -87,10 +87,15 @@ func (a *App) batchView(c *ui.Context) {
 		if rs == nil {
 			return
 		}
-		if ui.Button(c, "重命名").Clicked() {
+		if iconButton(c, "rename", "type", "重命名", "重命名规则集").Clicked() {
 			b.name, b.renaming = rs.Name, true
 		}
-		ui.MenuButton(c, "导入/导出", func(m *ui.Menu) {
+		ui.Spacer(c)
+		if res.err != nil {
+			ui.Icon(c, ic("triangle-alert")).FontSize(13).TextColor(k.red)
+			ui.Text(c, res.err.Error()).FontSize(11.5).TextColor(k.red).MaxLines(1).MaxWidth(320)
+		}
+		ui.MenuButton(c, "导入 / 导出", func(m *ui.Menu) {
 			if m.Item("从 CSV/TSV 文件导入…").Chosen() {
 				a.importRules(rs)
 			}
@@ -114,70 +119,90 @@ func (a *App) batchView(c *ui.Context) {
 			if m.Item("删除此规则集").Chosen() {
 				a.deleteRuleSet(rs.ID)
 			}
-		})
-		ui.Spacer(c)
-		if res.err != nil {
-			ui.Text(c, "⚠ "+res.err.Error()).FontSize(11).TextColor(t.Danger).MaxLines(2).MaxWidth(360)
-		}
+		}).Height(30).Radius(rMd).Background(k.field).Border(1, ui.Transparent).FontSize(12.5)
 	})
 	if rs == nil {
-		ui.Column(c).Grow(1).Center().Children(func() { muted(c, "还没有规则集，点「新建规则集」开始。") })
+		ui.Column(c).Grow(1).Center().Children(func() { hint(c, "还没有规则集，点「＋」新建。") })
 		return
 	}
-	ui.Column(c).Grow(1).Padding(10, 20, 12, 20).Gap(8).MinHeight(0).Children(func() {
-		// Column headings, aligned with the row layout below.
-		ui.Row(c).Gap(8).PaddingX(10).Children(func() {
-			ui.Text(c, "启用").FontSize(11).TextColor(t.TextMuted).Width(34)
-			ui.Text(c, "查找").FontSize(11).TextColor(t.TextMuted).Grow(1).Basis(0)
-			ui.Box(c).Width(16)
-			ui.Text(c, "替换为").FontSize(11).TextColor(t.TextMuted).Grow(1).Basis(0)
-			ui.Text(c, "正则 / 区分大小写 / 命中").FontSize(11).TextColor(t.TextMuted).Width(210)
-		})
-		b.list.Reorder = func(rows []int, to int) {
-			rs.Rules = moveRules(rs.Rules, rows, to)
-			a.save()
-		}
-		b.list.Key = func(i int) any { return fmt.Sprintf("%p", &rs.Rules[i]) }
-		ui.List(c, &b.list, len(rs.Rules), func(i int) {
-			a.ruleRow(c, rs, i, res)
-		}).Gap(4).Height(min(float32(len(rs.Rules))*46+8, 300))
-		ui.Row(c).Gap(8).Children(func() {
-			if ui.Button(c, "＋ 添加规则").Clicked() {
-				rs.Rules = append(rs.Rules, engine.Rule{MatchCase: true})
+	ui.Column(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp3).MinHeight(0).Children(func() {
+		// The rule table.
+		panel(c).Padding(0).Gap(0).Clip().Children(func() {
+			ui.Row(c).Height(34).Gap(sp2).Padding(0, sp3, 0, sp3).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+				ui.Box(c).Width(14 + 22 + 22)
+				eyebrow(c, "查找").Grow(1).Basis(0)
+				ui.Box(c).Width(18)
+				eyebrow(c, "替换为").Grow(1).Basis(0)
+				eyebrow(c, "选项").Width(62)
+				eyebrow(c, "命中").Width(56)
+				ui.Box(c).Width(28)
+			})
+			b.list.Reorder = func(rows []int, to int) {
+				rs.Rules = moveRules(rs.Rules, rows, to)
 				a.save()
 			}
-			total := 0
-			for _, n := range res.counts {
-				total += n
-			}
-			ui.Spacer(c)
-			muted(c, fmt.Sprintf("共 %d 条规则，替换 %d 处", len(rs.Rules), total))
-			ui.Toggle(c, &b.showDiff, "显示改动")
+			b.list.Key = func(i int) any { return fmt.Sprintf("%p", &rs.Rules[i]) }
+			ui.List(c, &b.list, len(rs.Rules), func(i int) {
+				a.ruleRow(c, rs, i, res)
+			}).Height(min(float32(len(rs.Rules))*45, 315))
+			ui.Row(c).Height(42).Padding(0, sp3).Gap(sp2).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
+				add := ui.ButtonBase(c.Key("addrule")).Height(28).Padding(0, 10, 0, 8).Radius(rSm).Gap(6).AlignItems(ui.Center).Label("添加规则")
+				pressable(c, add, k, ui.Transparent)
+				add.Children(func() {
+					ui.Icon(c, ic("plus")).FontSize(14).TextColor(k.accent)
+					ui.Text(c, "添加规则").FontSize(12.5).FontWeight(600).TextColor(k.accent)
+				})
+				if add.Clicked() {
+					rs.Rules = append(rs.Rules, engine.Rule{MatchCase: true})
+					a.save()
+				}
+				ui.Spacer(c)
+				total := 0
+				for _, n := range res.counts {
+					total += n
+				}
+				ui.Textf(c, "%d 条规则 · 共替换 %d 处 · 拖动左侧把手调整顺序", len(rs.Rules), total).FontSize(11.5).TextColor(k.faint)
+			})
 		})
-		ui.Scroll(c).Grow(1).Background(t.Surface).Radius(8).Border(1, t.Border).Padding(12).Children(func() {
-			if b.showDiff {
-				diffView(c, a.Text, res.out)
-			} else {
-				ui.Text(c, res.out).Selectable().Font("monospace").FontSize(13)
-			}
+		// Result preview.
+		canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
+			ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+				ui.Text(c, "结果预览").FontSize(13).FontWeight(600).TextColor(k.text)
+				diffBadge(c, a.Text, res.out)
+				ui.Spacer(c)
+				idx := map[bool]int{false: 0, true: 1}[b.showDiff]
+				if segmented(c, "bview", &idx, "结果", "改动对照") {
+					b.showDiff = idx == 1
+				}
+			})
+			ui.Scroll(c).Grow(1).Padding(sp5, sp6).Children(func() {
+				if b.showDiff {
+					diffView(c, a.Text, res.out)
+				} else {
+					ui.Text(c, res.out).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
+				}
+			})
 		})
 	})
 	ui.Modal(c, &b.renaming, func() {
-		ui.Text(c, "重命名规则集").Bold()
-		if ui.TextInput(c, &b.name).AutoFocus().Width(300).Submitted() || ui.PrimaryButton(c, "确定").Clicked() {
-			rs.Name, b.renaming = b.name, false
-			a.save()
-		}
+		ui.Text(c, "重命名规则集").FontSize(15).FontWeight(650)
+		in := field(c, ui.TextInput(c, &b.name).AutoFocus().Width(320))
+		ui.Row(c).Gap(8).Justify(ui.End).FillWidth().Children(func() {
+			if in.Submitted() || primary(c, "renameok", "确定", "", "", false).Clicked() {
+				rs.Name, b.renaming = b.name, false
+				a.save()
+			}
+		})
 	})
 	ui.Modal(c, &b.pasteOpen, func() {
-		ui.Text(c, "粘贴表格").Bold()
-		muted(c, "每行一条：查找<Tab>替换<Tab>正则(1/0)<Tab>区分大小写(1/0)。也接受 CSV。可以直接从 Excel/Numbers 复制。")
-		ui.TextArea(c, &b.pasteText).Size(520, 220).Font("monospace").AutoFocus()
-		ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-			if ui.Button(c, "取消").Clicked() {
+		ui.Text(c, "粘贴表格").FontSize(15).FontWeight(650)
+		hint(c, "每行一条：查找<Tab>替换<Tab>正则(1/0)<Tab>区分大小写(1/0)。也接受 CSV。可以直接从 Excel / Numbers 复制。")
+		field(c, ui.TextArea(c, &b.pasteText).Size(540, 220).Font(monoFont).AutoFocus())
+		ui.Row(c).Gap(8).Justify(ui.End).FillWidth().Children(func() {
+			if ghost(c, "pastecancel", "取消", "", false).Clicked() {
 				b.pasteOpen = false
 			}
-			if ui.PrimaryButton(c, "追加这些规则").Clicked() {
+			if primary(c, "pasteok", "追加这些规则", "", "", false).Clicked() {
 				rules, err := engine.ParseRules([]byte(b.pasteText))
 				if err != nil {
 					a.status = "解析失败：" + err.Error()
@@ -193,7 +218,7 @@ func (a *App) batchView(c *ui.Context) {
 }
 
 func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult) {
-	t := c.Theme()
+	k := tok(c)
 	r := &rs.Rules[i]
 	count := 0
 	if i < len(res.counts) {
@@ -205,46 +230,84 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 			valid = false
 		}
 	}
-	bg := t.Surface
-	if r.Disabled {
-		bg = t.Background
+	row := ui.Row(c).Height(45).Gap(sp2).Padding(0, sp3).AlignItems(ui.Center)
+	if i > 0 {
+		row.BorderWidth(1, 0, 0, 0).BorderColor(k.hair)
 	}
-	ui.Row(c).Gap(8).Padding(5, 10).Radius(8).Background(bg).Border(1, t.Border).AlignItems(ui.Center).Children(func() {
+	hov := row.Hovered()
+	if hov {
+		row.Background(k.hover)
+	}
+	if r.Disabled {
+		row.Opacity(0.5)
+	}
+	row.Children(func() {
+		ui.Icon(c, ic("grip-vertical")).FontSize(14).TextColor(map[bool]ui.Color{true: k.muted, false: k.faint.Alpha(0.5)}[hov]).Cursor(ui.CursorGrab)
 		enabled := !r.Disabled
-		if ui.Checkbox(c, &enabled, "").Label(fmt.Sprintf("启用第 %d 条", i+1)).Width(34).Changed() {
+		if ui.Checkbox(c, &enabled, "").Label(fmt.Sprintf("启用第 %d 条", i+1)).Width(22).Changed() {
 			r.Disabled = !enabled
 			a.save()
 		}
-		in := ui.TextInput(c, &r.Find).Font("monospace").Placeholder("查找").Label(fmt.Sprintf("第 %d 条 查找", i+1)).Grow(1).Basis(0)
-		if !valid {
-			in.Error("正则有误")
+		ui.Textf(c, "%d", i+1).FontSize(11).FontWeight(600).TextColor(k.faint).Width(22).FontFeatures("tnum")
+		in := ruleField(c, ui.TextInputBase(c, &r.Find).Placeholder("查找").Label(fmt.Sprintf("第 %d 条 查找", i+1)), !valid)
+		if r.Regex && valid {
+			in.TextRanges(patternRanges(k, r.Find)...)
 		}
 		if in.Changed() {
 			a.save()
 		}
-		ui.Text(c, "→").TextColor(t.TextMuted).Width(16)
-		if ui.TextInput(c, &r.Replace).Font("monospace").Placeholder("（删除）").Label(fmt.Sprintf("第 %d 条 替换", i+1)).Grow(1).Basis(0).Changed() {
+		ui.Icon(c, ic("arrow-right")).FontSize(13).TextColor(k.faint).Width(18)
+		rep := ruleField(c, ui.TextInputBase(c, &r.Replace).Placeholder("（删除）").Label(fmt.Sprintf("第 %d 条 替换", i+1)), false)
+		if r.Regex {
+			rep.TextRanges(templateRanges(k, r.Replace)...)
+		}
+		if rep.Changed() {
 			a.save()
 		}
-		ui.Row(c).Width(210).Gap(6).AlignItems(ui.Center).Children(func() {
-			if ui.Toggle(c, &r.Regex, ".*").Tooltip("按正则表达式匹配").Changed() {
+		ui.Row(c).Width(62).Gap(2).Children(func() {
+			if flag(c, "re", ".*", "按正则表达式匹配", &r.Regex) {
 				a.save()
 			}
-			if ui.Toggle(c, &r.MatchCase, "Aa").Tooltip("区分大小写").Changed() {
-				a.save()
-			}
-			label := fmt.Sprintf("%d 处", count)
-			if !valid {
-				label = "错误"
-			}
-			ui.Badge(c, label)
-			ui.Spacer(c)
-			if ui.Button(c, "✕").Label(fmt.Sprintf("删除第 %d 条", i+1)).Clicked() {
-				rs.Rules = append(rs.Rules[:i], rs.Rules[i+1:]...)
+			if flag(c, "cs", "Aa", "区分大小写", &r.MatchCase) {
 				a.save()
 			}
 		})
+		ui.Row(c).Width(56).Children(func() {
+			switch {
+			case !valid:
+				badge(c, "错误", toneRed).Tooltip("正则有误")
+			case count > 0:
+				badge(c, fmt.Sprintf("%d 处", count), toneAccent)
+			default:
+				badge(c, "0 处", toneNeutral)
+			}
+		})
+		del := iconButton(c, "del", "trash-2", fmt.Sprintf("删除第 %d 条", i+1), "删除这条规则").Size(28, 28)
+		if !hov {
+			del.Opacity(0.35)
+		}
+		if del.Clicked() {
+			rs.Rules = append(rs.Rules[:i], rs.Rules[i+1:]...)
+			a.save()
+		}
 	})
+}
+
+// ruleField styles an inline table cell editor.
+func ruleField(c *ui.Context, e ui.Element, bad bool) ui.Element {
+	k := tok(c)
+	e.Grow(1).Basis(0).Font(monoFont).FontSize(13).TextColor(k.text).Padding(6, 8).Radius(rSm).MinWidth(0)
+	switch {
+	case e.Focused():
+		e.Background(k.canvas).Border(1, k.accent.Alpha(0.7)).Shadow(0, 0, 0, 3, k.accent.Alpha(0.15))
+	case bad:
+		e.Background(k.redSoft).Border(1, k.red.Alpha(0.5))
+	case e.Hovered():
+		e.Background(k.fieldHover).Border(1, ui.Transparent)
+	default:
+		e.Background(k.field).Border(1, ui.Transparent)
+	}
+	return e
 }
 
 func moveRules(rules []engine.Rule, rows []int, to int) []engine.Rule {

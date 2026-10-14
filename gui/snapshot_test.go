@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/dandibbert/textrouter/engine"
 )
 
 // TestSnapshots writes PNGs of every page when TEXTROUTER_SNAPSHOTS is a
@@ -26,13 +28,17 @@ func TestSnapshots(t *testing.T) {
 				a.find.modeIdx = 1
 				a.find.opts.Find = `(\d+)元`
 				a.find.opts.Replace = "¥$1"
+			case PageBatch:
+				a.Text = sample + "\nMy favourite colour is centre grey — organise it."
 			case PageCleaners:
 				a.clean.selected = "Scrub"
 			case PageClipboard:
-				a.Transform("删除多余空格", func(s string) string { return s })
+				cl := engine.CleanerByName("Capitalize with Title Case")
+				a.Transform(cl.ZhName, cl.Fn)
 			}
-			tt.Frame()
-			tt.Frame()
+			for i := 0; i < 30; i++ {
+				tt.Frame()
+			}
 			name := page
 			if dark {
 				name += "-dark"
@@ -45,14 +51,21 @@ func TestSnapshots(t *testing.T) {
 			f.Close()
 		}
 	}
-	// palette
-	a, tt := newApp(t, sample)
-	tt.SetScale(2)
-	a.openPalette()
-	a.paletteQuery = "空格"
-	tt.Frame()
-	tt.Frame()
-	f, _ := os.Create(filepath.Join(dir, "palette.png"))
-	png.Encode(f, tt.Image())
-	f.Close()
+	for _, dark := range []bool{false, true} {
+		a, tt := newApp(t, sample)
+		tt.SetScale(2)
+		tt.SetDark(dark)
+		a.openPalette()
+		a.paletteQuery = "空格"
+		for i := 0; i < 40; i++ {
+			tt.Frame()
+		}
+		name := "palette"
+		if dark {
+			name += "-dark"
+		}
+		f, _ := os.Create(filepath.Join(dir, name+".png"))
+		png.Encode(f, tt.Image())
+		f.Close()
+	}
 }

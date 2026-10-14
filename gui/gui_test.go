@@ -95,7 +95,7 @@ func TestBatchPageCounts(t *testing.T) {
 	if a.Text != "my favorite color, color" {
 		t.Errorf("batch: %q", a.Text)
 	}
-	if err := tt.Click("＋ 添加规则"); err != nil {
+	if err := tt.Click("添加规则"); err != nil {
 		t.Fatal(err)
 	}
 	if n := len(a.currentRuleSet().Rules); n != 5 {

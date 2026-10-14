@@ -126,3 +126,8 @@ reg("#MY_TOKEN", "我的清理器", func(s string) string {
 ## English (short)
 
 TextRouter reimplements TextSoap 9's text cleaning with a clearer UX: a Clipboard Space opened by Dock/menu-bar/global shortcut, a find/replace screen that explains regexes and replacement tokens in plain language with per-match previews, batch replace as an ordered rule table (drag to reorder, per-rule hit counts, CSV/TSV), and a step-by-step chain builder with previews after each step. Pure Go (`engine/` has no UI deps), native UI via MyGo. `go test ./...`; `go tool mygo build -platform darwin/arm64`.
+
+## 第三方资源 / Credits
+
+- 图标：[Lucide](https://lucide.dev)（ISC，见 `gui/icons/LICENSE`）
+- 界面字体：[Inter](https://rsms.me/inter/)（SIL OFL 1.1，见 `gui/fonts/OFL.txt`），中文回退到系统的苹方
