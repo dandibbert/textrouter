@@ -5,54 +5,40 @@
   --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, "Cascadia Mono", "Noto Sans Mono CJK SC", "Noto Sans Mono",
     monospace;
 
-  /* Window backdrop: under html.glass it is translucent over the native
-     blur material; otherwise a soft gradient stands in for it. */
-  --backdrop: radial-gradient(1100px 560px at -10% -20%, rgba(98, 120, 255, 0.18), transparent 60%),
-    radial-gradient(900px 520px at 110% 120%, rgba(178, 102, 255, 0.12), transparent 60%),
-    linear-gradient(180deg, #f1f2f6, #e8e9ef);
-  --sheet: rgba(255, 255, 255, 0.94);
-  --sheet-shadow: 0 0 0 0.5px rgba(16, 18, 40, 0.1), 0 1px 2px rgba(16, 18, 40, 0.04), 0 12px 32px rgba(16, 18, 40, 0.07);
+  --backdrop: #ececee;
+  --sheet: #ffffff;
+  --sheet-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
   --bg: transparent;
   --chrome: transparent;
   --sidebar: transparent;
-  --surface: rgba(255, 255, 255, 0.92);
-  --surface-2: rgba(16, 18, 40, 0.025);
+  --surface: #ffffff;
+  --surface-2: rgba(0, 0, 0, 0.025);
   --raised: rgba(255, 255, 255, 0.9);
-  --panel: rgba(255, 255, 255, 0.72);
-  --field: rgba(255, 255, 255, 0.7);
-  --track: rgba(16, 18, 40, 0.06);
-  --sel: rgba(16, 18, 40, 0.065);
-  --hover: rgba(16, 18, 40, 0.045);
-  --press: rgba(16, 18, 40, 0.08);
-  --fill: rgba(16, 18, 40, 0.05);
-  --border: rgba(16, 18, 40, 0.075);
-  --border-strong: rgba(16, 18, 40, 0.13);
-  --edge: rgba(16, 18, 40, 0.1);
-  --hi: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  --text: #16161a;
-  --text-2: #54545e;
-  --text-3: #8b8b96;
-  --accent: #5b6cff;
-  --accent-2: #8b5cf6;
-  --accent-hover: #4d5ef5;
-  --accent-soft: rgba(91, 108, 255, 0.12);
-  --accent-text: #3f4fe0;
-  --grad: linear-gradient(135deg, #6d7dff, #8b5cf6);
-  --green: #16955a;
-  --green-soft: rgba(22, 149, 90, 0.11);
-  --red: #dc3e3e;
-  --red-soft: rgba(220, 62, 62, 0.1);
-  --orange: #c26a00;
-  --purple: #8b45d6;
-  --match: rgba(255, 196, 0, 0.34);
-  --match-current: rgba(255, 145, 0, 0.6);
-  --caret: #3b4ef0;
-  --invisible: rgba(91, 108, 255, 0.55);
-  --shadow-btn: 0 0 0 0.5px var(--edge), 0 1px 2px rgba(16, 18, 40, 0.06), var(--hi);
-  --shadow-pop: 0 20px 60px rgba(16, 18, 40, 0.2), 0 4px 12px rgba(16, 18, 40, 0.06), 0 0 0 0.5px rgba(16, 18, 40, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --shadow-card: 0 0 0 0.5px var(--edge), 0 1px 3px rgba(16, 18, 40, 0.04), var(--hi);
-  --glass-pop: #fafafc;
+  --panel: rgba(255, 255, 255, 0.75);
+  --field: rgba(255, 255, 255, 0.75);
+  --track: rgba(0, 0, 0, 0.06);
+  --sel: rgba(0, 0, 0, 0.07);
+  --hover: rgba(0, 0, 0, 0.045);
+  --press: rgba(0, 0, 0, 0.08);
+  --fill: rgba(0, 0, 0, 0.05);
+  --border: rgba(0, 0, 0, 0.075);
+  --border-strong: rgba(0, 0, 0, 0.13);
+  --edge: rgba(0, 0, 0, 0.1);
+  --hi: inset 0 0.5px 0 rgba(255, 255, 255, 0.6);
+  --text: #1d1d1f;
+  --text-2: #6e6e73;
+  --text-3: #98989d;
+  --accent: #007aff;
+  --green: #1a9a50;
+  --red: #e0352b;
+  --orange: #c46a00;
+  --purple: #9a49d6;
+  --match: rgba(255, 204, 0, 0.38);
+  --match-current: rgba(255, 149, 0, 0.62);
+  --shadow-btn: 0 0 0 0.5px var(--edge), 0 0.5px 1.5px rgba(0, 0, 0, 0.08), var(--hi);
+  --shadow-pop: 0 18px 50px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(0, 0, 0, 0.16);
+  --shadow-card: 0 0 0 0.5px var(--edge), var(--hi);
+  --glass-pop: #f7f7f8;
   --radius: 8px;
   --titlebar: var(--mygo-titlebar-height, 52px);
   --pad: 12px;
@@ -60,64 +46,73 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --backdrop: radial-gradient(1000px 540px at -10% -25%, rgba(109, 125, 255, 0.24), transparent 60%),
-      radial-gradient(900px 560px at 115% 125%, rgba(160, 92, 255, 0.13), transparent 60%),
-      linear-gradient(180deg, #16161b, #111114);
-    --sheet: rgba(25, 25, 30, 0.9);
-    --sheet-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 16px 48px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    --surface: rgba(255, 255, 255, 0.045);
+    --backdrop: #1c1c1e;
+    --sheet: #232325;
+    --sheet-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 2px 10px rgba(0, 0, 0, 0.3);
+    --surface: rgba(255, 255, 255, 0.04);
     --surface-2: rgba(255, 255, 255, 0.03);
-    --raised: rgba(255, 255, 255, 0.075);
-    --panel: rgba(255, 255, 255, 0.04);
-    --field: rgba(0, 0, 0, 0.22);
-    --track: rgba(0, 0, 0, 0.28);
-    --sel: rgba(255, 255, 255, 0.085);
+    --raised: rgba(255, 255, 255, 0.08);
+    --panel: rgba(255, 255, 255, 0.045);
+    --field: rgba(0, 0, 0, 0.2);
+    --track: rgba(0, 0, 0, 0.25);
+    --sel: rgba(255, 255, 255, 0.09);
     --hover: rgba(255, 255, 255, 0.055);
     --press: rgba(255, 255, 255, 0.1);
-    --fill: rgba(255, 255, 255, 0.06);
-    --border: rgba(255, 255, 255, 0.07);
-    --border-strong: rgba(255, 255, 255, 0.13);
-    --edge: rgba(255, 255, 255, 0.09);
-    --hi: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    --text: #ececf1;
-    --text-2: #a6a6b0;
-    --text-3: #6f6f7a;
-    --accent: #7383ff;
-    --accent-2: #a07bff;
-    --accent-hover: #8492ff;
-    --accent-soft: rgba(115, 131, 255, 0.17);
-    --accent-text: #a9b3ff;
-    --grad: linear-gradient(135deg, #7383ff, #9a6bff);
-    --green: #4fd08f;
-    --green-soft: rgba(79, 208, 143, 0.14);
-    --red: #ff6f6f;
-    --red-soft: rgba(255, 111, 111, 0.14);
-    --orange: #f2a649;
-    --purple: #c28eff;
-    --match: rgba(255, 196, 0, 0.24);
-    --match-current: rgba(255, 160, 0, 0.55);
-    --caret: #c2ccff;
-    --invisible: rgba(150, 165, 255, 0.6);
-    --shadow-btn: 0 0 0 0.5px var(--edge), 0 1px 2px rgba(0, 0, 0, 0.35), var(--hi);
-    --shadow-pop: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --fill: rgba(255, 255, 255, 0.065);
+    --border: rgba(255, 255, 255, 0.075);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --edge: rgba(255, 255, 255, 0.1);
+    --hi: inset 0 0.5px 0 rgba(255, 255, 255, 0.07);
+    --text: #f2f2f4;
+    --text-2: #a1a1a6;
+    --text-3: #6c6c70;
+    --accent: #0a84ff;
+    --green: #32d074;
+    --red: #ff6a5f;
+    --orange: #ffa53a;
+    --purple: #c58cff;
+    --match: rgba(255, 204, 0, 0.26);
+    --match-current: rgba(255, 159, 10, 0.55);
+    --shadow-btn: 0 0 0 0.5px var(--edge), 0 1px 2px rgba(0, 0, 0, 0.3), var(--hi);
+    --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
     --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06), var(--hi);
-    --glass-pop: #212127;
+    --glass-pop: #2a2a2c;
   }
 }
 
-/* Native blur sits behind the page: let more of it through. */
+/* The user's macOS accent color. */
+@supports (color: -apple-system-control-accent) {
+  :root {
+    --accent: -apple-system-control-accent;
+  }
+}
+:root {
+  --accent-hover: color-mix(in srgb, var(--accent), #000 8%);
+  --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent), var(--text) 18%);
+  --caret: var(--accent);
+  --invisible: color-mix(in srgb, var(--accent) 55%, transparent);
+  --green-soft: color-mix(in srgb, var(--green) 13%, transparent);
+  --red-soft: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+/* Over the window's native material the page paints no background of its
+   own; only the editor gets a light veil, for contrast. */
 html.glass {
-  --backdrop: radial-gradient(1100px 560px at -10% -20%, rgba(98, 120, 255, 0.1), transparent 60%),
-    rgba(244, 245, 250, 0.55);
-  --sheet: rgba(255, 255, 255, 0.82);
-  --glass-pop: rgba(248, 248, 251, 0.78);
+  --backdrop: transparent;
+  --sheet: rgba(255, 255, 255, 0.5);
+  --sheet-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+  --glass-pop: rgba(242, 242, 244, 0.72);
+  --text-2: rgba(0, 0, 0, 0.6);
+  --text-3: rgba(0, 0, 0, 0.44);
 }
 @media (prefers-color-scheme: dark) {
   html.glass {
-    --backdrop: radial-gradient(1000px 540px at -10% -25%, rgba(109, 125, 255, 0.14), transparent 60%),
-      rgba(20, 20, 25, 0.5);
-    --sheet: rgba(24, 24, 29, 0.8);
-    --glass-pop: rgba(36, 36, 42, 0.78);
+    --sheet: rgba(0, 0, 0, 0.2);
+    --sheet-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+    --glass-pop: rgba(44, 44, 46, 0.72);
+    --text-2: rgba(255, 255, 255, 0.62);
+    --text-3: rgba(255, 255, 255, 0.4);
   }
 }
 
@@ -256,9 +251,8 @@ button {
   color: var(--text-2);
 }
 .doc-icon.clip {
-  background: var(--grad);
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .doc-icon svg {
   width: 14px;
@@ -334,22 +328,19 @@ button {
   background: var(--press);
 }
 .tool.primary {
-  background: var(--grad);
-  color: #fff;
-  padding: 0 13px;
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 38%, transparent), 0 0 0 0.5px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  background: var(--raised);
+  box-shadow: var(--shadow-btn);
+  padding: 0 12px;
 }
 .tool.primary svg,
 .tool.primary:hover svg {
-  color: #fff;
+  color: var(--accent);
 }
 .tool.primary:hover {
-  background: var(--grad);
-  filter: brightness(1.07);
+  background: color-mix(in srgb, var(--raised), var(--text) 5%);
 }
 .tool.primary:active {
-  filter: brightness(0.94);
+  background: color-mix(in srgb, var(--raised), var(--text) 10%);
 }
 .tool:disabled {
   opacity: 0.4;
@@ -448,17 +439,15 @@ button {
   pointer-events: none;
 }
 .btn.primary {
-  background: var(--grad);
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 32%, transparent), 0 0 0 0.5px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
 }
 .btn.primary:hover {
-  background: var(--grad);
-  filter: brightness(1.07);
+  background: var(--accent-hover);
 }
 .btn.primary:active {
-  filter: brightness(0.94);
+  background: color-mix(in srgb, var(--accent), #000 16%);
 }
 .btn.danger {
   color: var(--red);
@@ -844,7 +833,7 @@ kbd {
   height: 36px;
   padding: 0 16px;
   border-radius: 18px;
-  background: rgba(28, 28, 34, 0.82);
+  background: rgba(30, 30, 32, 0.86);
   color: #fff;
   font-size: 12.5px;
   font-weight: 500;
@@ -1057,7 +1046,7 @@ kbd {
 }
 .cleaner:active,
 .cleaner.flash {
-  background: var(--grad);
+  background: var(--accent);
   color: #fff;
 }
 .cleaner:active .sub,
@@ -1086,13 +1075,13 @@ kbd {
   color: var(--accent-text);
 }
 .ico-tile.accent {
-  background: var(--grad);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.1);
   color: #fff;
 }
 .ico-tile.scrub {
-  background: linear-gradient(160deg, #ffcf5c, #f59e0b);
-  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.35);
+  background: #ff9f0a;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.1);
   color: #fff;
 }
 .cleaner:active .ico-tile,
@@ -1727,18 +1716,6 @@ kbd {
   justify-content: center;
   align-items: flex-start;
   padding-top: max(48px, 11vh);
-  background: rgba(10, 10, 20, 0.12);
-  animation: fade 0.12s ease-out;
-}
-@media (prefers-color-scheme: dark) {
-  .pal-backdrop {
-    background: rgba(0, 0, 0, 0.3);
-  }
-}
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
 }
 .pal {
   width: min(640px, calc(100vw - 48px));
@@ -1848,14 +1825,6 @@ kbd {
   gap: 7px;
   font-weight: 600;
   color: var(--text-2);
-}
-.pal-brand::before {
-  content: "";
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  background: var(--grad);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .pal-hint {
   display: inline-flex;
