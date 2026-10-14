@@ -1,0 +1,158 @@
+[
+ {
+  "id": "sp1",
+  "input": "a b"
+ },
+ {
+  "id": "sp2",
+  "input": "a  b"
+ },
+ {
+  "id": "sp4",
+  "input": "a    b"
+ },
+ {
+  "id": "leadtrail",
+  "input": "   lead and trail   "
+ },
+ {
+  "id": "nbsp",
+  "input": "a  b"
+ },
+ {
+  "id": "nbsp-only",
+  "input": "  "
+ },
+ {
+  "id": "tabs",
+  "input": "a\t\tb"
+ },
+ {
+  "id": "tab-single",
+  "input": "a\tb"
+ },
+ {
+  "id": "cr2",
+  "input": "a\n\nb"
+ },
+ {
+  "id": "cr3",
+  "input": "a\n\n\nb"
+ },
+ {
+  "id": "cr4",
+  "input": "a\n\n\n\nb"
+ },
+ {
+  "id": "broken-para",
+  "input": "line one\nline two"
+ },
+ {
+  "id": "para2",
+  "input": "first paragraph here\n\nsecond paragraph here"
+ },
+ {
+  "id": "fwd1",
+  "input": "> quoted text"
+ },
+ {
+  "id": "fwd2",
+  "input": ">> double quoted"
+ },
+ {
+  "id": "fwd-mixed",
+  "input": "> > spaced marks"
+ },
+ {
+  "id": "trailws",
+  "input": "line with trailing spaces   \nnext line"
+ },
+ {
+  "id": "mime-pct",
+  "input": "a%20b%2Cc"
+ },
+ {
+  "id": "mime-eq",
+  "input": "a=20b=2Cc"
+ },
+ {
+  "id": "mime-bad",
+  "input": "100% done"
+ },
+ {
+  "id": "smart",
+  "input": "“hi” and ‘x’"
+ },
+ {
+  "id": "straight",
+  "input": "\"hi\" and 'x'"
+ },
+ {
+  "id": "apple",
+  "input": "iPhone iTunes TextSoap API iOS macOS"
+ },
+ {
+  "id": "case-mixed",
+  "input": "MixedCASE text HERE"
+ },
+ {
+  "id": "case-lower",
+  "input": "the quick brown fox"
+ },
+ {
+  "id": "title",
+  "input": "the quick brown fox jumps over the lazy dog"
+ },
+ {
+  "id": "title-small",
+  "input": "a tale of two cities and the end of it"
+ },
+ {
+  "id": "accent",
+  "input": "café naïve résumé"
+ },
+ {
+  "id": "highascii",
+  "input": "café © ™ … — –"
+ },
+ {
+  "id": "ctrl",
+  "input": "a\u0001b\u0002c"
+ },
+ {
+  "id": "csv",
+  "input": "word1,word2,word3"
+ },
+ {
+  "id": "long",
+  "input": "The quick brown fox jumps over the lazy dog and keeps on running past the fence and into the woods today."
+ },
+ {
+  "id": "empty",
+  "input": ""
+ },
+ {
+  "id": "spaces-only",
+  "input": "   "
+ },
+ {
+  "id": "newline-only",
+  "input": "\n"
+ },
+ {
+  "id": "bullet",
+  "input": "• one\n• two"
+ },
+ {
+  "id": "dash",
+  "input": "- one\n- two"
+ },
+ {
+  "id": "trail-lines",
+  "input": "a   \nb\t\nc  "
+ },
+ {
+  "id": "blank-heavy",
+  "input": "a\n\n\n\n\n\nb"
+ }
+]

@@ -1,0 +1,1170 @@
+{
+ "source": "TextSoap 9.7.6 (3278) built-in cleaner token/description strings",
+ "count": 194,
+ "cleaners": [
+  {
+   "token": "#SCRUB",
+   "name": "Scrub",
+   "description": "Addresses typical text cleaning needs. Combines stripping spaces, forwarding characters, MIME encoded characters, and paragraphs. SCRUB calls the cleaners in a specific order to insure best results.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MYSCRUB",
+   "name": "MyScrub",
+   "description": "A shortcut to a user selected custom cleaner. Specify in Preferences > General.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_EXTRA_SPACES",
+   "name": "Remove Extra Spaces",
+   "description": "Replaces multiple spaces with a single space. Note: Leading spaces at beginning of a line are also removed.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_WHITESPACE_AT_BEGINNING",
+   "name": "Remove Whitespace Before Paragraphs",
+   "description": "Removes whitespace (spaces,tabs) at the beginning of a paragraph (line).",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_FORWARDING_CHARS",
+   "name": "Remove Forwarding (>) Characters",
+   "description": "Removes leading '>' (forwarding) marks from a line that are used in some emails.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CONVERT_MIME",
+   "name": "Convert MIME-encoded Characters",
+   "description": "Converts either %Hex or =Hex characters to their appropriate ASCII character. Example: a %20 or a =20, is converted to a space.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MAKE_PARAGRAPHS",
+   "name": "Make Paragraphs",
+   "description": "Converts multi-line paragraph with hard returns <CR> into a single paragraph. New paragraphs are marked by two successive returns.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_ALL_TABS",
+   "name": "Remove All Tabs",
+   "description": "Delete all tab characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_ALL_SPACES",
+   "name": "Remove All Spaces",
+   "description": "Delete all space characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_ALL_WHITESPACE",
+   "name": "Remove All Whitespace",
+   "description": "Delete all whitespace (spaces,tabs) chcaraters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_CONTROL_CHARS",
+   "name": "Remove Control Characters",
+   "description": "Delete control characters (ASCII value less than 32) with exception of tab or return.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_EXTRA_RETURNS",
+   "name": "Remove Extra Returns",
+   "description": "Converts multiple successive returns into a single return. Same as 'Multiple Returns to 2 Returns'",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#UPPERCASE",
+   "name": "Uppercase",
+   "description": "Convert text to “UPPERCASE”.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LOWERCASE",
+   "name": "Lowercase",
+   "description": "Convert text to “lowercase”.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_SENTENCES",
+   "name": "Capitalize Sentences",
+   "description": "Capitalize first character of each sentence, with changing existing case of text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_SENTENCES_ALT",
+   "name": "Capitalize Sentences with Lowercasing",
+   "description": "Convert text to lowercase, then capitalize first character of each sentence.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TITLE_CASE1",
+   "name": "Capitalize with Title Case",
+   "description": "Capitalize words using basic Title Case rules.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_WORDS",
+   "name": "Capitalize Words",
+   "description": "Capitalize each word.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_COMMON_TECH_NAMES",
+   "name": "Capitalize Common Tech Names",
+   "description": "Capitalize common industry names.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_LINES",
+   "name": "Capitalize Lines",
+   "description": "Convert text line to lowercase, then capitalize first character of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CAPITALIZE_LINES_ALT",
+   "name": "Capitalize Lines with Lowercasing",
+   "description": "#CAPITALIZE_LINES_ALT_INFO",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#RANDOMCASE",
+   "name": "Randomcase",
+   "description": "Randomize text capitalization.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MACOS_NAME_FIX",
+   "name": "Fixup macOS Name",
+   "description": "Convert 'Mac OS X', 'OS X', 'MacOS' to 'macOS'.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#APPLE_NAME_FIX",
+   "name": "Capitalize Apple Names",
+   "description": "Capitalize Apple-related names.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REVERSE_CHARACTERS",
+   "name": "Reverse All Characters",
+   "description": "Reverse each of the characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REVERSE_WORDORDER",
+   "name": "Reverse Word Order",
+   "description": "Reverse the word order of the text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REVERSE_CHARS_INEACHWORD",
+   "name": "Reverse Characters in Each Word",
+   "description": "Reverse the characters in each word.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_DIACRITICS",
+   "name": "Strip Diacritic Marks",
+   "description": "Strip diacritic marks.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MAKE_UNICODENAMES",
+   "name": "Make Unicode Names",
+   "description": "Convert characters to their Unicode Names.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CONVERT_TO_ASCII",
+   "name": "Convert to ASCII",
+   "description": "Convert Latin characters to ASCII characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CONVERT_BULLETS",
+   "name": "Convert Bullets to ASCII",
+   "description": "Convert bullets to standard dashes ASCII.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRAIGHTEN_QUOTES",
+   "name": "Straighten Quotes",
+   "description": "Convert single and double smart (curly) quotes to straight quotes.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#SMARTEN_QUOTES",
+   "name": "Smarten Quotes",
+   "description": "Convert single and double straight quotes to smart (or curly) quotes.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#EXPAND_TABS",
+   "name": "Expand Tabs",
+   "description": "Convert tabs (hex 0x09) into four (4) spaces.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REWRAP_TEXT",
+   "name": "Rewrap Text",
+   "description": "Fix any paragraphs (see Make Paragraphs), then rewrap text at 70 characters per line. (see Wrap At 70).",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_TEXT",
+   "name": "Quote Text",
+   "description": "Rewrap text and insert forwarding marks (‘>’) at beginning of each line. Put a hard return at the end of each line to ensure proper wrapping.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#WRAP_AT_50",
+   "name": "Wrap At 50",
+   "description": "Fix any paragraphs (see Make Paragraphs), then rewrap text at 50 characters per line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#WRAP_AT_60",
+   "name": "Wrap At 60",
+   "description": "Fix any paragraphs (see Make Paragraphs), then rewrap text at 60 characters per line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#WRAP_AT_70",
+   "name": "Wrap At 70",
+   "description": "Fix any paragraphs (see Make Paragraphs), then rewrap text at 70 characters per line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_L1",
+   "name": "Quote Text L1",
+   "description": "Rewrap text, placing single forward mark at beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_L2",
+   "name": "Quote Text L2",
+   "description": "Rewrap text, placing two forward marks at beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_L3",
+   "name": "Quote Text L3",
+   "description": "Rewrap text, placing three forward marks at beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_L4",
+   "name": "Quote Text L4",
+   "description": "Rewrap text, placing four forward marks at beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#QUOTE_BASED_FIRST_LINE",
+   "name": "Quote Based on First Line",
+   "description": "Quote text based on first line. If no forward marks found, simply rewrap. If forward marks are found, use them determine quote level.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#INCREASE_QUOTE_LEVEL",
+   "name": "Increase Quote Level",
+   "description": "Increase the quote level of a selection by one, adding a forwarding mark (>) to the beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NETTEXT",
+   "name": "Internet Friendly Text",
+   "description": "Convert to Internet Friendly Text",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_HIASCII",
+   "name": "Remove All High Ascii Characters",
+   "description": "Remove All High Ascii Characters",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#1CR_TO_2CR",
+   "name": "1 Return to 2 Returns",
+   "description": "Convert each return to two (2) returns.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#1CR_TO_SPACE",
+   "name": "1 Return to Space",
+   "description": "Convert each return to a space.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_1CR",
+   "name": "Strip 2 or more Returns",
+   "description": "Strip two (2) or more consecutive returns to a single (1) return.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_1SPACE",
+   "name": "Strip 2 or more Spaces",
+   "description": "Strip two (2) or more consecutive spaces to a single (1) space.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_1TAB",
+   "name": "Strip 2 or more Tabs",
+   "description": "Strip two (2) or more consecutive tabs to a single (1) tab.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_2CR",
+   "name": "Strip 3 or more Returns",
+   "description": "Strip three (3) or more consecutive returns to a single (1) return.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_2SPACE",
+   "name": "Strip 3 or more Spaces",
+   "description": "Strip three (3) or more consecutive spaces to a single (1) space.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_2TAB",
+   "name": "Strip 3 or more Tabs",
+   "description": "Strip three (3) or more consecutive tabs to a single (1) tab.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_3CR",
+   "name": "Strip 4 or more Returns",
+   "description": "Strip four (4) or more consecutive returns to a single (1) return.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_3SPACE",
+   "name": "Strip 4 or more Spaces",
+   "description": "Strip four (4) or more consecutive spaces to a single (1) space.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_GT_3TAB",
+   "name": "Strip 4 or more Tabs",
+   "description": "Strip four (4) or more consecutive tabs to a single (1) tab.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRIP_QUOTING_CHARS",
+   "name": "Strip Quoting (>) Characters",
+   "description": "Removes forwarding characters from beginning of a line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MULTIPLE_CR_TO_1CR",
+   "name": "Multiple Returns to 1 Return",
+   "description": "Convert multiple returns to a single (1) return.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MULTIPLE_CR_TO_2CR",
+   "name": "Multiple Returns to 2 Returns",
+   "description": "Convert multiple returns to two (2) returns.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#ELLIPSIS_TO_3PERIODS",
+   "name": "Ellipsis to Three periods",
+   "description": "Convert ellipsis to three periods.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#EM_DASH_TO_2HYPHENS",
+   "name": "Em Dash to 2 Hyphens",
+   "description": "Convert Em Dash to two hyphens.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#EN_DASH_TO_SPACE_DASH_SPACE",
+   "name": "En Dash to Space-Space",
+   "description": "Convert En Dash to a space dash space (' - ').",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#3PERIODS_TO_ELLIPSIS",
+   "name": "Three periods to Ellipsis",
+   "description": "Convert three periods to an ellipsis.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#2HYPHENS_TO_EM_DASH",
+   "name": "2 Hyphens to Em Dash",
+   "description": "Convert two hyphens to an Em Dash.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#SPACE_DASH_SPACE_TO_EN_DASH",
+   "name": "Space-Space to En Dash",
+   "description": "Convert a space-dash-space to an En Dash.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#ENABLE_LIGATURES",
+   "name": "Enable Ligatures",
+   "description": "Enable Ligatures",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#DISABLE_LIGATURES",
+   "name": "Disable Ligatures",
+   "description": "Disable Ligatures",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_FORWARDED_TEXT",
+   "name": "Remove Forwarded Text",
+   "description": "Delete any quoted text. Remove any lines of text preceded by a forwarding mark (>).",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_ENDING_LF",
+   "name": "Unix (LF) Line Endings",
+   "description": "Convert text to use Unix (LF) Line Endings. - Obsolete",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_ENDING_CR",
+   "name": "Mac (CR) Line Endings",
+   "description": "Convert text to use old-style Mac (CR) Line Endings. - Obsolete",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_ENDING_CRLF",
+   "name": "DOS (CR+LF) Line Endings",
+   "description": "Convert text to use DOS (CR+LF) Line Endings. - Obsolete",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TRIM_BEGINNING_OF_LINES",
+   "name": "Trim Beginning of Lines",
+   "description": "Remove extra spaces from beginning of lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TRIM_END_OF_LINES",
+   "name": "Trim End of Lines",
+   "description": "Remove extra spaces from end of lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TRIM_LINES",
+   "name": "Trim Lines",
+   "description": "Remove extra spaces from both beginning and end of lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CONVERT_NON_BREAKING_SPACES",
+   "name": "Convert Non-Breaking Spaces",
+   "description": "Convert Non-Breaking Spaces to standard spaces.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#URL_EXTRACT_BY_REPLACING",
+   "name": "Extract URLs by Replacing",
+   "description": "Extracts any URLs found, replacing original text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#URL_EXTRACT_BY_APPENDING",
+   "name": "Extract URLs by Appending",
+   "description": "Extract any URLs found, appending to original text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_EXTRA_SPACES_ORIG",
+   "name": "Remove Extra Spaces (Original)",
+   "description": "Replaces multiple spaces with a single space. Note: Leading spaces at beginning of a line are also removed.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NOTHING",
+   "name": "Do Nothing",
+   "description": "Do nothing.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_SORT_ASCENDING",
+   "name": "Sort Lines in Ascending Order",
+   "description": "Sort lines in increasing order.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_SORT_DESCENDING",
+   "name": "Sort Lines in Descending Order",
+   "description": "Sort in decreasing order.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_REVERSE",
+   "name": "Reverse Line Order",
+   "description": "Reverse order of selected lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINE_RANDOMIZE",
+   "name": "Randomize Lines (Unsort)",
+   "description": "Radomize order of lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_DUPLICATE_LINES",
+   "name": "Remove Duplicate Lines",
+   "description": "Remove duplicate lines.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_LINENUMBERS",
+   "name": "Remove Line Numbers",
+   "description": "Remove line numbers at beginning of each line.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINESPACE_10",
+   "name": "Ruler: Line Spacing 1.0",
+   "description": "Set paragraph ruler to single (1.0) spacing.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINESPACE_12",
+   "name": "Ruler: Line Spacing 1.2",
+   "description": "Set paragraph ruler to 1.2 line spacing.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINESPACE_15",
+   "name": "Ruler: Line Spacing 1.5",
+   "description": "Set paragraph ruler to 1.5 line spacing.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LINESPACE_20",
+   "name": "Ruler: Line Spacing 2.0",
+   "description": "Set paragraph ruler to double (2.0) spacing.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_SINGLESPACE",
+   "name": "Ruler: Default Spacing",
+   "description": "Apply a single-space paragraph style.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_ALIGN_LEFT",
+   "name": "Ruler: Left Aligned Text",
+   "description": "Left align text in paragraph.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_ALIGN_RIGHT",
+   "name": "Ruler: Right Aligned Text",
+   "description": "Right align text in paragraph.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_ALIGN_CENTER",
+   "name": "Ruler: Centered Text",
+   "description": "Center text in paragraph.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_ALIGN_FULL",
+   "name": "Ruler: Justified Text",
+   "description": "Justify text in paragraph.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_CLEARTABSTOPS",
+   "name": "Ruler: Clear All Tab Stops",
+   "description": "Clear all tab stops from selected paragraph rulers.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PARAGRAPH_RESETTABSTOPS",
+   "name": "Ruler: Reset Tab Stops",
+   "description": "Reset tab stops to default for the selected paragraph rulers.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_STYLE_FROM_TEXT",
+   "name": "Remove Style from Text",
+   "description": "Remove all style information.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MAKE_PLAIN_TEXT",
+   "name": "Convert to Plain Text",
+   "description": "Convert any rich text to plain text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_FORECOLOR_FROM_TEXT",
+   "name": "Remove Foreground Color from Text",
+   "description": "Remove foreground color.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_BACKCOLOR_FROM_TEXT",
+   "name": "Remove Background Color from Text",
+   "description": "Remove background color.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REMOVE_HYPERLINKING_FROM_TEXT",
+   "name": "Remove Hyperlinks from Text",
+   "description": "Remove hyperlink attribute from URLs.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#URL_MAKECLICKABLE",
+   "name": "Convert URLs to Hyperlinks",
+   "description": "Convert found URLs into clickable hyperlinks.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NORMALIZE_DATE_SHORTFORM",
+   "name": "Normalize Dates to Short Format",
+   "description": "Normalize Dates to Short format (format is based on System Text Preferences)",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NORMALIZE_DATE_MEDIUMFORM",
+   "name": "Normalize Dates to Medium Format",
+   "description": "Normalize Dates to Medium format (format is based on System Text Preferences)",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NORMALIZE_DATE_LONGFORM",
+   "name": "Normalize Dates to Long Format",
+   "description": "Normalize Dates to Long format (format is based on System Text Preferences)",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NORMALIZE_DATE_FULLFORM",
+   "name": "Normalize Dates to Full Format",
+   "description": "Normalize Dates to Full format (format is based on System Text Preferences)",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#DATEFORMAT_US",
+   "name": "Normalize Dates to MM-DD-YYYY",
+   "description": "Normalize Dates to MM-DD-YYYY format",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#DATEFORMAT_UK",
+   "name": "Normalize Dates to DD-MM-YYYY",
+   "description": "Normalize Dates to DD-MM-YYYY format",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#DATEFORMAT_YEARFIRST",
+   "name": "Normalize Dates to YYYY-MM-DD",
+   "description": "Normalize Dates to YYYY-MM-DD format",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#DATENOW",
+   "name": "DateNow Expansion",
+   "description": "Expand '${DATENOW}' with today's date. See online help for additional formatting options",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#ENCRYPT_WITH_ROT13",
+   "name": "ROT 13 Encryption",
+   "description": "Apply a very rudimentary encryption.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#STRING_TO_HEX",
+   "name": "String to Hexadecimal",
+   "description": "Convert a string of characters to a hexadecimal sequence.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HEX_TO_STRING",
+   "name": "Hexadecimal to String",
+   "description": "Convert a hexadecimal sequence to a string of characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#REPLACE_AT_SIGN",
+   "name": "Replace @ with (AT)",
+   "description": "Replace “@” with “(AT)”.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NOTIFY_STATS",
+   "name": "Word Count - Notification",
+   "description": "Calculate word count and uses System Notification to display results.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#NOTIFY_STATS_REMOVE",
+   "name": "Word Count - Clear Notification",
+   "description": "Remove word count notification from System Notification.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#FIX_JAMMED_WORDS",
+   "name": "Fix Jammed Words",
+   "description": "Find and correct misspelled words spell checker considers potentially 'jammed together' words (requiring a space between them).",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LABEL:Markdown Cleaners",
+   "name": "Markdown Cleaners",
+   "description": "",
+   "kind": "label"
+  },
+  {
+   "token": "#MARKDOWN_TEXT",
+   "name": "Markdown to HTML",
+   "description": "Transform Markdown text to HTML.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MARKDOWN_TEXT_RTF",
+   "name": "Markdown to RTF",
+   "description": "Transform Markdown text to RTF using CSS.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MARKDOWN_TEXT_APPEND",
+   "name": "Append Markdown to HTML",
+   "description": "Transform Markdown text to HTML, appending to original text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MARKDOWN_TEXT_PREVIEW",
+   "name": "Markdown Preview",
+   "description": "Transform Markdown text to HTML and preview in browser.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MARKDOWN_TEXT_MARKED2",
+   "name": "Preview in Marked2",
+   "description": "Send Markdown text to Marked2's Streaming Preview.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#MIXED_MARKDOWN",
+   "name": "Mixed-in Markdown",
+   "description": "Process Markdown text between tags: <markdown> and </markdown>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TO_MARKDOWN_TEXT",
+   "name": "HTML Source to Markdown",
+   "description": "Transform HTML Source to Markdown text.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LABEL:HTML Cleaners",
+   "name": "HTML Cleaners",
+   "description": "",
+   "kind": "label"
+  },
+  {
+   "token": "#EXTRACT_TEXT_FROM_HTML",
+   "name": "Extract Text from HTML Source",
+   "description": "Clean up HTML raw text. Will strip out anything between ‘<’ and ‘>’. Useful to extract text contents from HTML source, handling HTML entities. Finally, remove tab characters and remove multiple returns.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TEXT_TO_RTF",
+   "name": "Convert HTML Source to Rich Text",
+   "description": "Convert HTML source to Rich Text. Convert links to Hyperlinks and maintain some additional formatting when possible.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_ENTITY_TO_TEXT",
+   "name": "HTML Entity to Text",
+   "description": "Convert known HTML entities to their text equivalent.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TEXT_TO_NAMED_HTML_ENTITY",
+   "name": "Text to Named HTML Entity",
+   "description": "Convert non-ASCII text to HTML Entities. Try to use a named entity if one exists, otherwise revert to numeric HTML entity. Will not convert '<', '>', '&' characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TEXT_TO_NAMED_HTML_ENTITY_ALT",
+   "name": "Text to Named HTML Entity (Alt)",
+   "description": "Convert non-ASCII text to HTML Entities. Try to use a named entity if one exists, otherwise revert to numeric HTML entity. Will also convert '<', '>', '&' characters.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#TEXT_TO_NUMERIC_HTML_ENTITY",
+   "name": "Text to Numeric HTML Entity",
+   "description": "Convert non-ASCII text to HTML Entities, defaulting to Numeric Entities",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#ALL_TEXT_TO_NUMERIC_HTML_ENTITIES",
+   "name": "All Text to Numeric HTML Entities",
+   "description": "Convert all standard ASCII, as well as non-ASCII, characters to Numeric Entities.",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_CREATE_OL",
+   "name": "HTML: Create Ordered List",
+   "description": "Convert a series of lines into an HTML-based ordered list",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_CREATE_UL",
+   "name": "HTML: Create Unordered List",
+   "description": "Convert a series of lines into an HTML-based unordered list",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_SMARTEN_QUOTES",
+   "name": "Smarten Quotes in HTML Text",
+   "description": "Apply smarten quotes cleaner to the text of raw HTML (skip text in tags).",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_BOLD",
+   "name": "HTML Tag: Bold",
+   "description": "Wrap text in given tag: <b>{text}</b>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_ITALIC",
+   "name": "HTML Tag: Italic",
+   "description": "Wrap text in given tag: <i>{text}</i>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_STRONG",
+   "name": "HTML Tag: Strong",
+   "description": "Wrap text in given tag: <strong>{text}</strong>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_EMPHASIZED",
+   "name": "HTML Tag: Emphasized",
+   "description": "Wrap text in given tag: <em>{text}</em>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_UNDERLINE",
+   "name": "HTML Tag: Underline",
+   "description": "Wrap text in given tag: <u>{text}</u>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_PREFORMATTED",
+   "name": "HTML Tag: Preformatted",
+   "description": "Wrap text in given tag: <pre>{text}</pre>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_BREAK",
+   "name": "HTML Tag: Break",
+   "description": "Insert <br/>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_HORIZONTAL_RULE",
+   "name": "HTML Tag: Horizontal Rule",
+   "description": "Insert <hr/>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_DIV",
+   "name": "HTML Tag: div",
+   "description": "Wrap text in given tag: <div>{text}</div>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_PARAGRAPH",
+   "name": "HTML Tag: Paragraph",
+   "description": "Wrap text in given tag: <p>{text}</p>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_SPAN",
+   "name": "HTML Tag: span",
+   "description": "Wrap text in given tag: <span>{text}</span>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_BLOCKQUOTE",
+   "name": "HTML Tag: Blockquote",
+   "description": "Wrap text in given tag: <blockquote>{text}</blockquote>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_CITE",
+   "name": "HTML Tag: Cite",
+   "description": "Wrap text in given tag: <cite>{text}</cite>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H1",
+   "name": "HTML Tag: h1",
+   "description": "Wrap text in given tag: <h1>{text}</h1>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H2",
+   "name": "HTML Tag: h2",
+   "description": "Wrap text in given tag: <h2>{text}</h2>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H3",
+   "name": "HTML Tag: h3",
+   "description": "Wrap text in given tag: <h3>{text}</h3>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H4",
+   "name": "HTML Tag: h4",
+   "description": "Wrap text in given tag: <h4>{text}</h4>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H5",
+   "name": "HTML Tag: h5",
+   "description": "Wrap text in given tag: <h5>{text}</h5>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_H6",
+   "name": "HTML Tag: h6",
+   "description": "Wrap text in given tag: <h6>{text}</h6>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_UL",
+   "name": "HTML Tag: Unordered List",
+   "description": "Wrap text in given tag: <ul>{text}</ul>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_OL",
+   "name": "HTML Tag: Ordered List",
+   "description": "Wrap text in given tag: <ol>{text}</ol>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_LI",
+   "name": "HTML Tag: List Item",
+   "description": "Wrap text in given tag: <li>{text}</li>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_TABLE",
+   "name": "HTML Tag: Table",
+   "description": "Wrap text in given tag: <table>{text}</table>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_TABLEROW",
+   "name": "HTML Tag: Table Row",
+   "description": "Wrap text in given tag: <tr>{text}</tr>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_TABLECELL",
+   "name": "HTML Tag: Table Cell",
+   "description": "Wrap text in given tag: <td>{text}</td>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#HTML_TAG_LINK",
+   "name": "HTML Tag: Link",
+   "description": "Wrap text in given tag: <a href=\"http://www.unmarked.com\">http://www.unmarked.com</a>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LABEL:Plist Cleaners",
+   "name": "Plist Cleaners",
+   "description": "",
+   "kind": "label"
+  },
+  {
+   "token": "#PLIST_TAG_ARRAY",
+   "name": "PLIST Tag: Array",
+   "description": "Wrap text in given tag: <array>{text}</array>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_DICTIONARY",
+   "name": "PLIST Tag: Dictionary",
+   "description": "Wrap text in given tag: <dict>{text}</dict>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_KEY",
+   "name": "PLIST Tag: Key",
+   "description": "Wrap text in given tag: <key>{text}</key>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_STRING",
+   "name": "PLIST Tag: String",
+   "description": "Wrap text in given tag: <string>{text}</string>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_INTEGER",
+   "name": "PLIST Tag: Integer",
+   "description": "Wrap text in a given tag: <integer>{text}</integer>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_FLOAT",
+   "name": "PLIST Tag: Float",
+   "description": "Wrap text in a given tag: <float>{text}</float>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_TRUE",
+   "name": "PLIST Tag: True",
+   "description": "Insert <true/>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#PLIST_TAG_FALSE",
+   "name": "PLIST Tag: False",
+   "description": "Insert <false/>",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LABEL:BBCode Cleaners",
+   "name": "BBCode Cleaners",
+   "description": "",
+   "kind": "label"
+  },
+  {
+   "token": "#BBCODE_TAG_BOLD",
+   "name": "BBCode: Bold",
+   "description": "[b]{text}[/b] - Bold {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_ITALIC",
+   "name": "BBCode: Italic",
+   "description": "[i]{text}[/i] - Italicizes {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_UNDERLINE",
+   "name": "BBCode: Underline",
+   "description": "[u]{text}[/u] - Underlines {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_STRIKETHROUGH",
+   "name": "BBCode: Strike-through",
+   "description": "[s]{text}[/s] - Line-through {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_CENTERTEXT",
+   "name": "BBCode: Center text",
+   "description": "[center]{text}[/center] - Centers {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_QUOTE",
+   "name": "BBCode: Quote",
+   "description": "[quote]{text}[/quote] - Quotation box containing {text}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_IMAGE",
+   "name": "BBCode: Image",
+   "description": "[img]{url}[/img] - Image using {url}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_CODE",
+   "name": "BBCode: Code",
+   "description": "[code]{text}[/code] - Renders {text}, maintaining white space",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_UL",
+   "name": "BBCode: List",
+   "description": "[ul]{items}[/ul] - Unordered list of {items}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_OL",
+   "name": "BBCode: Ordered List",
+   "description": "[ol]{items}[/ol] - Ordered list of {items}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_LI",
+   "name": "BBCode: List Item",
+   "description": "[li]{text}[/li] - Species individual {item} within a list",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_TABLE",
+   "name": "BBCode: Table",
+   "description": "[table]{rows}[/table] - Table with {rows}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_TABLEROW",
+   "name": "BBCode: Table Row",
+   "description": "[tr]{cells}[/tr] - Table row containing {cells}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_TABLEHEADERCELL",
+   "name": "BBCode: Header Cell",
+   "description": "[th]{content}[/th] - Table Heading cell with {content}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_TABLECELL",
+   "name": "BBCode: Content Cell",
+   "description": "[td]{content}[/td] - Table cell with {content}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_YOUTUBE",
+   "name": "BBCode: YouTube Video",
+   "description": "[youtube]{id}[/youtube] - YouTube video indicated by {id}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#BBCODE_TAG_GOOGLEVIDEO",
+   "name": "BBCode: Google Video",
+   "description": "[gvideo]{id}[/gvideo] - Google video indicated by {id}",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#LABEL:Deprecated",
+   "name": "Deprecated",
+   "description": "",
+   "kind": "label"
+  },
+  {
+   "token": "#CONVERT_TO_UPPERCASE",
+   "name": "Convert to Uppercase",
+   "description": "Deprecated - Use 'Uppercase' cleaner",
+   "kind": "cleaner"
+  },
+  {
+   "token": "#CONVERT_TO_LOWERCASE",
+   "name": "Convert to Lowercase",
+   "description": "Deprecated - Use 'Lowercase' cleaner",
+   "kind": "cleaner"
+  }
+ ]
+}

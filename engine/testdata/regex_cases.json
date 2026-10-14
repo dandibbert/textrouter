@@ -1,0 +1,489 @@
+[
+ {
+  "probe": "case-match_case-false",
+  "input": "ABC abc",
+  "note": "match_case=False is the only way to get case-insensitive matching",
+  "find": "abc",
+  "replace": "Y",
+  "match_case": false,
+  "replacements": null,
+  "output": "Y Y"
+ },
+ {
+  "probe": "case-match_case-true",
+  "input": "ABC abc",
+  "note": "match_case=True (the serialized default) is case-sensitive",
+  "find": "abc",
+  "replace": "Y",
+  "match_case": true,
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "case-i-letter-inert",
+  "input": "ABC abc",
+  "note": "CONTROL: the 'i' option letter does nothing",
+  "find": "abc",
+  "replace": "Y",
+  "regex_options": "i",
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "case-I-letter-inert",
+  "input": "ABC abc",
+  "note": "CONTROL: uppercase 'I' does nothing either",
+  "find": "abc",
+  "replace": "Y",
+  "regex_options": "I",
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "case-ignorecase-word-inert",
+  "input": "ABC abc",
+  "note": "CONTROL: the long form 'ignorecase' does nothing either",
+  "find": "abc",
+  "replace": "Y",
+  "regex_options": "ignorecase",
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "case-i-with-match_case-true",
+  "input": "ABC abc",
+  "note": "an 'i' letter cannot override match_case=True",
+  "find": "abc",
+  "replace": "Y",
+  "regex_options": "i",
+  "match_case": true,
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "case-inline-i-flag",
+  "input": "ABC abc",
+  "note": "inline (?i) DOES work, unlike the options field",
+  "find": "(?i)abc",
+  "replace": "Y",
+  "replacements": null,
+  "output": "Y Y"
+ },
+ {
+  "probe": "opt6-empty",
+  "input": "a\nb\na",
+  "note": "no options: ^ matches only at the very start",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "",
+  "replacements": null,
+  "output": "X\nb\na"
+ },
+ {
+  "probe": "opt6-m",
+  "input": "a\nb\na",
+  "note": "m: ^/$ match at line boundaries",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "m",
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "opt6-M-uppercase-inert",
+  "input": "a\nb\na",
+  "note": "CONTROL: uppercase M does nothing (lowercase only)",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "M",
+  "replacements": null,
+  "output": "X\nb\na"
+ },
+ {
+  "probe": "opt6-lm",
+  "input": "a\nb\na",
+  "note": "m still applies inside a longer string",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "lm",
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "opt6-matchlines-word-inert",
+  "input": "a\nb\na",
+  "note": "CONTROL: the long form 'matchlines' does nothing",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "matchlines",
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "opt6-s",
+  "input": "a\nb",
+  "note": "s: . matches a newline",
+  "find": "a.b",
+  "replace": "Z",
+  "regex_options": "s",
+  "replacements": null,
+  "output": "Z"
+ },
+ {
+  "probe": "opt6-S-uppercase-inert",
+  "input": "a\nb",
+  "note": "CONTROL: uppercase S does nothing",
+  "find": "a.b",
+  "replace": "Z",
+  "regex_options": "S",
+  "replacements": null,
+  "output": "a\nb"
+ },
+ {
+  "probe": "opt6-dotall-word-inert",
+  "input": "a\nb",
+  "note": "CONTROL: the long form 'dotall' does nothing",
+  "find": "a.b",
+  "replace": "Z",
+  "regex_options": "dotall",
+  "replacements": null,
+  "output": "a\nb"
+ },
+ {
+  "probe": "opt6-zzz-inert",
+  "input": "ABC abc",
+  "note": "CONTROL: an unknown token is ignored, not an error",
+  "find": "abc",
+  "replace": "Y",
+  "regex_options": "zzz",
+  "replacements": null,
+  "output": "ABC Y"
+ },
+ {
+  "probe": "opt6-match_lines-key-inert",
+  "input": "a\nb\na",
+  "note": "CONTROL: a `match_lines` parameter key does nothing",
+  "find": "^a",
+  "replace": "X",
+  "match_lines": true,
+  "replacements": null,
+  "output": "X\nb\na"
+ },
+ {
+  "probe": "opt6-dot_matches_all-key-inert",
+  "input": "a\nb",
+  "note": "CONTROL: a `dot_matches_all` parameter key does nothing",
+  "find": "a.b",
+  "replace": "Z",
+  "dot_matches_all": true,
+  "replacements": null,
+  "output": "a\nb"
+ },
+ {
+  "probe": "opt6-inline-m",
+  "input": "a\nb\na",
+  "note": "inline (?m) works",
+  "find": "(?m)^a",
+  "replace": "X",
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "type-0-literal",
+  "input": "a.b",
+  "note": "type 0: '.' is a literal dot",
+  "find": ".",
+  "replace": "Z",
+  "type": 0,
+  "replacements": null,
+  "output": "aZb"
+ },
+ {
+  "probe": "type-1-regex",
+  "input": "a.b",
+  "note": "type 1: '.' is the regex wildcard",
+  "find": ".",
+  "replace": "Z",
+  "type": 1,
+  "replacements": null,
+  "output": "ZZZ"
+ },
+ {
+  "probe": "type-1-is-default",
+  "input": "a.b",
+  "note": "omitting `type` behaves like type 1 (regex)",
+  "find": ".",
+  "replace": "Z",
+  "replacements": null,
+  "output": "ZZZ"
+ },
+ {
+  "probe": "gran-0",
+  "input": "a\nb\na",
+  "note": "granularity 0 with multiline on",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "m",
+  "granularity": 0,
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "gran-1",
+  "input": "a\nb\na",
+  "note": "granularity 1: same result as 0",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "m",
+  "granularity": 1,
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "gran-2",
+  "input": "a\nb\na",
+  "note": "granularity 2: same result as 0",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "m",
+  "granularity": 2,
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "gran-3",
+  "input": "a\nb\na",
+  "note": "granularity 3: same result as 0",
+  "find": "^a",
+  "replace": "X",
+  "regex_options": "m",
+  "granularity": 3,
+  "replacements": null,
+  "output": "X\nb\nX"
+ },
+ {
+  "probe": "tok-backref",
+  "input": "ab12",
+  "note": "$n backreferences, reordered",
+  "find": "([a-z]+)([0-9]+)",
+  "replace": "$2-$1",
+  "replacements": null,
+  "output": "12-ab"
+ },
+ {
+  "probe": "tok-whole-match",
+  "input": "AbCd",
+  "note": "$0 is the whole match and may repeat",
+  "find": "(AbCd)",
+  "replace": "$0$0",
+  "replacements": null,
+  "output": "AbCdAbCd"
+ },
+ {
+  "probe": "tok-group-repeat",
+  "input": "AbCd",
+  "note": "$1 is group 1 and may repeat",
+  "find": "(AbCd)",
+  "replace": "$1$1",
+  "replacements": null,
+  "output": "AbCdAbCd"
+ },
+ {
+  "probe": "tok-case-u-mixed",
+  "input": "AbCd",
+  "note": "$u: uppercase only the first character of the substitution",
+  "find": "(AbCd)",
+  "replace": "$u$1",
+  "replacements": null,
+  "output": "AbCd"
+ },
+ {
+  "probe": "tok-case-U-mixed",
+  "input": "AbCd",
+  "note": "$U: uppercase the whole substitution",
+  "find": "(AbCd)",
+  "replace": "$U$1",
+  "replacements": null,
+  "output": "ABCD"
+ },
+ {
+  "probe": "tok-case-l-mixed",
+  "input": "AbCd",
+  "note": "$l: lowercase only the first character",
+  "find": "(AbCd)",
+  "replace": "$l$1",
+  "replacements": null,
+  "output": "abCd"
+ },
+ {
+  "probe": "tok-case-L-mixed",
+  "input": "AbCd",
+  "note": "$L: lowercase the whole substitution",
+  "find": "(AbCd)",
+  "replace": "$L$1",
+  "replacements": null,
+  "output": "abcd"
+ },
+ {
+  "probe": "tok-case-mid",
+  "input": "snake_case",
+  "note": "$u on a single-char capture: identical to the bare capture",
+  "find": "_([a-z])",
+  "replace": "$u$1",
+  "replacements": null,
+  "output": "snakeCase"
+ },
+ {
+  "probe": "tok-case-applies-to-zero",
+  "input": "AbCd",
+  "note": "the case tokens apply to $0 as well",
+  "find": "(AbCd)",
+  "replace": "$U$0",
+  "replacements": null,
+  "output": "ABCD"
+ },
+ {
+  "probe": "tok-case-on-other-group",
+  "input": "AbCd",
+  "note": "$U applies to whichever group follows it",
+  "find": "(Ab)(Cd)",
+  "replace": "$U$2",
+  "replacements": null,
+  "output": "CD"
+ },
+ {
+  "probe": "tok-case-l-on-other-group",
+  "input": "AbCd",
+  "note": "$l on group 2",
+  "find": "(Ab)(Cd)",
+  "replace": "$l$2",
+  "replacements": null,
+  "output": "cd"
+ },
+ {
+  "probe": "tok-uppercase-letter-unsupported",
+  "input": "the quick brown fox",
+  "note": "a backslash before the token does NOT uppercase: \\U writes a literal U",
+  "find": "(quick)",
+  "replace": "\\U$1",
+  "replacements": null,
+  "output": "the Uquick brown fox"
+ },
+ {
+  "probe": "tok-E-inert",
+  "input": "abc",
+  "note": "$E is consumed and substitutes as empty; no observed effect on context",
+  "find": "b",
+  "replace": "<$E>",
+  "replacements": null,
+  "output": "a<>c"
+ },
+ {
+  "probe": "tok-e-inert",
+  "input": "abc",
+  "note": "$e behaves exactly like $E",
+  "find": "b",
+  "replace": "<$e>",
+  "replacements": null,
+  "output": "a<>c"
+ },
+ {
+  "probe": "tok-E-before-group",
+  "input": "AbCd",
+  "note": "$E before a group does not alter that group",
+  "find": "(AbCd)",
+  "replace": "$E$1",
+  "replacements": null,
+  "output": "AbCd"
+ },
+ {
+  "probe": "tok-literal-dollar",
+  "input": "cost 5",
+  "note": "$$ substitutes as EMPTY, it is not a literal $",
+  "find": "5",
+  "replace": "$$",
+  "replacements": null,
+  "output": "cost "
+ },
+ {
+  "probe": "tok-backslash-dollar",
+  "input": "cost 5",
+  "note": "\\$ is the literal-dollar escape",
+  "find": "5",
+  "replace": "\\$",
+  "replacements": null,
+  "output": "cost $"
+ },
+ {
+  "probe": "tok-bare-dollar",
+  "input": "a b",
+  "note": "a bare trailing $ substitutes as empty",
+  "find": " ",
+  "replace": "$",
+  "replacements": null,
+  "output": "ab"
+ },
+ {
+  "probe": "tok-missing-group",
+  "input": "ac",
+  "note": "an optional group that did not participate substitutes as empty",
+  "find": "(a)(z)?(c)",
+  "replace": "[$2]",
+  "replacements": null,
+  "output": "[]"
+ },
+ {
+  "probe": "tok-outofrange-group",
+  "input": "abc",
+  "note": "an out-of-range group number substitutes as empty",
+  "find": "b",
+  "replace": "$9",
+  "replacements": null,
+  "output": "ac"
+ },
+ {
+  "probe": "tok-number-extra-digit",
+  "input": "AbCd",
+  "note": "$01 parses as group 0 followed by a literal '1'",
+  "find": "(AbCd)",
+  "replace": "$01",
+  "replacements": null,
+  "output": "AbCd1"
+ },
+ {
+  "probe": "tok-brace-syntax-unsupported",
+  "input": "AbCd",
+  "note": "the ${1} brace form is NOT supported: '$' is dropped and the rest is literal",
+  "find": "(AbCd)",
+  "replace": "${1}",
+  "replacements": null,
+  "output": "1}"
+ },
+ {
+  "probe": "tok-empty-template",
+  "input": "keep drop",
+  "note": "an empty template deletes the match",
+  "find": "drop",
+  "replace": "",
+  "replacements": null,
+  "output": "keep "
+ },
+ {
+  "probe": "tok-unknown-token",
+  "input": "abc",
+  "note": "an unknown $token keeps the following text; only the word chars are eaten",
+  "find": "a",
+  "replace": "$UNKNOWNTOKEN",
+  "replacements": null,
+  "output": "NKNOWNTOKENbc"
+ },
+ {
+  "probe": "no-match",
+  "input": "hello",
+  "note": "no match: the input passes through untouched",
+  "find": "zzz",
+  "replace": "!",
+  "replacements": null,
+  "output": "hello"
+ }
+]
