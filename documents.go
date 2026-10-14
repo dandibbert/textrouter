@@ -106,8 +106,10 @@ func glass() bool {
 func withGlass(o mygo.WindowOptions) mygo.WindowOptions {
 	if glass() {
 		o.Transparent = true
+		// A background color would also paint under the page.
+		o.BackgroundColor = ""
 		if runtime.GOOS == "darwin" {
-			o.Vibrancy = mygo.VibrancyUnderWindow
+			o.Vibrancy = mygo.VibrancySidebar
 		}
 		sep := "?"
 		if strings.Contains(o.URL, "?") {
