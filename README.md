@@ -121,7 +121,7 @@ reg("#MY_TOKEN", "我的清理器", func(s string) string {
 | 在 TextSoap 中执行过的动作链样例（`chain_examples.json`） | 15 / 15 |
 | 界面测试（`gui/gui_test.go`，MyGo Tester 无窗口运行） | 6 个场景通过 |
 
-注意：实测数据只覆盖 39 个输入，100% 通过不代表所有输入都与 TextSoap 一致；未实测的 125 个清理器按说明实现，界面中标为「未验证」。
+注意：实测数据只覆盖 39 个输入，100% 通过不代表所有输入都与 TextSoap 一致；其余 151 个未实测清理器按说明实现，界面中标为「未验证」。
 
 ## English (short)
 
