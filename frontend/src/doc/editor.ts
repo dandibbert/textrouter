@@ -17,6 +17,7 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { fontStack } from "../lib/text";
 
 export type Hit = { from: number; to: number };
 export type EditorOptions = {
@@ -68,7 +69,11 @@ class EolWidget extends WidgetType {
   toDOM() {
     const s = document.createElement("span");
     s.className = "cm-eol";
+    s.setAttribute("aria-hidden", "true");
     return s;
+  }
+  ignoreEvent() {
+    return false;
   }
   eq() {
     return true;
@@ -114,9 +119,7 @@ const compartments = {
 
 function fontTheme(o: EditorOptions) {
   const size = Math.round(((o.fontSize || 14) * (o.zoom || 100)) / 100);
-  return EditorView.theme({
-    ".cm-scroller": { fontSize: size + "px", fontFamily: o.fontFamily ? `${JSON.stringify(o.fontFamily)}, var(--mono)` : "var(--mono)" },
-  });
+  return EditorView.editorAttributes.of({ style: `--editor-font: ${fontStack(o.fontFamily)}; --editor-size: ${size}px` });
 }
 
 function configure(o: EditorOptions) {

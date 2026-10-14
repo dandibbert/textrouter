@@ -175,3 +175,11 @@ export function debounce<A extends unknown[]>(fn: (...a: A) => void, ms: number)
   d.cancel = () => clearTimeout(t);
   return d;
 }
+
+/** A single family name gets quoted; anything that already looks like a CSS
+ * font list ("Menlo, monospace") is used as typed. */
+export function fontStack(family: string) {
+  const f = family.trim().replace(/;/g, "");
+  if (!f) return "var(--mono)";
+  return `${/[,"']/.test(f) ? f : JSON.stringify(f)}, var(--mono)`;
+}

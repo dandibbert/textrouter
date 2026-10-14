@@ -3,6 +3,7 @@ import { Keyboard, Settings, SlidersHorizontal, Type } from "lucide-react";
 import { Library, type Boot, type Prefs } from "../mygo";
 import { keys, useBoot } from "../lib/boot";
 import { Segmented, Toasts, errorText, toast } from "../lib/ui";
+import { fontStack } from "../lib/text";
 
 export default function PrefsApp() {
   const boot = useBoot();
@@ -82,9 +83,7 @@ function PrefsWindow({ boot }: { boot: Boot }) {
   return (
     <div className="page">
       <header className="titlebar">
-        <span className="page-title">偏好设置</span>
-        <span className="spacer" />
-        <div className="no-drag" style={{ width: 420, minWidth: 0, flexShrink: 1 }}>
+        <div className="no-drag titlebar-center" style={{ width: 420 }}>
           <Segmented
             small
             value={tab}
@@ -162,10 +161,19 @@ function PrefsWindow({ boot }: { boot: Boot }) {
             <div className="panel">
               <Row k="字体">
                 <div className="row">
-                  <input className="input" style={{ maxWidth: 240 }} placeholder="默认等宽字体" value={p.fontFamily} onChange={(e) => set("fontFamily", e.target.value)} />
+                  <input className="input" style={{ maxWidth: 240 }} list="font-suggestions" placeholder="默认等宽字体" value={p.fontFamily} onChange={(e) => set("fontFamily", e.target.value)} />
+                  <datalist id="font-suggestions">
+                    {["SF Mono", "Menlo", "Monaco", "JetBrains Mono", "Fira Code", "Cascadia Code", "Sarasa Mono SC", "PingFang SC", "Courier New", "New York"].map((f) => (
+                      <option key={f} value={f} />
+                    ))}
+                  </datalist>
                   <input className="input" type="number" style={{ width: 70 }} min={9} max={40} value={p.fontSize} onChange={(e) => set("fontSize", parseInt(e.target.value || "14", 10))} />
                   <span className="muted">pt</span>
                 </div>
+                <div className="font-preview" style={{ fontFamily: fontStack(p.fontFamily), fontSize: p.fontSize }}>
+                  剪贴板 Clipboard 0O 1lI {"{ }"} $1
+                </div>
+                <div className="hint">填写系统里已安装的字体名，例如 Menlo；也可以写一组备选，例如 Menlo, PingFang SC。</div>
               </Row>
               <Row k="显示">
                 <Check label="行号" value={p.showLineNumbers} onChange={(v) => set("showLineNumbers", v)} />
