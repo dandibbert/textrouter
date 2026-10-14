@@ -1,8 +1,9 @@
-// TextRouter: a TextSoap-style text cleaner with a Clipboard Space,
-// readable find/replace, batch rule tables and action chains.
+// TextRouter is a TextSoap-style text cleaner: a Clipboard Workspace editor
+// with interactive find/replace, 190+ cleaners and custom cleaners built
+// from TextSoap's actions.
 //
-//	go tool mygo dev     # run with live reload
-//	go tool mygo build -platform darwin/arm64
+//	go tool mygo dev     # run with the Vite dev server
+//	go tool mygo build   # build the app
 package main
 
 import (
@@ -13,52 +14,202 @@ import (
 	"image/png"
 	"log"
 	"runtime"
+	"slices"
 
 	"github.com/dandibbert/textrouter/engine"
-	"github.com/dandibbert/textrouter/gui"
 	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/ui"
 )
 
-// desktop implements gui.Platform with MyGo's desktop APIs.
-type desktop struct {
-	win    *mygo.Window
-	hotkey string
-	show   func()
+const appName = "TextRouter"
+
+func main() {
+	mygo.App.SetName(appName)
+	app.lib = engine.LoadLibrary(engine.LibraryPath())
+
+	mygo.Bind(Soap{})
+	mygo.Bind(Document{})
+	mygo.Bind(Batch{})
+	mygo.BindAs("Library", LibraryService{})
+
+	setTheme(app.prefs().Appearance)
+	mygo.App.OnBeforeQuit(func(*mygo.QuitEvent) { quitting = true })
+	mygo.App.OnOpenFile(func(path string) {
+		if err := openFiles([]string{path}); err != nil {
+			log.Println("open:", err)
+		}
+	})
+	mygo.App.WhenReady(func() {
+		mygo.App.SetMenu(buildMenu())
+		p := app.prefs()
+		applyPrefs(engine.Prefs{}, p)
+		showWorkspace()
+	})
+	mygo.App.OnActivate(func(hasVisibleWindows bool) {
+		if !hasVisibleWindows {
+			showWorkspace()
+		}
+	})
+	mygo.App.OnWindowAllClosed(func() {
+		if app.prefs().QuitWhenLastClosed || (runtime.GOOS != "darwin" && tray == nil) {
+			mygo.App.Quit()
+		}
+	})
+	if err := mygo.App.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func (d *desktop) OpenFiles(title string, exts []string, multiple, dirs bool) []string {
-	opts := mygo.OpenDialogOptions{Parent: d.win, Title: title, Multiple: multiple, Directory: dirs}
-	if len(exts) > 0 {
-		opts.Filters = []mygo.FileFilter{{Name: "Files", Extensions: exts}}
+// ---------------------------------------------------------------------------
+// Menus
+
+type click = func(*mygo.MenuItem, *mygo.Window)
+
+// command sends a menu command to the window it was chosen in, bringing up
+// the Clipboard Workspace when no window is focused.
+func command(name string) click {
+	return func(_ *mygo.MenuItem, w *mygo.Window) {
+		if w == nil || w.IsDestroyed() {
+			if d := focusedDoc(); d != nil {
+				w = d.win
+			}
+		}
+		if w == nil {
+			showWorkspace()
+			if d := workspaceDoc(); d != nil {
+				w = d.win
+			} else {
+				return
+			}
+		}
+		_ = Command.Emit(w, name)
 	}
-	paths, err := mygo.Dialog.Open(opts)
-	if err != nil {
-		log.Println("open dialog:", err)
-	}
-	return paths
 }
 
-func (d *desktop) SaveFile(title, name string) string {
-	p, err := mygo.Dialog.Save(mygo.SaveDialogOptions{Parent: d.win, Title: title, DefaultPath: name})
-	if err != nil {
-		log.Println("save dialog:", err)
+func run(fn func()) click { return func(*mygo.MenuItem, *mygo.Window) { fn() } }
+
+// togglePref flips an editor preference from the View menu.
+func togglePref(set func(p *engine.Prefs, v bool)) click {
+	return func(it *mygo.MenuItem, _ *mygo.Window) {
+		p := app.prefs()
+		set(&p, it.Checked)
+		go func() { _, _ = LibraryService{}.SetPrefs(p) }()
 	}
-	return p
 }
 
-// HideWindow hides the window; on macOS the whole app hides so the
-// previous app comes back to the front, ready for ⌘V.
-func (d *desktop) HideWindow() {
+var appMenu *mygo.Menu
+
+func buildMenu() *mygo.Menu {
+	p := app.prefs()
+	appItems := []*mygo.MenuItem{
+		{Label: "关于 " + appName, Role: mygo.RoleAbout},
+		mygo.Separator(),
+		{Label: "偏好设置…", Accelerator: "CmdOrCtrl+,", Click: run(func() { openSingle("prefs") })},
+		mygo.Separator(),
+	}
 	if runtime.GOOS == "darwin" {
-		mygo.App.Hide()
+		appItems = append(appItems,
+			&mygo.MenuItem{Role: mygo.RoleServices}, mygo.Separator(),
+			&mygo.MenuItem{Label: "隐藏 " + appName, Role: mygo.RoleHide},
+			&mygo.MenuItem{Label: "隐藏其他", Role: mygo.RoleHideOthers},
+			&mygo.MenuItem{Label: "全部显示", Role: mygo.RoleUnhide}, mygo.Separator())
+	} else {
+		appItems = appItems[2:]
+	}
+	appItems = append(appItems, &mygo.MenuItem{Label: "退出 " + appName, Role: mygo.RoleQuit})
+
+	appMenu = mygo.NewMenu([]*mygo.MenuItem{
+		{Label: appName, Submenu: appItems},
+		{Label: "文件", Submenu: []*mygo.MenuItem{
+			{Label: "新建", Accelerator: "CmdOrCtrl+N", Click: run(func() { openDocument(KindUntitled, "", "") })},
+			{Label: "剪贴板工作区", Accelerator: "CmdOrCtrl+Shift+N", Click: run(showWorkspace)},
+			{Label: "打开…", Accelerator: "CmdOrCtrl+O", Click: command("open")},
+			mygo.Separator(),
+			{Label: "关闭", Accelerator: "CmdOrCtrl+W", Role: mygo.RoleClose},
+			{Label: "存储…", Accelerator: "CmdOrCtrl+S", Click: command("save")},
+			{Label: "另存为…", Accelerator: "CmdOrCtrl+Shift+S", Click: command("saveAs")},
+			mygo.Separator(),
+			{Label: "批量处理文件…", Accelerator: "CmdOrCtrl+Shift+B", Click: run(func() { openSingle("batch") })},
+		}},
+		{Label: "编辑", Submenu: []*mygo.MenuItem{
+			{Label: "撤销", Role: mygo.RoleUndo},
+			{Label: "重做", Role: mygo.RoleRedo},
+			mygo.Separator(),
+			{Label: "剪切", Role: mygo.RoleCut},
+			{Label: "拷贝", Role: mygo.RoleCopy},
+			{Label: "粘贴", Role: mygo.RolePaste},
+			{Label: "全选", Role: mygo.RoleSelectAll},
+			mygo.Separator(),
+			{Label: "全部拷贝", Accelerator: "CmdOrCtrl+Shift+C", Click: command("copyAll")},
+			{Label: "粘贴覆盖", Accelerator: "CmdOrCtrl+Shift+V", Click: command("pasteOver")},
+			mygo.Separator(),
+			{Label: "查找", Submenu: []*mygo.MenuItem{
+				{Label: "查找与替换…", Accelerator: "CmdOrCtrl+F", Click: command("find")},
+				{Label: "查找下一个", Accelerator: "CmdOrCtrl+G", Click: command("findNext")},
+				{Label: "查找上一个", Accelerator: "CmdOrCtrl+Shift+G", Click: command("findPrevious")},
+				{Label: "用所选内容查找", Accelerator: "CmdOrCtrl+E", Click: command("useSelection")},
+				mygo.Separator(),
+				{Label: "替换并查找下一个", Accelerator: "CmdOrCtrl+Alt+G", Click: command("replace")},
+				{Label: "全部替换", Accelerator: "CmdOrCtrl+Alt+Shift+G", Click: command("replaceAll")},
+			}},
+		}},
+		{Label: "清理", Submenu: []*mygo.MenuItem{
+			{Label: "MyScrub 一键清理", Accelerator: "CmdOrCtrl+J", Click: command("myScrub")},
+			mygo.Separator(),
+			{Label: "清理器列表", Accelerator: "CmdOrCtrl+1", Click: command("showCleaners")},
+			{Label: "查找面板", Accelerator: "CmdOrCtrl+2", Click: command("find")},
+			{Label: "搜索清理器", Accelerator: "CmdOrCtrl+Alt+F", Click: command("searchCleaners")},
+			mygo.Separator(),
+			{Label: "我的库…", Accelerator: "CmdOrCtrl+Shift+L", Click: run(func() { openLibrary("") })},
+		}},
+		{Label: "显示", Submenu: []*mygo.MenuItem{
+			{Label: "显示/隐藏侧栏", Accelerator: "CmdOrCtrl+Alt+S", Click: command("toggleSidebar")},
+			mygo.Separator(),
+			{ID: "lineNumbers", Label: "行号", Type: mygo.MenuItemCheckbox, Checked: p.ShowLineNumbers,
+				Click: togglePref(func(p *engine.Prefs, v bool) { p.ShowLineNumbers = v })},
+			{ID: "wrap", Label: "自动换行", Type: mygo.MenuItemCheckbox, Checked: p.WrapText,
+				Click: togglePref(func(p *engine.Prefs, v bool) { p.WrapText = v })},
+			{ID: "invisibles", Label: "不可见字符", Type: mygo.MenuItemCheckbox, Checked: p.ShowInvisibles,
+				Click: togglePref(func(p *engine.Prefs, v bool) { p.ShowInvisibles = v })},
+			{ID: "stats", Label: "统计信息", Type: mygo.MenuItemCheckbox, Checked: p.ShowWordCount,
+				Click: togglePref(func(p *engine.Prefs, v bool) { p.ShowWordCount = v })},
+			mygo.Separator(),
+			{Label: "放大", Accelerator: "CmdOrCtrl+=", Click: command("zoomIn")},
+			{Label: "缩小", Accelerator: "CmdOrCtrl+-", Click: command("zoomOut")},
+			{Label: "实际大小", Accelerator: "CmdOrCtrl+0", Click: command("zoomReset")},
+			mygo.Separator(),
+			{Label: "进入全屏", Role: mygo.RoleToggleFullScreen},
+			{Label: "开发者工具", Role: mygo.RoleToggleDevTools},
+		}},
+		{Label: "窗口", Submenu: []*mygo.MenuItem{
+			{Label: "最小化", Role: mygo.RoleMinimize},
+			{Label: "缩放", Role: mygo.RoleZoom},
+			mygo.Separator(),
+			{Label: "剪贴板工作区", Click: run(showWorkspace)},
+			{Label: "我的库", Click: run(func() { openLibrary("") })},
+			{Label: "批量处理文件", Click: run(func() { openSingle("batch") })},
+		}},
+	})
+	return appMenu
+}
+
+func syncViewMenu(p engine.Prefs) {
+	if appMenu == nil {
 		return
 	}
-	d.win.Hide()
+	for id, v := range map[string]bool{"lineNumbers": p.ShowLineNumbers, "wrap": p.WrapText,
+		"invisibles": p.ShowInvisibles, "stats": p.ShowWordCount} {
+		if it := appMenu.ItemByID(id); it != nil && it.Checked != v {
+			it.Checked = v
+		}
+	}
+	mygo.App.SetMenu(appMenu)
 }
 
-func (d *desktop) SetTheme(theme string) {
-	switch theme {
+// ---------------------------------------------------------------------------
+// Preferences that reach the system
+
+func setTheme(appearance string) {
+	switch appearance {
 	case "dark":
 		mygo.Theme.SetSource(mygo.ThemeDark)
 	case "light":
@@ -68,135 +219,142 @@ func (d *desktop) SetTheme(theme string) {
 	}
 }
 
-func (d *desktop) SetHotkey(acc string) error {
-	if d.hotkey != "" {
-		mygo.GlobalShortcut.Unregister(d.hotkey)
+var hotkey string
+
+func setHotkey(acc string) error {
+	if hotkey != "" {
+		mygo.GlobalShortcut.Unregister(hotkey)
+		hotkey = ""
 	}
 	if acc == "" {
-		d.hotkey = ""
 		return nil
 	}
-	if err := mygo.GlobalShortcut.Register(acc, func() { d.show() }); err != nil {
-		if d.hotkey != "" {
-			_ = mygo.GlobalShortcut.Register(d.hotkey, func() { d.show() })
-		}
+	if err := mygo.GlobalShortcut.Register(acc, showWorkspace); err != nil {
 		return err
 	}
-	d.hotkey = acc
+	hotkey = acc
 	return nil
 }
 
-func (d *desktop) Update(fn func()) { d.win.Update(fn) }
-
-func main() {
-	lib := engine.LoadLibrary(engine.LibraryPath())
-	d := &desktop{}
-	a := gui.New(lib, d)
-	quitting := false
-
-	mygo.App.SetName("TextRouter")
-	d.SetTheme(lib.Settings.Theme)
-	mygo.App.OnBeforeQuit(func(*mygo.QuitEvent) { quitting = true })
-	mygo.App.WhenReady(func() {
-		d.win = mygo.NewWindow(mygo.WindowOptions{
-			Title:     "TextRouter",
-			Width:     1120,
-			Height:    720,
-			MinWidth:  820,
-			MinHeight: 520,
-			StateKey:  "main",
-			Content:   ui.View(a.View),
-		})
-		// Open Clipboard Space with the current clipboard: from the Dock,
-		// the menu bar icon or the global shortcut.
-		d.show = func() {
-			text := mygo.Clipboard.ReadText()
-			d.win.Update(func() {
-				a.LoadClipboard(text)
-				a.Page = gui.PageClipboard
-			})
-			d.win.Show()
-			d.win.Focus()
-			mygo.App.Focus()
+func applyPrefs(old, p engine.Prefs) {
+	mygo.RunOnMain(func() {
+		if old.Appearance != p.Appearance {
+			setTheme(p.Appearance)
 		}
-		d.win.OnClose(func(e *mygo.CloseEvent) {
-			if !quitting {
-				e.PreventDefault()
-				d.win.Hide()
-			}
-		})
-		mygo.App.OnActivate(func(hasVisible bool) {
-			if !hasVisible {
-				d.show()
-			}
-		})
-		goPage := func(p string) func(*mygo.MenuItem, *mygo.Window) {
-			return func(*mygo.MenuItem, *mygo.Window) {
-				d.show()
-				d.win.Update(func() { a.Page = p })
+		if old.GlobalHotkey != p.GlobalHotkey {
+			if err := setHotkey(p.GlobalHotkey); err != nil {
+				log.Println("global shortcut:", err)
 			}
 		}
-		mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
-			{Role: mygo.RoleAppMenu},
-			{Role: mygo.RoleEditMenu},
-			{Label: "前往", Submenu: []*mygo.MenuItem{
-				{Label: "剪贴板空间", Accelerator: "CmdOrCtrl+1", Click: goPage(gui.PageClipboard)},
-				{Label: "查找替换", Accelerator: "CmdOrCtrl+2", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Accelerator: "CmdOrCtrl+3", Click: goPage(gui.PageBatch)},
-				{Label: "动作链", Accelerator: "CmdOrCtrl+4", Click: goPage(gui.PageChains)},
-				{Label: "清理器库", Accelerator: "CmdOrCtrl+5", Click: goPage(gui.PageCleaners)},
-				{Label: "设置", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
-			}},
-			{Role: mygo.RoleWindowMenu},
-		}))
-		tray, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: "TextRouter — 打开剪贴板空间"})
-		if err != nil {
-			log.Println("tray:", err)
-		} else {
-			menu := mygo.NewMenu([]*mygo.MenuItem{
-				{Label: "打开剪贴板空间", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
-				{Label: "查找替换", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Click: goPage(gui.PageBatch)},
-				mygo.Separator(),
-				{Role: mygo.RoleQuit},
-			})
-			if runtime.GOOS == "linux" {
-				tray.SetMenu(menu)
-			} else {
-				tray.OnClick(d.show)
-				tray.OnRightClick(func() {
-					tray.SetMenu(menu)
-					defer tray.SetMenu(nil)
-					tray.PopUpMenu()
-				})
-			}
-			mygo.App.OnWillQuit(func(*mygo.QuitEvent) { tray.Destroy() })
+		if p.MenuBarIcon && tray == nil {
+			createTray()
+		} else if !p.MenuBarIcon && tray != nil {
+			tray.Destroy()
+			tray = nil
+		} else if tray != nil && old.MyScrub != p.MyScrub {
+			refreshTrayMenu()
 		}
-		if err := d.SetHotkey(lib.Settings.Hotkey); err != nil {
-			log.Println("global shortcut:", err)
-		}
-		d.show()
+		syncViewMenu(p)
 	})
-	mygo.App.OnWindowAllClosed(func() {}) // keep running in the menu bar
-	if err := mygo.App.Run(); err != nil {
-		log.Fatal(err)
+}
+
+// ---------------------------------------------------------------------------
+// Menu bar icon (what textsoapAgent provides): open the workspace, or clean
+// the clipboard in place with a cleaner.
+
+var tray *mygo.Tray
+
+func createTray() {
+	t, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: appName + " — 打开剪贴板工作区"})
+	if err != nil {
+		log.Println("tray:", err)
+		return
+	}
+	tray = t
+	if runtime.GOOS == "linux" {
+		refreshTrayMenu()
+		return
+	}
+	t.OnClick(showWorkspace)
+	t.OnRightClick(func() {
+		t.SetMenu(trayMenu())
+		defer t.SetMenu(nil)
+		t.PopUpMenu()
+	})
+}
+
+func refreshTrayMenu() {
+	if tray != nil && runtime.GOOS == "linux" {
+		tray.SetMenu(trayMenu())
 	}
 }
 
-// trayIcon draws a template "T⇄" glyph: black on transparent for macOS.
+// cleanClipboard applies a cleaner to the clipboard text in place.
+func cleanClipboard(name string) click {
+	return func(*mygo.MenuItem, *mygo.Window) {
+		go func() {
+			text := mygo.Clipboard.ReadText()
+			if r := (Soap{}).Apply(name, text); r.Changed {
+				mygo.Clipboard.WriteText(r.Text)
+			}
+		}()
+	}
+}
+
+func trayMenu() *mygo.Menu {
+	var cleaners []*mygo.MenuItem
+	var custom []string
+	app.read(func(l *engine.Library) {
+		for _, c := range l.Cleaners {
+			custom = append(custom, c.Name)
+		}
+	})
+	slices.Sort(custom)
+	for _, n := range custom {
+		cleaners = append(cleaners, &mygo.MenuItem{Label: n, Click: cleanClipboard(n)})
+	}
+	if len(cleaners) > 0 {
+		cleaners = append(cleaners, mygo.Separator())
+	}
+	for _, n := range []string{"Scrub", "Remove Extra Spaces", "Make Paragraphs", "Remove Forwarding (>) Characters",
+		"Straighten Quotes", "Trim Lines", "Uppercase", "Lowercase", "Capitalize Sentences"} {
+		if c := engine.CleanerByName(n); c != nil {
+			cleaners = append(cleaners, &mygo.MenuItem{Label: c.ZhName, Click: cleanClipboard(n)})
+		}
+	}
+	return mygo.NewMenu([]*mygo.MenuItem{
+		{Label: "打开剪贴板工作区", Click: run(showWorkspace)},
+		{Label: "MyScrub 清理剪贴板", Click: cleanClipboard("#MYSCRUB")},
+		{Label: "清理剪贴板", Submenu: cleaners},
+		mygo.Separator(),
+		{Label: "新建文档", Click: run(func() { openDocument(KindUntitled, "", "") })},
+		{Label: "我的库…", Click: run(func() { openLibrary("") })},
+		{Label: "批量处理文件…", Click: run(func() { openSingle("batch") })},
+		{Label: "偏好设置…", Click: run(func() { openSingle("prefs") })},
+		mygo.Separator(),
+		{Label: "退出 " + appName, Role: mygo.RoleQuit},
+	})
+}
+
+// trayIcon draws a template glyph: a soap bar with a sparkle.
 func trayIcon() []byte {
 	img := image.NewNRGBA(image.Rect(0, 0, 32, 32))
 	ink := color.NRGBA{A: 255}
 	if runtime.GOOS != "darwin" {
-		ink = color.NRGBA{R: 124, G: 92, B: 255, A: 255}
+		ink = color.NRGBA{R: 90, G: 110, B: 255, A: 255}
 	}
-	for _, r := range []image.Rectangle{
-		image.Rect(3, 4, 19, 8), image.Rect(9, 8, 13, 28), // T
-		image.Rect(17, 14, 29, 17), image.Rect(25, 11, 28, 20), // →
-		image.Rect(17, 22, 29, 25), image.Rect(18, 19, 21, 28), // ←
-	} {
-		draw.Draw(img, r, image.NewUniform(ink), image.Point{}, draw.Src)
-	}
+	fill := func(r image.Rectangle) { draw.Draw(img, r, image.NewUniform(ink), image.Point{}, draw.Src) }
+	// Rounded bar outline.
+	fill(image.Rect(5, 12, 27, 14))
+	fill(image.Rect(5, 26, 27, 28))
+	fill(image.Rect(3, 14, 5, 26))
+	fill(image.Rect(27, 14, 29, 26))
+	// Lines of text on the bar.
+	fill(image.Rect(8, 17, 22, 19))
+	fill(image.Rect(8, 21, 18, 23))
+	// Sparkle.
+	fill(image.Rect(22, 2, 24, 10))
+	fill(image.Rect(19, 5, 27, 7))
 	var b bytes.Buffer
 	_ = png.Encode(&b, img)
 	return b.Bytes()
