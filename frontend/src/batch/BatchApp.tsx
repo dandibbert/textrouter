@@ -126,7 +126,9 @@ function BatchWindow({ boot }: { boot: Boot }) {
           <div className="form-row">
             <div className="k">文件夹里的文件</div>
             <div className="v">
-              <Segmented small value={s.extMode || "additional"} onChange={(v) => set("extMode", v)} options={[{ value: "additional", label: "常见文本文件 + 以下扩展名" }, { value: "only", label: "只处理以下扩展名" }]} />
+              <div style={{ maxWidth: 340 }}>
+                <Segmented small value={s.extMode || "additional"} onChange={(v) => set("extMode", v)} options={[{ value: "additional", label: "常见文本 + 以下扩展名" }, { value: "only", label: "只处理以下扩展名" }]} />
+              </div>
               <input className="input mono" style={{ maxWidth: 340 }} placeholder="例如 rtf, adoc" value={s.extensions} onChange={(e) => set("extensions", e.target.value)} />
               <label className="check">
                 <input type="checkbox" checked={s.includeSubfolders} onChange={(e) => set("includeSubfolders", e.target.checked)} />

@@ -14,28 +14,27 @@
   background: var(--sidebar);
   border-right: 1px solid var(--border);
 }
+.lib-list-head {
+  padding: 12px 12px 8px;
+}
 .lib-items {
   flex: 1;
   overflow: auto;
-  padding: 0 8px 8px;
+  padding: 0 6px 8px;
 }
 .lib-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  padding: 6px 9px;
+  min-height: 42px;
+  padding: 5px 6px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
   text-align: left;
 }
-.lib-item > svg {
-  width: 15px;
-  height: 15px;
-  color: var(--text-3);
-  flex: none;
-}
+
 .lib-item:hover {
   background: var(--hover);
 }
@@ -43,9 +42,12 @@
   background: var(--accent);
   color: #fff;
 }
-.lib-item.on svg,
 .lib-item.on .s {
   color: rgba(255, 255, 255, 0.85);
+}
+.lib-item.on .ico-tile {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 .lib-item .names {
   display: flex;
@@ -68,7 +70,7 @@
 .lib-foot {
   display: flex;
   gap: 6px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-top: 1px solid var(--border);
 }
 .lib-empty {
@@ -97,7 +99,7 @@
   background: var(--bg);
 }
 .lib-head {
-  padding: 14px 18px 12px;
+  padding: 16px 20px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
@@ -123,7 +125,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 14px 16px 30px;
+  padding: 16px 20px 32px;
 }
 .alist {
   display: flex;
@@ -135,13 +137,13 @@
   gap: 6px;
 }
 .acard {
-  background: var(--surface);
+  background: var(--panel);
   border-radius: 10px;
   box-shadow: var(--shadow-card);
   position: relative;
 }
 .acard.sel {
-  box-shadow: 0 0 0 1.5px var(--accent), 0 2px 10px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 0 1.5px var(--accent), 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 .acard.off > .acard-head .acard-title,
 .acard.off > .acard-head .acard-sum,
@@ -156,8 +158,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
-  padding: 4px 8px 4px 4px;
+  min-height: 42px;
+  padding: 4px 8px 4px 6px;
 }
 .acard-head input[type="checkbox"] {
   accent-color: var(--accent);
@@ -178,7 +180,8 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--text-3);
-  min-width: 14px;
+  width: 16px;
+  flex: none;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -202,9 +205,12 @@
   flex: none;
 }
 .badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
   font-size: 11px;
   font-weight: 600;
-  padding: 1px 7px;
+  padding: 0 8px;
   border-radius: 10px;
   white-space: nowrap;
 }
@@ -213,7 +219,7 @@
   color: var(--green);
 }
 .badge.none {
-  background: var(--hover);
+  background: var(--fill);
   color: var(--text-3);
 }
 .badge.err {
@@ -221,10 +227,10 @@
   color: var(--red);
 }
 .acard-body {
-  padding: 2px 14px 14px 44px;
+  padding: 0 16px 16px 73px;
 }
 .acard-children {
-  margin: 0 10px 10px 30px;
+  margin: 0 12px 12px 36px;
   padding: 8px;
   border-radius: 8px;
   background: var(--surface-2);
@@ -420,7 +426,7 @@ table.grid .x {
 .toolbox-list {
   flex: 1;
   overflow: auto;
-  padding: 0 8px 10px;
+  padding: 0 6px 10px;
 }
 .toolbox-cat {
   display: flex;
@@ -429,7 +435,7 @@ table.grid .x {
   width: 100%;
   border: 0;
   background: transparent;
-  padding: 8px 4px 4px;
+  padding: 10px 6px 4px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--text-2);
@@ -451,7 +457,7 @@ table.grid .x {
   cursor: grab;
 }
 .tool-item:hover {
-  background: var(--surface);
+  background: var(--panel);
   box-shadow: var(--shadow-card);
 }
 .tool-item .t {
@@ -488,9 +494,10 @@ table.grid .x {
   gap: 2px;
 }
 .gitem {
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--surface);
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--panel);
   box-shadow: var(--shadow-card);
   margin-bottom: 4px;
   display: flex;

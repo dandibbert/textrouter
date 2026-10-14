@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
-import { AlertCircle, ArrowDown, ChevronLeft, ChevronRight, History, Lightbulb, Plus, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, CornerDownRight, History, Lightbulb, Plus, Search, SlidersHorizontal, X, Zap } from "lucide-react";
 import { Library, Soap, type Boot, type FindRequest, type FoundMatch, type Part, type SearchEntry } from "../mygo";
 import { PatternField, type PatternFieldHandle } from "../lib/PatternField";
 import { MenuButton, toast, type MenuEntry } from "../lib/ui";
@@ -378,33 +378,35 @@ export const FindPanel = forwardRef<FindPanelHandle, {
       <div className="find-form">
         <div className="find-toggles">
           <button className={"pill" + (regex ? " on" : "")} onClick={() => setRegex(!regex)} title="把查找内容当作正则表达式">
-            .* 正则
+            <span className="pill-code">.*</span>正则
           </button>
           <button className={"pill" + (matchCase ? " on" : "")} onClick={() => setMatchCase(!matchCase)} title="区分大小写">
-            Aa 区分大小写
+            <span className="pill-code">Aa</span>大小写
           </button>
           <button className={"pill" + (live ? " on" : "")} onClick={() => setLive(!live)} title="输入时即时查找">
+            <Zap />
             实时
           </button>
-        </div>
-        <div className="row" style={{ gap: 2 }}>
-          <MenuButton icon={<SlidersHorizontal />} label="选项" items={optionsMenu} />
-          <MenuButton icon={<Plus />} label="插入" items={insertMenu} />
-          <MenuButton icon={<History />} label="历史" items={historyMenu} align="right" />
+          <span className="spacer" />
+          <MenuButton className="btn ghost small" icon={<SlidersHorizontal />} label="选项" items={optionsMenu} align="right" />
         </div>
 
-        <div>
+        <div className="field">
           <div className="field-title">
-            <span>
+            <span className="row">
               查找
-              {!regex && gran > 0 && <span className="chip gray" style={{ marginLeft: 6 }}>{granularities[gran]}</span>}
+              {!regex && gran > 0 && <span className="chip gray">{granularities[gran]}</span>}
             </span>
-            {regex && (
-              <button className="link" onClick={() => setExplainOn(!explainOn)}>
-                <Lightbulb />
-                {explainOn ? "收起解释" : "解释"}
-              </button>
-            )}
+            <span className="field-actions">
+              {regex && (
+                <button className={"link" + (explainOn ? " on" : "")} onClick={() => setExplainOn(!explainOn)} title="逐段解释这个正则表达式">
+                  <Lightbulb />
+                  解释
+                </button>
+              )}
+              <MenuButton className="link" icon={<Plus />} label="插入" items={insertMenu} align="right" caret={false} title="插入常用片段到光标处" />
+              <MenuButton className="link" icon={<History />} label="历史" items={historyMenu} align="right" caret={false} title="最近的查找" />
+            </span>
           </div>
           <PatternField
             ref={findRef}
@@ -434,10 +436,10 @@ export const FindPanel = forwardRef<FindPanelHandle, {
             </div>
           )}
         </div>
-        <div>
+        <div className="field">
           <div className="field-title">
             <span>替换为</span>
-            {regex && <span className="muted" style={{ fontWeight: 400 }}>$1 引用第 1 个分组</span>}
+            {regex && <span className="field-hint">$1 = 第 1 个分组</span>}
           </div>
           <PatternField
             ref={replaceRef}
@@ -451,24 +453,14 @@ export const FindPanel = forwardRef<FindPanelHandle, {
           />
         </div>
         <div className="find-buttons">
-          <button className="btn primary" onClick={doFind} disabled={!find}>
+          <button className="btn primary" onClick={doFind} disabled={!find} title="查找全部匹配 ⏎">
+            <Search />
             查找
           </button>
-          <button className="btn" onClick={clear} disabled={!searched}>
-            清除
-          </button>
-          <button className="btn icon" onClick={() => next(-1)} disabled={!find} title={`上一个 ${keys("CmdOrCtrl+Shift+G")}`}>
-            <ChevronLeft />
-          </button>
-          <button className="btn icon" onClick={() => next(1)} disabled={!find} title={`下一个 ${keys("CmdOrCtrl+G")}`}>
-            <ChevronRight />
-          </button>
-        </div>
-        <div className="find-buttons2">
-          <button className="btn" onClick={replaceOne} disabled={!find} title="替换选中的匹配，然后选中下一个">
+          <button className="btn" onClick={replaceOne} disabled={!find} title={`替换选中的匹配，然后选中下一个 ${keys("CmdOrCtrl+Alt+G")}`}>
             替换
           </button>
-          <button className="btn" onClick={replaceAll} disabled={!find} title="替换全部匹配（可撤销）">
+          <button className="btn" onClick={replaceAll} disabled={!find} title={`替换全部匹配（可撤销）${keys("CmdOrCtrl+Alt+Shift+G")}`}>
             全部替换
           </button>
         </div>
@@ -476,12 +468,21 @@ export const FindPanel = forwardRef<FindPanelHandle, {
 
       <div className="matches-head">
         <span>匹配</span>
-        <span className="spacer" />
         {searched && !error && (
-          <span className="count muted">
-            {matches.length === 0 ? "没有匹配" : current >= 0 ? `第 ${current + 1} / ${matches.length}${truncated ? "+" : ""} 个` : `${matches.length}${truncated ? "+" : ""} 个`}
+          <span className={"count" + (matches.length ? "" : " none")}>
+            {matches.length === 0 ? "无" : current >= 0 ? `${current + 1} / ${matches.length}${truncated ? "+" : ""}` : `${matches.length}${truncated ? "+" : ""}`}
           </span>
         )}
+        <span className="spacer" />
+        <button className="btn ghost small icon" onClick={() => next(-1)} disabled={!matches.length} title={`上一个 ${keys("CmdOrCtrl+Shift+G")}`}>
+          <ChevronLeft />
+        </button>
+        <button className="btn ghost small icon" onClick={() => next(1)} disabled={!matches.length} title={`下一个 ${keys("CmdOrCtrl+G")}`}>
+          <ChevronRight />
+        </button>
+        <button className="btn ghost small icon" onClick={clear} disabled={!searched} title="清除查找结果和高亮">
+          <X />
+        </button>
       </div>
       <div className="matches" ref={listRef}>
         {!searched && (
@@ -498,12 +499,10 @@ export const FindPanel = forwardRef<FindPanelHandle, {
             <span className="pair">
               <span className="from">{mm.text === "" ? <span className="invis">（空）</span> : <Visible text={mm.text} />}</span>
               {replace !== "" && (
-                <>
-                  <span className="arrow">
-                    <ArrowDown />
-                  </span>
+                <span className="to-row">
+                  <CornerDownRight />
                   {mm.result === "" ? <span className="to deleted">删除</span> : <span className="to"><Visible text={mm.result} /></span>}
-                </>
+                </span>
               )}
             </span>
           </button>
@@ -512,20 +511,16 @@ export const FindPanel = forwardRef<FindPanelHandle, {
       </div>
       {m && m.groups.length > 1 && (
         <div className="groups">
-          <div className="label">捕获分组（第 {current + 1} 个匹配）</div>
-          <table>
-            <tbody>
-              {m.groups.slice(1).map((g) => (
-                <tr key={g.index}>
-                  <td className="g">
-                    ${g.index}
-                    {g.name && <span className="muted"> {g.name}</span>}
-                  </td>
-                  <td className="v">{g.ok ? g.text === "" ? <span className="invis">（空）</span> : <Visible text={g.text} /> : <span className="muted">（未参与匹配）</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="groups-title">捕获分组 · 第 {current + 1} 个匹配</div>
+          {m.groups.slice(1).map((g) => (
+            <div key={g.index} className="group-row">
+              <span className="g">
+                ${g.index}
+                {g.name && <span className="gname">{g.name}</span>}
+              </span>
+              <span className="v">{g.ok ? g.text === "" ? <span className="invis">（空）</span> : <Visible text={g.text} /> : <span className="invis">未参与匹配</span>}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

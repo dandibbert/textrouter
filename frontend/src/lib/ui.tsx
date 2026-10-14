@@ -100,7 +100,7 @@ export function MenuButton({ label, icon, items, className = "btn ghost small", 
       >
         {icon}
         {label}
-        {caret && <ChevronDown style={{ width: 12, height: 12, opacity: 0.6 }} />}
+        {caret && <ChevronDown className="caret" />}
       </button>
       {rect && <Menu anchor={rect} items={typeof items === "function" ? items() : items} onClose={() => setRect(null)} align={align} />}
     </>

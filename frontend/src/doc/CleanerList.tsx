@@ -73,7 +73,9 @@ export const CleanerList = forwardRef<CleanerListHandle, {
         </>
       ))}
     >
-      {c.custom ? <Layers className="ico" /> : c.name === "MyScrub" || c.name === "Scrub" ? <Sparkle className="ico" /> : <Wand2 className="ico" />}
+      <span className={"ico-tile" + (c.custom ? " custom" : c.name === "MyScrub" || c.name === "Scrub" ? " scrub" : "")}>
+        {c.custom ? <Layers /> : c.name === "MyScrub" || c.name === "Scrub" ? <Sparkle /> : <Wand2 />}
+      </span>
       <span className="names">
         <span className="zh">{c.zh}</span>
         <span className="sub">{c.custom ? c.desc || "自定义清理器" : c.name}</span>
@@ -97,10 +99,11 @@ export const CleanerList = forwardRef<CleanerListHandle, {
     <div className={"cleaners" + (boot.prefs.compactDisplay ? " compact" : "")}>
       <div className="cleaners-head">
         <MenuButton
-          className="btn"
-          icon={<FolderOpen style={{ color: "var(--accent)" }} />}
-          label={<span style={{ flex: 1, textAlign: "left" }}>{group?.name ?? "分组"}</span>}
+          className="select-btn"
+          icon={<FolderOpen />}
+          label={<span className="select-label">{group?.name ?? "分组"}</span>}
           items={groupMenu}
+          title="切换清理器分组"
         />
         <div className="search">
           <Search />

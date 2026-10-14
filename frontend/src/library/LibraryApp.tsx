@@ -93,7 +93,7 @@ function LibraryWindow({ boot }: { boot: Boot }) {
     <div className="page lib">
       <header className="titlebar">
         <span className="page-title">我的库</span>
-        <div className="no-drag" style={{ marginLeft: 14, width: 220 }}>
+        <div className="no-drag titlebar-center" style={{ width: 220 }}>
           <Segmented
             small
             value={tab}
@@ -128,7 +128,7 @@ function LibraryWindow({ boot }: { boot: Boot }) {
       ) : (
         <div className="lib-body">
           <aside className="lib-list">
-            <div style={{ padding: 10 }}>
+            <div className="lib-list-head">
               <div className="search">
                 <Search />
                 <input className="input" placeholder="搜索我的清理器" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -137,7 +137,9 @@ function LibraryWindow({ boot }: { boot: Boot }) {
             <div className="lib-items">
               {list.map((c) => (
                 <button key={c.uuid} className={"lib-item" + (c.uuid === selected ? " on" : "")} onClick={() => setSelected(c.uuid)}>
-                  <Layers />
+                  <span className="ico-tile custom">
+                    <Layers />
+                  </span>
                   <span className="names">
                     <span className="n">{c.name}</span>
                     <span className="s">{c.actions.length} 个动作{c.comment ? ` · ${c.comment}` : ""}</span>

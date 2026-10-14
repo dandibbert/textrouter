@@ -298,50 +298,15 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
 
   return (
     <div className="doc">
-      <header className="titlebar">
-        <button className={"tool icon-only" + (sidebar ? "" : " on")} onClick={() => toggleSidebar()} title={`显示/隐藏侧栏 ${keys("CmdOrCtrl+Alt+S")}`}>
-          <PanelLeft />
-        </button>
-        <div className="title-block">
-          {info.kind === "clipboard" ? <ClipboardType style={{ width: 16, height: 16, color: "var(--accent)" }} /> : <FileText style={{ width: 16, height: 16, color: "var(--text-3)" }} />}
-          <span className="name" title={info.path}>{info.name}</span>
-          {info.kind === "clipboard" && prefs.copyBackOnClose && <span className="chip" title="关闭窗口或退出时，文本会自动拷贝回剪贴板">关闭时拷回剪贴板</span>}
-          {dirty && <span className="dirty-dot" title="有未存储的更改" />}
-        </div>
-        <div className="spacer" />
-        <div className="tool-group">
-          <button className="tool primary" onClick={myScrub} title={`MyScrub 一键清理：应用「${myScrubName}」${keys("CmdOrCtrl+J")}\n可在偏好设置中更换`}>
-            <Sparkles />
-            <span>一键清理</span>
-          </button>
-          <div className="tool-sep" />
-          <button className="tool collapsible" onClick={copy} title="拷贝选中的文本（没有选中则拷贝全部）">
-            <Copy />
-            <span>拷贝</span>
-          </button>
-          <button className="tool collapsible" onClick={paste} title="在光标处粘贴剪贴板内容">
-            <ClipboardPaste />
-            <span>粘贴</span>
-          </button>
-          <button className="tool collapsible" onClick={copyAll} title={`全选并拷贝 ${keys("CmdOrCtrl+Shift+C")}`}>
-            <ClipboardCopy />
-            <span>全部拷贝</span>
-          </button>
-          <button className="tool collapsible" onClick={pasteOver} title={`用剪贴板内容替换全部文本 ${keys("CmdOrCtrl+Shift+V")}`}>
-            <Replace />
-            <span>粘贴覆盖</span>
-          </button>
-          <div className="tool-sep" />
-          <button className="tool collapsible" onClick={() => Document.openLibrary("")} title={`我的库：自定义清理器和分组 ${keys("CmdOrCtrl+Shift+L")}`}>
-            <BookOpen />
-            <span>我的库</span>
-          </button>
-        </div>
-      </header>
-
       <div className="doc-body">
         {(
           <aside className="sidebar" style={{ width, display: sidebar ? "flex" : "none" }}>
+            <div className="sidebar-top">
+              <span className="spacer" />
+              <button className="tool icon-only" onClick={() => toggleSidebar(false)} title={`隐藏侧栏 ${keys("CmdOrCtrl+Alt+S")}`}>
+                <PanelLeft />
+              </button>
+            </div>
             <div className="sidebar-tabs">
               <Segmented
                 value={tab}
@@ -362,6 +327,52 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
           </aside>
         )}
         <main className="editor-col">
+          <header className={"titlebar main-toolbar" + (sidebar ? "" : " inset")}>
+            {!sidebar && (
+              <button className="tool icon-only" onClick={() => toggleSidebar(true)} title={`显示侧栏 ${keys("CmdOrCtrl+Alt+S")}`}>
+                <PanelLeft />
+              </button>
+            )}
+            <div className="title-block">
+              <span className={"doc-icon" + (info.kind === "clipboard" ? " clip" : "")}>
+                {info.kind === "clipboard" ? <ClipboardType /> : <FileText />}
+              </span>
+              <span className="name" title={info.path}>{info.name}</span>
+              {dirty && <span className="dirty-dot" title="有未存储的更改" />}
+              {info.kind === "clipboard" && prefs.copyBackOnClose && (
+                <span className="chip" title="关闭窗口或退出时，文本会自动拷贝回剪贴板">
+                  关闭时拷回
+                </span>
+              )}
+            </div>
+            <div className="spacer" />
+            <button className="tool primary" onClick={myScrub} title={`MyScrub 一键清理：应用「${myScrubName}」${keys("CmdOrCtrl+J")}\n可在偏好设置中更换`}>
+              <Sparkles />
+              <span>一键清理</span>
+            </button>
+            <div className="tool-cluster">
+              <button className="tool collapsible" onClick={copy} title="拷贝选中的文本（没有选中则拷贝全部）">
+                <Copy />
+                <span>拷贝</span>
+              </button>
+              <button className="tool collapsible" onClick={paste} title="在光标处粘贴剪贴板内容">
+                <ClipboardPaste />
+                <span>粘贴</span>
+              </button>
+              <button className="tool collapsible" onClick={copyAll} title={`全选并拷贝 ${keys("CmdOrCtrl+Shift+C")}`}>
+                <ClipboardCopy />
+                <span>全部拷贝</span>
+              </button>
+              <button className="tool collapsible" onClick={pasteOver} title={`用剪贴板内容替换全部文本 ${keys("CmdOrCtrl+Shift+V")}`}>
+                <Replace />
+                <span>粘贴覆盖</span>
+              </button>
+            </div>
+            <button className="tool collapsible" onClick={() => Document.openLibrary("")} title={`我的库：自定义清理器和分组 ${keys("CmdOrCtrl+Shift+L")}`}>
+              <BookOpen />
+              <span>我的库</span>
+            </button>
+          </header>
           <div className="editor-host" ref={host} />
           <footer className="statusbar">
             <MenuButton
