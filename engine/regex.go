@@ -50,22 +50,24 @@ func (o FindOptions) DotAll() bool { return strings.ContainsRune(o.RegexOptions,
 // Match is one match with its groups, in rune offsets of the input.
 type Match struct {
 	Start, End int
-	Groups     []Group // index 0 is the whole match
+	Groups     []Capture // index 0 is the whole match
 	Result     string  // what this match is replaced by
 }
 
-// Group is one capture group of a match. Ok is false when it did not take part.
-type Group struct {
+// Capture is one capture group of a match. Ok is false when it did not take part.
+type Capture struct {
 	Start, End int
 	Text       string
 	Ok         bool
+	Name       string
 }
 
 // AllowComments reports whether the x option letter is set.
 func (o FindOptions) AllowComments() bool { return strings.ContainsRune(o.RegexOptions, 'x') }
 
-// Pattern returns the regexp2 pattern the options compile to.
-func (o FindOptions) Pattern() (string, error) {
+// Pattern returns the regexp2 pattern the options compile to and the names
+// of its capture groups (names[i] for group i, "" when unnamed).
+func (o FindOptions) Pattern() (string, []string, error) {
 	if !o.Regex {
 		pat := regexp2.Escape(UnescapeText(o.Find))
 		switch o.Granularity {
@@ -76,16 +78,21 @@ func (o FindOptions) Pattern() (string, error) {
 		case GranEndsWith:
 			pat = pat + `(?![\w])`
 		}
-		return pat, nil
+		return pat, nil, nil
 	}
 	return translateICU(o.Find, o.DotAll())
 }
 
 // Compile builds the matcher. Literal patterns are escaped.
 func (o FindOptions) Compile() (*regexp2.Regexp, error) {
-	pat, err := o.Pattern()
+	re, _, err := o.compile()
+	return re, err
+}
+
+func (o FindOptions) compile() (*regexp2.Regexp, []string, error) {
+	pat, names, err := o.Pattern()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var opt regexp2.RegexOptions
 	if !o.MatchCase {
@@ -102,10 +109,10 @@ func (o FindOptions) Compile() (*regexp2.Regexp, error) {
 	}
 	re, err := regexp2.Compile(pat, opt)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	re.MatchTimeout = 2e9
-	return re, nil
+	return re, names, nil
 }
 
 // FindAll returns every match (non-overlapping, left to right) with its
@@ -114,7 +121,7 @@ func (o FindOptions) FindAll(text string, limit int) ([]Match, error) {
 	if o.Find == "" {
 		return nil, nil
 	}
-	re, err := o.Compile()
+	re, names, err := o.compile()
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +133,11 @@ func (o FindOptions) FindAll(text string, limit int) ([]Match, error) {
 	m, err := re.FindStringMatch(text)
 	for m != nil && err == nil {
 		mm := Match{Start: m.Index, End: m.Index + m.Length}
-		for _, g := range m.Groups() {
-			gr := Group{Ok: len(g.Captures) > 0}
+		for gi, g := range m.Groups() {
+			gr := Capture{Ok: len(g.Captures) > 0}
+			if gi < len(names) {
+				gr.Name = names[gi]
+			}
 			if gr.Ok {
 				gr.Start, gr.End, gr.Text = g.Index, g.Index+g.Length, g.String()
 			}
@@ -246,7 +256,7 @@ func ParseTemplate(s string) Template {
 }
 
 // Expand builds the substitution for one match.
-func (t Template) Expand(groups []Group) string {
+func (t Template) Expand(groups []Capture) string {
 	var b strings.Builder
 	mode := TokEnd // no case change
 	next := TokEnd // pending one-character change

@@ -28,6 +28,10 @@ func TestICUSyntax(t *testing.T) {
 		{`[a-c[x-z]]+`, "abxyq", "<abxy>q"},
 		{`\x{41}+`, "AAAb", "<AAA>b"},
 	}
+	o := FindOptions{Find: `(?<y>a)(b)`, Replace: "$2$1", Regex: true, MatchCase: true}
+	if ms, err := o.FindAll("ab", 0); err != nil || ms[0].Result != "ba" || ms[0].Groups[1].Name != "y" {
+		t.Errorf("named groups must be numbered in order (ICU): %+v %v", ms, err)
+	}
 	for _, c := range cases {
 		o := FindOptions{Find: c.find, Replace: "<$0>", Regex: true, MatchCase: true}
 		got, _, err := o.Apply(c.in)

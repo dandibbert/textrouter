@@ -41,12 +41,17 @@ var propertyAliases = map[string]string{
 	"white_space": "space", "whitespace": "space",
 }
 
-// translateICU rewrites an ICU pattern into regexp2 syntax.
-func translateICU(pat string, dotAll bool) (string, error) {
+// translateICU rewrites an ICU pattern into regexp2 syntax. Named groups
+// become plain groups so that numbering follows ICU (in order of their
+// opening parenthesis; .NET numbers unnamed groups first); names[i] is the
+// name of group i, if any.
+func translateICU(pat string, dotAll bool) (string, []string, error) {
 	r := []rune(pat)
 	var out strings.Builder
 	type frame struct{ start int }
 	var groups []frame
+	names := []string{""}
+	byName := map[string]int{}
 	lastAtom := -1
 	// An inline (?s) anywhere means "." is managed by the pattern itself.
 	if strings.Contains(pat, "(?s") || hasInlineFlag(pat, 's') {
@@ -60,9 +65,24 @@ func translateICU(pat string, dotAll bool) (string, error) {
 		c := r[i]
 		switch c {
 		case '\\':
+			if i+2 < len(r) && r[i+1] == 'k' && (r[i+2] == '<' || r[i+2] == '{') {
+				closer := '>'
+				if r[i+2] == '{' {
+					closer = '}'
+				}
+				if end := indexRune(r, i+3, closer); end > 0 {
+					name := string(r[i+3 : end])
+					if idx, ok := byName[name]; ok {
+						emitAtom(fmt.Sprintf(`\k<%d>`, idx))
+						i = end
+						continue
+					}
+					return "", nil, fmt.Errorf("没有名为 %s 的分组", name)
+				}
+			}
 			s, n, err := icuEscape(r, i, false)
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
 			i += n - 1
 			if s == "" {
@@ -72,12 +92,28 @@ func translateICU(pat string, dotAll bool) (string, error) {
 		case '[':
 			s, n, err := icuClass(r, i)
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
 			i += n - 1
 			emitAtom(s)
 		case '(':
 			groups = append(groups, frame{out.Len()})
+			if i+1 >= len(r) || r[i+1] != '?' {
+				names = append(names, "")
+			} else if i+2 < len(r) && (r[i+2] == '<' || r[i+2] == '\'') && i+3 < len(r) && r[i+3] != '=' && r[i+3] != '!' {
+				closer := '>'
+				if r[i+2] == '\'' {
+					closer = '\''
+				}
+				if end := indexRune(r, i+3, closer); end > 0 {
+					name := string(r[i+3 : end])
+					names = append(names, name)
+					byName[name] = len(names) - 1
+					out.WriteRune('(')
+					i = end
+					continue
+				}
+			}
 			if i+1 < len(r) && r[i+1] == '?' {
 				j := i + 2
 				k := j
@@ -158,7 +194,7 @@ func translateICU(pat string, dotAll bool) (string, error) {
 			emitAtom(string(c))
 		}
 	}
-	return out.String(), nil
+	return out.String(), names, nil
 }
 
 func hasInlineFlag(pat string, flag rune) bool {
