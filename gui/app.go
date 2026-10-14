@@ -94,6 +94,11 @@ type App struct {
 	toastUndo bool
 	monoEdit  bool
 	writeClip func(string)
+	// clipLoaded is the clipboard text last loaded into (or copied from)
+	// the 剪贴板 document; clipPrev is that document's text right after.
+	clipSeen   bool
+	clipLoaded string
+	clipPrev   string
 }
 
 type lastOp struct {
@@ -123,16 +128,57 @@ func New(lib *engine.Library, p Platform) *App {
 	return a
 }
 
-// LoadClipboard replaces the workspace text (called when the window opens).
-// It is one undoable edit.
-func (a *App) LoadClipboard(s string) {
-	a.syncEditor()
-	if s == a.Text {
-		return
+// LoadClipboard is what every activation calls (launch, Dock icon, app
+// activation, menu bar icon, global shortcut) with the clipboard's text:
+// it switches to the 剪贴板 document and reads the clipboard into it.
+//
+//   - Clipboard unchanged since it was last loaded or copied from here:
+//     the document is left alone (carets, undo history, edits).
+//   - Changed: it replaces the document as one undoable edit. When the
+//     document had edits of its own (it differs from what was last loaded
+//     or copied), a toast offers to undo the load.
+//   - Auto-read off in the settings: only switches to the document.
+//
+// It reports whether the document was replaced.
+func (a *App) LoadClipboard(s string) bool {
+	a.ShowClipboard()
+	if a.Lib.Settings.NoAutoReadClipboard {
+		return false
 	}
+	a.syncEditor()
+	if a.clipSeen && s == a.clipLoaded {
+		return false // nothing new on the clipboard
+	}
+	first := !a.clipSeen
+	a.clipSeen, a.clipLoaded = true, s
+	if s == a.Text {
+		return false
+	}
+	edited := !first && a.Text != a.clipPrev && a.Text != ""
+	before := a.Text
 	a.replaceAll(s)
-	a.last = nil
+	a.clipPrev = a.Text
 	a.clearDiffBase()
+	a.changes = nil
+	if edited {
+		a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
+		a.toast, a.toastUndo = "已载入新剪贴板", true
+		a.status = "已载入新剪贴板（之前的编辑可撤销找回）"
+	} else {
+		a.last = nil
+		a.status = "已读取剪贴板"
+	}
+	return true
+}
+
+// noteCopied records text this app put on the clipboard, so the next
+// activation sees nothing new and leaves the document alone.
+func (a *App) noteCopied(s string) {
+	a.clipSeen, a.clipLoaded = true, s
+	if a.cur == 0 {
+		a.syncEditor()
+		a.clipPrev = a.Text
+	}
 }
 
 // Transform applies fn as one undoable operation: to each selection of
@@ -213,7 +259,7 @@ func (a *App) View(c *ui.Context) {
 	registerFonts()
 	uiFontFamily = a.uiFamily()
 	k := applyTheme(c)
-	a.writeClip = c.WriteClipboard
+	a.writeClip = func(t string) { c.WriteClipboard(t); a.noteCopied(t) }
 	a.ensureDocs()
 	a.persistView()
 	if a.Page == PageFind {

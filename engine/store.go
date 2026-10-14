@@ -13,7 +13,10 @@ type Settings struct {
 	CopyOnDone    bool     `json:"copyOnDone"`     // "完成" copies the result and hides the window
 	Pinned        []string `json:"pinned"`         // cleaner names / "chain:<id>" pinned in Clipboard Space
 	ShowUnmeasure bool     `json:"showUnmeasured"` // list unverified cleaners in the palette
-	View          View     `json:"view"`           // editor view options, restored on launch
+	View          View     `json:"view"`
+	// NoAutoReadClipboard turns off reading the clipboard into the 剪贴板
+	// document on every activation (on by default, hence the negation).
+	NoAutoReadClipboard bool `json:"noAutoReadClipboard,omitempty"` // editor view options, restored on launch
 }
 
 // View is how the editor looks, remembered across launches.

@@ -366,6 +366,13 @@ func (a *App) settingsView(c *ui.Context) {
 			})
 			a.fontSettings(c, k, row, group)
 			group("行为", func() {
+				row("激活时自动读取剪贴板", "启动、点 Dock 图标、切回本应用、点菜单栏图标或按全局快捷键时，切到「剪贴板」并读入最新内容；内容没变就不动文档", false, func() {
+					on := !st.NoAutoReadClipboard
+					if ui.Switch(c, &on).Label("激活时自动读取剪贴板").Changed() {
+						st.NoAutoReadClipboard = !on
+						a.save()
+					}
+				})
 				row("「复制并完成」后自动收起窗口", "焦点回到之前的应用，直接 ⌘V 粘贴", false, func() {
 					if ui.Switch(c, &st.CopyOnDone).Label("「复制并完成」后自动收起窗口").Changed() {
 						a.save()

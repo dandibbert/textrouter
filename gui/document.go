@@ -115,6 +115,7 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 		}
 		if iconButton(c, "copyall", "copy", "全部复制", "全部复制到剪贴板").Clicked() {
 			c.WriteClipboard(a.Text)
+			a.noteCopied(a.Text)
 			a.status = "已复制全部文本"
 		}
 		a.toolsMenu(c, k)

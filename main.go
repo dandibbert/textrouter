@@ -115,14 +115,17 @@ func main() {
 		})
 		// Open Clipboard Space with the current clipboard: from the Dock,
 		// the menu bar icon or the global shortcut.
+		appActive := false
 		d.show = func() {
 			text := mygo.Clipboard.ReadText()
-			d.win.Update(func() {
-				a.LoadClipboard(text)
-			})
-			d.win.Show()
+			d.win.Update(func() { a.LoadClipboard(text) })
+			if !d.win.IsVisible() {
+				d.win.Show()
+			}
 			d.win.Focus()
-			mygo.App.Focus()
+			if !appActive {
+				mygo.App.Focus() // didBecomeActive follows; it finds nothing new
+			}
 		}
 		// Remember the window size in the settings, once resizing settles.
 		var resizeTimer *time.Timer
@@ -141,11 +144,19 @@ func main() {
 				d.win.Hide()
 			}
 		})
-		mygo.App.OnActivate(func(hasVisible bool) {
-			if !hasVisible {
-				d.show()
-			}
-		})
+		// Every activation reads the clipboard into the 剪贴板 document:
+		//  - Dock icon click: applicationShouldHandleReopen:hasVisibleWindows:
+		//    → OnActivate, whether or not the window is visible (before, a
+		//    visible window ignored the click);
+		//  - switching back to the app (Dock click while inactive, ⌘Tab,
+		//    clicking its window): applicationDidBecomeActive: →
+		//    OnDidBecomeActive;
+		//  - menu bar icon, global shortcut and launch call d.show directly.
+		// A Dock click on an inactive app fires both; the second finds the
+		// clipboard unchanged and leaves the document alone.
+		mygo.App.OnActivate(func(bool) { d.show() })
+		mygo.App.OnDidBecomeActive(func() { appActive = true; d.show() })
+		mygo.App.OnDidResignActive(func() { appActive = false })
 		goPage := func(p string) func(*mygo.MenuItem, *mygo.Window) {
 			return func(*mygo.MenuItem, *mygo.Window) {
 				d.show()
