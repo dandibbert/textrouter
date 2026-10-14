@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -77,6 +78,8 @@ func TestSelectionScopedActions(t *testing.T) {
 	// Find/replace page applies to the selection too.
 	a.ed.Select(0, 5)
 	a.Page = PageFind
+	tt.Frame()
+	a.insp.inSel, a.insp.selRange = true, [2]int{0, 5}
 	a.find.opts.Find, a.find.opts.Replace = "l", "L"
 	tt.Frame()
 	if err := tt.Click("全部替换（2 处）"); err != nil {
@@ -86,7 +89,7 @@ func TestSelectionScopedActions(t *testing.T) {
 		t.Fatalf("scoped replace: %q", a.Text)
 	}
 	// Two selections: both change in one undo step.
-	a.Page = PageClipboard
+	a.insp.inSel = false
 	tt.Frame()
 	a.ed.SetSelections(editor.Selection{Anchor: 0, Head: 2}, editor.Selection{Anchor: 12, Head: 18})
 	a.Transform(up.ZhName, up.Fn)
@@ -182,7 +185,7 @@ func TestFindPageLivePreview(t *testing.T) {
 	a.find.opts.Find = `(\d+)元`
 	a.find.opts.Replace = "¥$1"
 	tt.Frame()
-	if !tt.HasText("找到 2 处") {
+	if !tt.HasText("2 处") || a.inspector != "find" {
 		t.Fatalf("texts %q", tt.Texts())
 	}
 	if !tt.HasText("第 1 组开始（替换里用 $1 引用）") {
@@ -203,7 +206,7 @@ func TestBatchPageCounts(t *testing.T) {
 	if !tt.HasText("2 处") || !tt.HasText("1 处") {
 		t.Fatalf("counts missing: %q", tt.Texts())
 	}
-	if err := tt.Click("应用到剪贴板空间"); err != nil {
+	if err := tt.Click("应用到文档"); err != nil {
 		t.Fatal(err)
 	}
 	if a.Text != "my favorite color, color" {
@@ -225,7 +228,7 @@ func TestChainsPage(t *testing.T) {
 	if !tt.HasText("最终结果") {
 		t.Fatalf("texts %q", tt.Texts())
 	}
-	if err := tt.Click("应用到剪贴板空间"); err != nil {
+	if err := tt.Click("应用到文档"); err != nil {
 		t.Fatal(err)
 	}
 	if a.Text != "中文 English 混排" {
@@ -249,7 +252,7 @@ func TestCleanersAndSettingsAndFiles(t *testing.T) {
 	}
 	a.Page = PageSettings
 	tt.Frame()
-	if !tt.HasText("打开剪贴板空间的全局快捷键") {
+	if !tt.HasText("打开剪贴板文档的全局快捷键") {
 		t.Errorf("settings: %q", tt.Texts())
 	}
 	a.Page = PageFiles
@@ -263,5 +266,46 @@ func TestCleanersAndSettingsAndFiles(t *testing.T) {
 	tt.Frame()
 	if !strings.Contains(strings.Join(tt.Texts(), " "), "复制并完成") {
 		t.Error("dark render")
+	}
+}
+
+func TestDocumentTabsAndToolSheet(t *testing.T) {
+	a, tt := newApp(t, "from clipboard")
+	tt.Frame()
+	p := filepath.Join(t.TempDir(), "notes.txt")
+	if err := os.WriteFile(p, []byte("file body"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	tt.Frame()
+	if len(a.docs) != 2 || a.cur != 1 || a.Text != "file body" || !tt.HasText("notes.txt") {
+		t.Fatalf("docs=%d cur=%d text=%q", len(a.docs), a.cur, a.Text)
+	}
+	if tt.HasText("复制并完成") {
+		t.Fatal("file document should not offer copy-and-done")
+	}
+	if err := tt.Click("剪贴板"); err != nil {
+		t.Fatal(err)
+	}
+	if a.cur != 0 || a.Text != "from clipboard" {
+		t.Fatalf("switch back: cur=%d %q", a.cur, a.Text)
+	}
+	a.loadFile(p) // reopening switches to the existing tab
+	tt.Frame()
+	if len(a.docs) != 2 || a.cur != 1 {
+		t.Fatalf("reopen: docs=%d cur=%d", len(a.docs), a.cur)
+	}
+	a.OpenTool(PageBatch)
+	tt.Frame()
+	if !tt.HasText("应用到文档") {
+		t.Fatalf("batch sheet missing: %q", tt.Texts())
+	}
+	tt.Key(0, ui.KeyEscape)
+	tt.Frame()
+	if a.Page != PageClipboard {
+		t.Fatalf("esc should close sheet, page=%q", a.Page)
+	}
+	if strings.Contains(strings.Join(tt.Texts(), "|"), "剪贴板空间") {
+		t.Fatal("剪贴板空间 still in UI")
 	}
 }

@@ -221,6 +221,8 @@ func (a *App) configureEditor(c *ui.Context, k tokens) {
 	st.Theme = editorTheme(c, k)
 	st.Bindings = []editor.Binding{
 		{Mods: ui.Cmd, Key: ui.KeyK, Command: editor.NoCommand},
+		{Mods: ui.Cmd, Key: ui.KeyF, Command: editor.NoCommand},
+		{Mods: ui.Cmd | ui.Alt, Key: ui.KeyF, Command: editor.NoCommand},
 		{Mods: ui.Cmd, Key: ui.KeyEnter, Command: editor.NoCommand},
 		{Mods: ui.Cmd, Key: ui.KeyBackslash, Command: editor.NoCommand},
 		{Mods: ui.Cmd, Key: ui.KeyEqual, Command: editor.NoCommand},
@@ -273,106 +275,6 @@ func invisibleInlays(s string) []editor.Inlay {
 	return out
 }
 
-// clipboardView is the main screen: an edge-to-edge editor with one slim
-// top bar and the status bar.
-func (a *App) clipboardView(c *ui.Context) {
-	k := tok(c)
-	a.syncEditor()
-	a.configureEditor(c, k)
-	c.OnShortcut(ui.Cmd, ui.KeyEnter, a.done)
-	c.OnShortcut(ui.Cmd, ui.KeyEqual, func() { a.view.fontSize = min(a.view.fontSize+1, 32) })
-	c.OnShortcut(ui.Cmd, ui.KeyMinus, func() { a.view.fontSize = max(a.view.fontSize-1, 10) })
-	c.OnShortcut(ui.Cmd, ui.Key0, func() { a.view.fontSize = 15 })
-	c.OnShortcut(ui.Cmd, ui.KeyO, a.openFile)
-	c.OnShortcut(ui.Cmd, ui.KeyS, a.saveFile)
-	c.OnShortcut(ui.Cmd|ui.Alt, ui.KeyI, func() { a.view.invisibles = !a.view.invisibles })
-
-	a.editorBar(c, k)
-	zone := ui.Column(c).Grow(1).MinHeight(0).Background(k.canvas)
-	if files := zone.DroppedFiles(); len(files) > 0 {
-		a.loadFile(files[0])
-	}
-	zone.Children(func() {
-		ui.Row(c).Grow(1).MinHeight(0).Padding(sp2, 0, 0, sp2).Children(func() {
-			editor.View(c, a.ed).Grow(1).FillHeight().AutoFocus()
-		})
-	})
-	a.updateInvisibles()
-	a.syncEditor()
-}
-
-// editorBar is the one slim, quiet bar above the editor.
-func (a *App) editorBar(c *ui.Context, k tokens) {
-	bar := c.TitleBar()
-	left := float32(sp3)
-	if !a.sideOpen {
-		left = max(bar.Left, 0) + sp3
-		if bar.Left == 0 && bar.Height == 0 {
-			left = sp3
-		}
-	}
-	ui.Row(c).Height(42).Padding(0, sp3, 0, left).Gap(2).AlignItems(ui.Center).Background(k.canvas).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).DragWindow().Children(func() {
-		a.sidebarToggle(c)
-		ui.Box(c).Width(sp2)
-		// Palette launcher: quiet, text-like.
-		l := ui.ButtonBase(c.Key("apply")).Height(28).Width(260).Padding(0, 8, 0, 10).Radius(rMd).Gap(8).AlignItems(ui.Center).Label("应用动作").Tooltip("搜索并应用清理器、动作链、规则和编辑命令")
-		pressable(c, l, k, k.field)
-		l.Children(func() {
-			ui.Icon(c, ic("search")).FontSize(13).TextColor(k.faint)
-			ui.Text(c, "应用动作…").FontSize(12.5).TextColor(k.faint).Grow(1).SingleLine()
-			ui.Text(c, "⌘K").FontSize(11.5).TextColor(k.faint)
-		})
-		if l.Clicked() {
-			a.openPalette()
-		}
-		ui.Box(c).Width(sp2)
-		a.scopePill(c, k)
-		ui.Spacer(c)
-		toggle := func(key, icon, label, tip string, on bool) bool {
-			b := iconButton(c, key, icon, label, tip).Size(28, 28)
-			if on {
-				b.Background(k.accentSoft)
-			}
-			return b.Clicked()
-		}
-		if toggle("find", "text-search", "查找", "查找 ⌘F · 替换 ⌥⌘F", false) {
-			a.ed.Run(editor.Find)
-		}
-		if toggle("invis", "pilcrow", "显示不可见字符", "显示空格、制表符、换行、NBSP、全角空格 ⌥⌘I", a.view.invisibles) {
-			a.view.invisibles = !a.view.invisibles
-		}
-		if toggle("lnum", "list-ordered", "行号", "显示行号", a.view.lineNumbers) {
-			a.view.lineNumbers = !a.view.lineNumbers
-		}
-		if toggle("wrap", "wrap-text", "自动换行", "自动换行", a.view.wrap) {
-			a.view.wrap = !a.view.wrap
-		}
-		if toggle("mono", "type", "等宽字体", "等宽 / 比例字体", a.view.mono) {
-			a.view.mono = !a.view.mono
-		}
-		ui.Box(c).Size(1, 16).Background(k.hair).Margin(0, sp2)
-		u := iconButton(c, "undo", "undo-2", "撤销", "撤销 ⌘Z（包括动作）").Size(28, 28)
-		if !a.ed.Buffer.CanUndo() {
-			u.Opacity(0.35)
-		}
-		if u.Clicked() {
-			a.Undo()
-		}
-		ui.Box(c).Width(sp1)
-		// Copy & close: quiet text button with an accent label.
-		d := ui.ButtonBase(c.Key("done")).Height(28).Padding(0, 10).Radius(rMd).Gap(6).AlignItems(ui.Center).Label("复制并完成").Tooltip("复制回剪贴板并收起窗口")
-		pressable(c, d, k, ui.Transparent)
-		d.Children(func() {
-			ui.Icon(c, ic("copy")).FontSize(13).TextColor(k.accent)
-			ui.Text(c, "复制并完成").FontSize(12.5).FontWeight(600).TextColor(k.accent).SingleLine()
-			ui.Text(c, "⌘↩").FontSize(11.5).TextColor(k.accent.Alpha(0.6))
-		})
-		if d.Clicked() {
-			a.done()
-		}
-	})
-}
-
 // scopePill shows what the next action will apply to.
 func (a *App) scopePill(c *ui.Context, k tokens) {
 	sels := a.selections()
@@ -392,17 +294,6 @@ func (a *App) scopePill(c *ui.Context, k tokens) {
 		ui.Box(c).Size(6, 6).Radius(3).Background(k.accent)
 		ui.Text(c, label).FontSize(11.5).FontWeight(600).TextColor(k.accent).SingleLine()
 	}).Tooltip("动作、查找替换和批量替换只作用于选中的文字")
-}
-
-func (a *App) sidebarToggle(c *ui.Context) {
-	icon := "chevron-right"
-	if a.sideOpen {
-		icon = "chevron-down"
-	}
-	_ = icon
-	if iconButton(c, "side", "panel-left", "侧边栏", "显示/隐藏侧边栏 ⌘\\").Size(28, 28).Clicked() {
-		a.sideOpen = !a.sideOpen
-	}
 }
 
 // renderFindBar draws the editor's find/replace bar as a floating card.
@@ -498,11 +389,15 @@ func (a *App) loadFile(path string) {
 		a.status = "不是 UTF-8 文本文件：" + filepath.Base(path)
 		return
 	}
-	a.syncEditor()
-	a.replaceAll(string(data))
-	a.filePath = path
-	a.last = nil
-	a.clearDiffBase()
+	a.ensureDocs()
+	for i, d := range a.docs {
+		if d.path == path {
+			a.switchDoc(i)
+			return
+		}
+	}
+	a.docs = append(a.docs, &document{name: filepath.Base(path), path: path, text: string(data)})
+	a.switchDoc(len(a.docs) - 1)
 	a.status = "已打开 " + filepath.Base(path)
 }
 
@@ -519,8 +414,8 @@ func (a *App) openFile() {
 func (a *App) saveFile() {
 	text := a.Text
 	name := "文本.txt"
-	if a.filePath != "" {
-		name = filepath.Base(a.filePath)
+	if d := a.doc(); d.path != "" {
+		name = filepath.Base(d.path)
 	}
 	go func() {
 		p := a.Platform.SaveFile("存储文本", name)
@@ -533,7 +428,9 @@ func (a *App) saveFile() {
 				a.status = "存储失败：" + err.Error()
 				return
 			}
-			a.filePath = p
+			if d := a.doc(); !d.clip {
+				d.path, d.name = p, filepath.Base(p)
+			}
 			a.status = "已存储到 " + p
 		})
 	}()

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -28,39 +27,42 @@ func TestSnapshots(t *testing.T) {
 		setup func(a *App, tt *ui.Tester)
 	}
 	scenes := []scene{
-		{"editor", func(a *App, tt *ui.Tester) {
-			cl := engine.CleanerByName("Capitalize with Title Case")
-			a.ed.Select(0, strings.Index(a.Text, "\n> price"))
-			a.Transform(cl.ZhName, cl.Fn)
-			a.ed.Select(0, 0)
-		}},
-		{"editor-selection-invisibles", func(a *App, tt *ui.Tester) {
-			a.view.invisibles = true
-			s := strings.Index(a.Text, "中文")
-			a.ed.Select(s, strings.Index(a.Text, "\n\nnew"))
-		}},
-		{"editor-find", func(a *App, tt *ui.Tester) {
-			a.ed.Find("元")
-		}},
-		{"editor-sidebar", func(a *App, tt *ui.Tester) {
-			a.sideOpen = true
-			a.view.mono = true
-		}},
-		{"find", func(a *App, tt *ui.Tester) {
-			a.Page = PageFind
+		{"main-find-regex", func(a *App, tt *ui.Tester) {
+			a.showFind()
 			a.find.modeIdx = 1
 			a.find.opts.Find = `(\d+)元`
 			a.find.opts.Replace = "¥$1"
+			a.insp.explain = false
 		}},
-		{"batch", func(a *App, tt *ui.Tester) {
-			a.Page = PageBatch
+		{"main-cleaners", func(a *App, tt *ui.Tester) {
+			a.toggleInspector("cleaners")
+			s := strings.Index(a.Text, "中文")
+			a.ed.Select(s, strings.Index(a.Text, "\n\nnew"))
+		}},
+		{"tools-menu", func(a *App, tt *ui.Tester) {
+			tt.Frame()
+			if err := tt.Click("工具"); err != nil {
+				t.Fatal(err)
+			}
+			// The real menu is native (NSMenu); paint its items in-app.
+			a.fakeMenu = tt.Menu()
+			if len(a.fakeMenu) == 0 {
+				t.Fatal("tools menu did not open")
+			}
+		}},
+		{"batch-sheet", func(a *App, tt *ui.Tester) {
 			a.Text += "\nMy favourite colour is centre grey — organise it."
+			a.OpenTool(PageBatch)
 		}},
-		{"chains", func(a *App, tt *ui.Tester) { a.Page = PageChains }},
-		{"cleaners", func(a *App, tt *ui.Tester) { a.Page = PageCleaners; a.clean.selected = "Scrub"; a.sideOpen = true }},
-		{"files", func(a *App, tt *ui.Tester) { a.Page = PageFiles }},
-		{"settings", func(a *App, tt *ui.Tester) { a.Page = PageSettings; a.sideOpen = true }},
-		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "行" }},
+		{"doc-clipboard", func(a *App, tt *ui.Tester) {}},
+		{"doc-file", func(a *App, tt *ui.Tester) {
+			p := filepath.Join(t.TempDir(), "release-notes.md")
+			os.WriteFile(p, []byte("# Release notes\n\n- Faster  find  panel\n- Document tabs: clipboard and files side by side\n- Batch replace as a sheet\n"), 0o644)
+			a.loadFile(p)
+			a.view.lineNumbers = true
+		}},
+		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
+		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},
 	}
 	for _, dark := range []bool{false, true} {
 		for _, sc := range scenes {

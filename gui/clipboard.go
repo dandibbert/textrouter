@@ -139,8 +139,9 @@ func (a *App) paletteItems() []paletteItem {
 	for _, ec := range editorCommands {
 		add("cmd:"+ec.name, ec.title, "编辑 "+ec.keys, "")
 	}
-	for _, it := range append(append([]navItem{}, navMain[1:]...), append(navTools, navItem{PageSettings, "settings-2", "设置"})...) {
-		add("page:"+it.id, "前往："+it.label, "页面", "")
+	add("page:"+PageFind, "查找替换", "查找 ⌘F", "")
+	for _, it := range tools {
+		add("page:"+it.id, it.label+"…", "工具", "")
 	}
 	for i := range a.Lib.RuleSets {
 		add("rules:"+a.Lib.RuleSets[i].ID, a.Lib.RuleSets[i].Name, "批量替换规则", "")
@@ -198,9 +199,7 @@ func (a *App) runPaletteItem(it paletteItem) {
 	label, fn := a.resolveAction(it.id)
 	if fn != nil {
 		a.Transform(label, fn)
-		if a.Page != PageClipboard && a.Page != PageFind && a.Page != PageBatch {
-			a.Page = PageClipboard
-		}
+		a.Page = PageClipboard
 	}
 }
 

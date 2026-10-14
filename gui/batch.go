@@ -58,7 +58,7 @@ func (a *App) batchView(c *ui.Context) {
 	pageHeader(c, "批量替换", "从上到下依次执行，每条作用于上一条的结果", func() {
 		a.scopePill(c, k)
 		ui.Box(c).Width(sp2)
-		if rs != nil && primary(c, "applybatch", "应用到剪贴板空间", "play", "", res.out == a.scopeText()).Clicked() && res.out != a.scopeText() {
+		if rs != nil && primary(c, "applybatch", "应用到文档", "play", "", res.out == a.scopeText()).Clicked() && res.out != a.scopeText() {
 			rules := rs.Rules
 			a.Transform("批量替换："+rs.Name, func(in string) string { out, _, _ := engine.ApplyRules(in, rules); return out })
 		}

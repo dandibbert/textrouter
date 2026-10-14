@@ -80,7 +80,7 @@ func (a *App) cleanersView(c *ui.Context) {
 			if sel == nil {
 				ui.Column(c).Grow(1).Center().Gap(sp2).Children(func() {
 					ui.Icon(c, ic("library-big")).FontSize(28).TextColor(k.faint)
-					hint(c, "选择左侧的清理器，预览它对剪贴板空间文本的效果。")
+					hint(c, "选择左侧的清理器，预览它对当前文档的效果。")
 				})
 				return
 			}
@@ -99,7 +99,7 @@ func (a *App) cleanersView(c *ui.Context) {
 					if pinned {
 						label, icon = "取消固定", "pin-off"
 					}
-					if ghost(c, "pincl", label, icon, false).Tooltip("固定到剪贴板空间").Clicked() {
+					if ghost(c, "pincl", label, icon, false).Tooltip("固定到常用").Clicked() {
 						a.togglePin(sel.Name)
 					}
 					if primary(c, "applycl", "应用", "play", "", out == a.Text).Clicked() && out != a.Text {
@@ -351,7 +351,7 @@ func (a *App) settingsView(c *ui.Context) {
 						a.save()
 					}
 				})
-				row("打开剪贴板空间的全局快捷键", "格式如 CmdOrCtrl+Shift+V、Alt+Space。按下后窗口弹出并读取当前剪贴板。", true, func() {
+				row("打开剪贴板文档的全局快捷键", "格式如 CmdOrCtrl+Shift+V、Alt+Space。按下后窗口弹出并读取当前剪贴板。", true, func() {
 					field(c, ui.TextInput(c, &s.hotkey).Label("全局快捷键").Width(200).Font(monoFont))
 					if ghost(c, "hk", "应用", "", false).Clicked() {
 						if err := a.Platform.SetHotkey(s.hotkey); err != nil {

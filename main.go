@@ -118,7 +118,6 @@ func main() {
 			text := mygo.Clipboard.ReadText()
 			d.win.Update(func() {
 				a.LoadClipboard(text)
-				a.Page = gui.PageClipboard
 			})
 			d.win.Show()
 			d.win.Focus()
@@ -141,27 +140,38 @@ func main() {
 				d.win.Update(func() { a.Page = p })
 			}
 		}
+		run := func(fn func()) func(*mygo.MenuItem, *mygo.Window) {
+			return func(*mygo.MenuItem, *mygo.Window) { d.win.Update(fn) }
+		}
 		mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
 			{Role: mygo.RoleAppMenu},
 			{Role: mygo.RoleEditMenu},
-			{Label: "前往", Submenu: []*mygo.MenuItem{
-				{Label: "剪贴板空间", Accelerator: "CmdOrCtrl+1", Click: goPage(gui.PageClipboard)},
-				{Label: "查找替换", Accelerator: "CmdOrCtrl+2", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Accelerator: "CmdOrCtrl+3", Click: goPage(gui.PageBatch)},
-				{Label: "动作链", Accelerator: "CmdOrCtrl+4", Click: goPage(gui.PageChains)},
-				{Label: "清理器库", Accelerator: "CmdOrCtrl+5", Click: goPage(gui.PageCleaners)},
-				{Label: "设置", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
+			{Label: "文件", Submenu: []*mygo.MenuItem{
+				{Label: "剪贴板", Accelerator: "CmdOrCtrl+1", Click: run(a.ShowClipboard)},
+				{Label: "打开…", Accelerator: "CmdOrCtrl+O", Click: run(a.OpenFileDialog)},
+				{Label: "存储为…", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
+			}},
+			{Label: "查找", Submenu: []*mygo.MenuItem{
+				{Label: "查找替换", Accelerator: "CmdOrCtrl+F", Click: run(a.ShowFind)},
+			}},
+			{Label: "工具", Submenu: []*mygo.MenuItem{
+				{Label: "批量替换…", Accelerator: "CmdOrCtrl+Shift+R", Click: goPage(gui.PageBatch)},
+				{Label: "我的清理器（动作链）…", Accelerator: "CmdOrCtrl+Shift+L", Click: goPage(gui.PageChains)},
+				{Label: "清理器库…", Click: goPage(gui.PageCleaners)},
+				{Label: "批量处理文件…", Click: goPage(gui.PageFiles)},
+				mygo.Separator(),
+				{Label: "全部动作…", Accelerator: "CmdOrCtrl+K", Click: run(a.OpenPalette)},
+				{Label: "设置…", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
 			}},
 			{Role: mygo.RoleWindowMenu},
 		}))
-		tray, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: "TextRouter — 打开剪贴板空间"})
+		tray, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: "TextRouter — 打开剪贴板"})
 		if err != nil {
 			log.Println("tray:", err)
 		} else {
 			menu := mygo.NewMenu([]*mygo.MenuItem{
-				{Label: "打开剪贴板空间", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
-				{Label: "查找替换", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Click: goPage(gui.PageBatch)},
+				{Label: "打开剪贴板", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
+				{Label: "批量替换…", Click: goPage(gui.PageBatch)},
 				mygo.Separator(),
 				{Role: mygo.RoleQuit},
 			})

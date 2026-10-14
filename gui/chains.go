@@ -71,7 +71,7 @@ func (a *App) chainsView(c *ui.Context) {
 		}).Height(30).Radius(rMd).Background(k.field).Border(1, ui.Transparent).FontSize(12.5)
 		if ch != nil {
 			run := a.runChain(ch)
-			if primary(c, "applychain", "应用到剪贴板空间", "play", "", run.out == a.scopeText()).Clicked() && run.out != a.scopeText() {
+			if primary(c, "applychain", "应用到文档", "play", "", run.out == a.scopeText()).Clicked() && run.out != a.scopeText() {
 				a.Transform(ch.Name, a.chainFn(ch))
 			}
 		}
@@ -141,7 +141,7 @@ func (a *App) chainsView(c *ui.Context) {
 					a.save()
 				}
 				pinned := a.isPinned("chain:" + ch.ID)
-				label, icon := "固定到剪贴板空间", "pin"
+				label, icon := "固定到常用", "pin"
 				if pinned {
 					label, icon = "已固定", "pin-off"
 				}
