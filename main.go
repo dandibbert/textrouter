@@ -154,6 +154,7 @@ func buildMenu() *mygo.Menu {
 		}},
 		{Label: "清理", Submenu: []*mygo.MenuItem{
 			{Label: "MyScrub 一键清理", Accelerator: "CmdOrCtrl+J", Click: command("myScrub")},
+			{Label: "命令面板…", Accelerator: "CmdOrCtrl+K", Click: command("palette")},
 			mygo.Separator(),
 			{Label: "清理器列表", Accelerator: "CmdOrCtrl+1", Click: command("showCleaners")},
 			{Label: "查找面板", Accelerator: "CmdOrCtrl+2", Click: command("find")},

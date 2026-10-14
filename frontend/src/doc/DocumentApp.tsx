@@ -3,6 +3,10 @@ import type { EditorView, ViewUpdate } from "@codemirror/view";
 import {
   BookOpen,
   ClipboardCopy,
+  FilePlus2,
+  Files,
+  FolderOpen,
+  Layers,
   ClipboardPaste,
   ClipboardType,
   Copy,
@@ -12,6 +16,8 @@ import {
   Pilcrow,
   Replace,
   Search,
+  Settings,
+  Sparkle,
   Sparkles,
   WrapText,
   Wand2,
@@ -25,6 +31,7 @@ import { debounce, textStats, type Stats } from "../lib/text";
 import { createEditor, reconfigure, type EditorOptions } from "./editor";
 import { CleanerList, type CleanerListHandle } from "./CleanerList";
 import { FindPanel, type FindPanelHandle } from "./FindPanel";
+import { Palette, type PaletteItem } from "./Palette";
 
 function editorOptions(p: Prefs): EditorOptions {
   return {
@@ -228,6 +235,12 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
     if (focusFind) findRef.current?.focus();
   }, [focusFind]);
 
+  const [palette, setPalette] = useState(false);
+  const closePalette = () => {
+    setPalette(false);
+    viewRef.current?.focus();
+  };
+
   const zoom = (z: number) => setPref(prefs, "zoom", Math.max(50, Math.min(300, z)));
 
   // Menu commands, window events.
@@ -258,6 +271,7 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
       setTimeout(() => cleanersRef.current?.focusSearch(), 0);
     },
     toggleSidebar: () => toggleSidebar(),
+    palette: () => setPalette((p) => !p),
     zoomIn: () => zoom(prefs.zoom + 10),
     zoomOut: () => zoom(prefs.zoom - 10),
     zoomReset: () => zoom(100),
@@ -296,6 +310,48 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
 
   const myScrubName = boot.cleaners.find((c) => c.name === (prefs.myScrub || "Scrub"))?.zh ?? prefs.myScrub;
 
+  const paletteItems = (): PaletteItem[] => {
+    const h = handlers.current;
+    const act = (id: string, title: string, icon: React.ReactNode, run: () => void, k?: string, sub?: string): PaletteItem => ({
+      id,
+      section: "操作",
+      title,
+      sub,
+      icon,
+      keys: k ? keys(k) : undefined,
+      run,
+    });
+    const scrub = (n: string) => n === "MyScrub" || n === "Scrub";
+    return [
+      { ...act("myScrub", "一键清理", <Sparkles />, myScrub, "CmdOrCtrl+J", myScrubName), tile: "accent" },
+      act("find", "查找替换", <Search />, showFind, "CmdOrCtrl+F"),
+      act("copy", "拷贝", <Copy />, copy, undefined, "选中的文本，没有选中则全部"),
+      act("paste", "粘贴", <ClipboardPaste />, paste),
+      act("copyAll", "全部拷贝", <ClipboardCopy />, copyAll, "CmdOrCtrl+Shift+C"),
+      act("pasteOver", "粘贴覆盖", <Replace />, pasteOver, "CmdOrCtrl+Shift+V", "用剪贴板替换全部文本"),
+      act("library", "我的库", <BookOpen />, () => Document.openLibrary(""), "CmdOrCtrl+Shift+L", "自定义清理器和分组"),
+      act("batch", "批量处理文件", <Files />, () => Document.openBatch()),
+      act("open", "打开文件", <FolderOpen />, h.open, "CmdOrCtrl+O"),
+      act("new", "新建文档", <FilePlus2 />, () => Document.new(), "CmdOrCtrl+N"),
+      act("sidebar", sidebar ? "隐藏侧栏" : "显示侧栏", <PanelLeft />, () => toggleSidebar(), "CmdOrCtrl+Alt+S"),
+      act("prefs", "偏好设置", <Settings />, () => Document.openPrefs(), "CmdOrCtrl+,"),
+      ...boot.cleaners
+        .filter((c) => c.implemented)
+        .map(
+          (c): PaletteItem => ({
+            id: "c:" + (c.uuid ?? c.name),
+            section: "清理器",
+            title: c.zh,
+            sub: c.custom ? c.desc || "自定义清理器" : c.name,
+            search: c.name + " " + c.desc + " " + c.category,
+            icon: c.custom ? <Layers /> : scrub(c.name) ? <Sparkle /> : <Wand2 />,
+            tile: c.custom ? "plain" : scrub(c.name) ? "scrub" : "plain",
+            run: () => applyCleaner(c),
+          }),
+        ),
+    ];
+  };
+
   return (
     <div className="doc">
       <div className="doc-body">
@@ -326,7 +382,7 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
             <div className="resizer" onMouseDown={startResize} />
           </aside>
         )}
-        <main className="editor-col">
+        <main className={"editor-col" + (sidebar ? "" : " solo")}>
           <header className={"titlebar main-toolbar" + (sidebar ? "" : " inset")}>
             {!sidebar && (
               <button className="tool icon-only" onClick={() => toggleSidebar(true)} title={`显示侧栏 ${keys("CmdOrCtrl+Alt+S")}`}>
@@ -373,55 +429,61 @@ function DocumentWindow({ boot, info }: { boot: Boot; info: DocInfo }) {
               <span>我的库</span>
             </button>
           </header>
-          <div className="editor-host" ref={host} />
-          <footer className="statusbar">
-            <MenuButton
-              className="status-btn"
-              icon={<ZoomIn />}
-              label={`${prefs.zoom}%`}
-              title="缩放"
-              items={[50, 75, 90, 100, 110, 125, 150, 175, 200, 250].map((z) => ({ label: `${z}%`, checked: prefs.zoom === z, onSelect: () => zoom(z) }))}
-            />
-            <button className={"status-btn" + (prefs.showLineNumbers ? " on" : "")} onClick={() => setPref(prefs, "showLineNumbers", !prefs.showLineNumbers)} title="行号">
-              <ListOrdered />
-            </button>
-            <button className={"status-btn" + (prefs.wrapText ? " on" : "")} onClick={() => setPref(prefs, "wrapText", !prefs.wrapText)} title="自动换行">
-              <WrapText />
-            </button>
-            <button className={"status-btn" + (prefs.showInvisibles ? " on" : "")} onClick={() => setPref(prefs, "showInvisibles", !prefs.showInvisibles)} title="显示不可见字符（空格、制表符、换行）">
-              <Pilcrow />
-            </button>
-            <div className="spacer" />
-            {prefs.showWordCount ? (
-              <button className="status-btn" onClick={() => setPref(prefs, "showWordCount", false)} title="点击隐藏统计">
-                <span className="stats">
-                  {selection > 0 && (
+          <div className="sheet">
+            <div className="editor-host" ref={host} />
+            <footer className="statusbar">
+              <MenuButton
+                className="status-btn"
+                icon={<ZoomIn />}
+                label={`${prefs.zoom}%`}
+                title="缩放"
+                items={[50, 75, 90, 100, 110, 125, 150, 175, 200, 250].map((z) => ({ label: `${z}%`, checked: prefs.zoom === z, onSelect: () => zoom(z) }))}
+              />
+              <button className={"status-btn" + (prefs.showLineNumbers ? " on" : "")} onClick={() => setPref(prefs, "showLineNumbers", !prefs.showLineNumbers)} title="行号">
+                <ListOrdered />
+              </button>
+              <button className={"status-btn" + (prefs.wrapText ? " on" : "")} onClick={() => setPref(prefs, "wrapText", !prefs.wrapText)} title="自动换行">
+                <WrapText />
+              </button>
+              <button className={"status-btn" + (prefs.showInvisibles ? " on" : "")} onClick={() => setPref(prefs, "showInvisibles", !prefs.showInvisibles)} title="显示不可见字符（空格、制表符、换行）">
+                <Pilcrow />
+              </button>
+              <div className="spacer" />
+              {prefs.showWordCount ? (
+                <button className="status-btn" onClick={() => setPref(prefs, "showWordCount", false)} title="点击隐藏统计">
+                  <span className="stats">
+                    {selection > 0 && (
+                      <span>
+                        已选 <b>{selection}</b>
+                      </span>
+                    )}
                     <span>
-                      已选 <b>{selection}</b>
+                      段落 <b>{stats.paragraphs}</b>
                     </span>
-                  )}
-                  <span>
-                    段落 <b>{stats.paragraphs}</b>
+                    <span>
+                      词 <b>{stats.words}</b>
+                    </span>
+                    <span>
+                      字符 <b>{stats.chars}</b>
+                    </span>
+                    <span>
+                      不含空白 <b>{stats.charsNoSpace}</b>
+                    </span>
                   </span>
-                  <span>
-                    词 <b>{stats.words}</b>
-                  </span>
-                  <span>
-                    字符 <b>{stats.chars}</b>
-                  </span>
-                  <span>
-                    不含空白 <b>{stats.charsNoSpace}</b>
-                  </span>
-                </span>
+                </button>
+              ) : (
+                <button className="status-btn" onClick={() => setPref(prefs, "showWordCount", true)}>
+                  显示统计
+                </button>
+              )}
+              <button className="status-btn" onClick={() => setPalette(true)} title="命令面板：搜索并执行清理器和操作">
+                操作 <kbd className="keycap">{keys("CmdOrCtrl+K")}</kbd>
               </button>
-            ) : (
-              <button className="status-btn" onClick={() => setPref(prefs, "showWordCount", true)}>
-                显示统计
-              </button>
-            )}
-          </footer>
+            </footer>
+          </div>
         </main>
       </div>
+      {palette && <Palette items={paletteItems()} onClose={closePalette} />}
       <Toasts />
     </div>
   );
