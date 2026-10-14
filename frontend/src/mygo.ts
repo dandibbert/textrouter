@@ -328,6 +328,10 @@ export const Document = {
   close(text: string): Promise<void> {
     return call("Document.Close", text);
   },
+  /** Confirm asks a yes/no question attached to the calling window. */
+  confirm(message: string, detail: string, ok: string): Promise<boolean> {
+    return call("Document.Confirm", message, detail, ok);
+  },
   /**
    * Hide hides the app (macOS) or the window, so the previous app comes back
    * for pasting.

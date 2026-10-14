@@ -427,6 +427,18 @@ func (Document) OpenPrefs() { openSingle("prefs") }
 // OpenBatch shows Batch File Cleaning.
 func (Document) OpenBatch() { openSingle("batch") }
 
+// Confirm asks a yes/no question attached to the calling window.
+func (Document) Confirm(ctx context.Context, message, detail, ok string) bool {
+	if ok == "" {
+		ok = "好"
+	}
+	r, err := mygo.Dialog.Message(mygo.MessageOptions{
+		Parent: mygo.CallerWindow(ctx), Type: mygo.MessageWarning, Message: message, Detail: detail,
+		Buttons: []string{ok, "取消"}, DefaultButton: 0, CancelButton: 1,
+	})
+	return err == nil && r.Button == 0
+}
+
 // Hide hides the app (macOS) or the window, so the previous app comes back
 // for pasting.
 func (Document) Hide(ctx context.Context) {
