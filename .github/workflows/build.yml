@@ -18,6 +18,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci
+      - name: Type-check and build the frontend
+        run: npm --prefix frontend run build
       - run: go vet ./...
       - run: go test -count=1 -v ./engine/ 2>&1 | grep -E "^(---|ok|FAIL)|pass|truth|cleaners:|examples"
       - run: go test -count=1 ./...
@@ -33,7 +41,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test -count=1 ./engine/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci
+      - run: go test -count=1 ./...
       - name: Build app and disk images (ad-hoc signed)
         run: go tool mygo build -platform darwin/arm64,darwin/amd64
       - name: Zip the .app bundles
