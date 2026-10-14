@@ -339,7 +339,10 @@ func field(c *ui.Context, e ui.Element) ui.Element {
 // the window's drag region under the hidden title bar.
 func pageHeader(c *ui.Context, title, subtitle string, actions func()) {
 	k := tok(c)
-	ui.Row(c).Height(titleBarH).Padding(0, sp5, 0, sp6).Gap(sp2).AlignItems(ui.Center).DragWindow().Children(func() {
+	ui.Row(c).Height(titleBarH).Padding(0, sp5, 0, sp3).Gap(sp2).AlignItems(ui.Center).DragWindow().Children(func() {
+		if headerLead != nil {
+			headerLead()
+		}
 		ui.Text(c, title).FontSize(15).FontWeight(650).TextColor(k.text).SingleLine()
 		if subtitle != "" {
 			ui.Text(c, subtitle).FontSize(12.5).TextColor(k.faint).SingleLine().MinWidth(0).Shrink(1).Margin(0, 0, 0, sp1)
@@ -350,6 +353,10 @@ func pageHeader(c *ui.Context, title, subtitle string, actions func()) {
 		}
 	})
 }
+
+// headerLead draws what precedes a page title (sidebar toggle, room for
+// the window controls); set by the App each frame.
+var headerLead func()
 
 // hint is a muted helper line.
 func hint(c *ui.Context, s string) ui.Element {

@@ -108,7 +108,7 @@ func main() {
 			// Inset title bar: the traffic lights float over the sidebar,
 			// which shows the window's sidebar material (macOS).
 			TitleBarStyle:  mygo.TitleBarHiddenInset,
-			TitleBarHeight: 52,
+			TitleBarHeight: 42,
 			Vibrancy:       mygo.VibrancySidebar,
 			Content:        ui.View(a.View),
 		})

@@ -6,9 +6,11 @@ package gui
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/editor"
 )
 
 // Platform is what the interface needs from the desktop. All methods may
@@ -53,9 +55,16 @@ type App struct {
 	Page string
 	Text string // the Clipboard Space text, shared by every page as the sample
 
-	history []snapshot // undo stack of applied operations
-	future  []snapshot
-	last    *lastOp
+	last *lastOp
+
+	ed       *editor.State // the Clipboard Space editor; its buffer holds Text
+	edVer    uint64
+	edSynced string
+	invisVer uint64
+	invisOn  bool
+	view     editorPrefs
+	sideOpen bool
+	filePath string
 
 	paletteOpen  bool
 	paletteQuery string
@@ -77,14 +86,11 @@ type App struct {
 	writeClip func(string)
 }
 
-type snapshot struct {
-	text, label string
-}
-
 type lastOp struct {
 	label    string
 	before   string
 	after    string
+	scope    string
 	showDiff bool
 }
 
@@ -103,67 +109,62 @@ func New(lib *engine.Library, p Platform) *App {
 	}
 	a.clean.category = "全部"
 	a.batch.showDiff = true
+	a.view = editorPrefs{lineNumbers: true, wrap: true, fontSize: 15}
 	return a
 }
 
 // LoadClipboard replaces the workspace text (called when the window opens).
+// It is one undoable edit.
 func (a *App) LoadClipboard(s string) {
+	a.syncEditor()
 	if s == a.Text {
 		return
 	}
-	a.push("读取剪贴板")
-	a.Text = s
+	a.replaceAll(s)
 	a.last = nil
+	a.clearDiffBase()
 }
 
-func (a *App) push(label string) {
-	a.history = append(a.history, snapshot{a.Text, label})
-	if len(a.history) > 200 {
-		a.history = a.history[1:]
-	}
-	a.future = nil
-}
-
-// Transform applies fn to the workspace text as one undoable operation.
+// Transform applies fn as one undoable operation: to each selection of
+// the editor when there is one, else to the whole text.
 func (a *App) Transform(label string, fn func(string) string) {
+	a.syncEditor()
 	before := a.Text
-	after := fn(before)
+	scope := a.applyScoped(fn)
+	after := a.Text
 	if after == before {
-		a.status = "「" + label + "」没有改变文本"
+		a.status = "「" + label + "」没有改变" + scope
 		return
 	}
-	a.push(label)
-	a.Text = after
-	a.last = &lastOp{label: label, before: before, after: after}
+	a.last = &lastOp{label: label, before: before, after: after, scope: scope}
+	a.ed.DiffBase = editor.NewBuffer(before)
 	ins, del := engine.DiffStats(engine.Diff(before, after))
-	a.status = fmt.Sprintf("已应用「%s」：+%d −%d 字符", label, ins, del)
-	a.toast, a.toastUndo = fmt.Sprintf("已应用「%s」 · +%d −%d", label, ins, del), true
-	a.last.showDiff = false
+	a.status = fmt.Sprintf("已对%s应用「%s」：+%d −%d 字符", scope, label, ins, del)
+	a.toast, a.toastUndo = fmt.Sprintf("「%s」· %s · +%d −%d", label, scope, ins, del), true
 }
 
-// Undo restores the text before the last operation.
+// Undo undoes the last edit or action (one shared history).
 func (a *App) Undo() {
-	if len(a.history) == 0 {
+	a.syncEditor()
+	if !a.ed.Buffer.CanUndo() {
 		return
 	}
-	s := a.history[len(a.history)-1]
-	a.history = a.history[:len(a.history)-1]
-	a.future = append(a.future, snapshot{a.Text, s.label})
-	a.Text = s.text
+	a.ed.Buffer.Undo()
+	a.syncEditor()
 	a.last = nil
-	a.status = "已撤销「" + s.label + "」"
+	a.clearDiffBase()
+	a.status = "已撤销"
 }
 
-// Redo re-applies an undone operation.
+// Redo re-applies an undone edit.
 func (a *App) Redo() {
-	if len(a.future) == 0 {
+	a.syncEditor()
+	if !a.ed.Buffer.CanRedo() {
 		return
 	}
-	s := a.future[len(a.future)-1]
-	a.future = a.future[:len(a.future)-1]
-	a.history = append(a.history, snapshot{a.Text, s.label})
-	a.Text = s.text
-	a.status = "已重做「" + s.label + "」"
+	a.ed.Buffer.Redo()
+	a.syncEditor()
+	a.status = "已重做"
 }
 
 func (a *App) save() {
@@ -209,18 +210,42 @@ func (a *App) View(c *ui.Context) {
 		c.OnShortcut(ui.Cmd, []ui.Key{ui.Key1, ui.Key2, ui.Key3, ui.Key4, ui.Key5}[i], func() { a.Page = id })
 	}
 	c.OnShortcut(ui.Cmd, ui.KeyComma, func() { a.Page = PageSettings })
+	c.OnShortcut(ui.Cmd, ui.KeyBackslash, func() { a.sideOpen = !a.sideOpen })
+	a.syncEditor()
 	vib := c.Vibrancy()
 	if vib {
 		c.Root().Background(ui.Transparent)
 	}
-	ui.Row(c).Fill().AlignItems(ui.Stretch).Children(func() {
-		side := ui.Column(c).Width(sidebarW).FillHeight()
-		if !vib {
-			side.Background(k.sidebar)
+	headerLead = func() {
+		bar := c.TitleBar()
+		if !a.sideOpen && bar.Left > 0 {
+			ui.Box(c).Width(bar.Left - sp3)
 		}
-		side.Children(func() { a.sidebar(c) })
-		ui.Box(c).Width(1).FillHeight().Background(k.hair)
-		ui.Column(c).Grow(1).FillHeight().MinWidth(0).Background(k.window).Children(func() {
+		a.sidebarToggle(c)
+		ui.Box(c).Width(sp1)
+	}
+	ui.Row(c).Fill().AlignItems(ui.Stretch).Children(func() {
+		target := float32(0)
+		if a.sideOpen {
+			target = sidebarW
+		}
+		holder := ui.Box(c.Key("sidewrap")).FillHeight().Clip()
+		w := holder.AnimateTo("w", target, ui.Smooth)
+		holder.Width(w)
+		if w > 0.5 {
+			holder.Children(func() {
+				side := ui.Column(c).Width(sidebarW).FillHeight().BorderWidth(0, 1, 0, 0).BorderColor(k.hair)
+				if !vib {
+					side.Background(k.sidebar)
+				}
+				side.Children(func() { a.sidebar(c) })
+			})
+		}
+		bg := k.window
+		if a.Page == PageClipboard {
+			bg = k.canvas
+		}
+		ui.Column(c).Grow(1).FillHeight().MinWidth(0).Background(bg).Children(func() {
 			switch a.Page {
 			case PageFind:
 				a.findView(c)
@@ -337,28 +362,61 @@ func (a *App) navRow(c *ui.Context, it navItem, count string) {
 
 func (a *App) statusBar(c *ui.Context) {
 	k := tok(c)
-	ui.Row(c).Height(30).Padding(0, sp5).Gap(sp3).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
+	bg := k.window
+	if a.Page == PageClipboard {
+		bg = k.canvas
+	}
+	ui.Row(c).Height(26).Padding(0, sp4).Gap(sp3).AlignItems(ui.Center).Background(bg).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
 		st := a.status
-		dot := k.green
 		if st == "" {
 			st = "就绪"
-			dot = k.faint
 		}
+		col := k.faint
 		if strings.Contains(st, "失败") || strings.Contains(st, "错误") {
-			dot = k.red
+			col = k.red
 		}
-		ui.Box(c).Size(6, 6).Radius(3).Background(dot)
-		ui.Text(c, st).FontSize(11.5).TextColor(k.muted).Grow(1).SingleLine()
+		ui.Text(c, st).FontSize(11).TextColor(col).Grow(1).SingleLine()
+		if a.last != nil && a.Page == PageClipboard {
+			u := ui.ButtonBase(c.Key("sb-undo")).Height(18).Padding(0, 6).Radius(4).Label("撤销上一步")
+			if u.Hovered() {
+				u.Background(k.hover)
+			}
+			u.Children(func() { ui.Text(c, "撤销").FontSize(11).FontWeight(600).TextColor(k.accent) })
+			if u.Clicked() {
+				a.Undo()
+			}
+		}
+		parts := []string{}
+		if a.Page == PageClipboard && a.ed != nil {
+			p := a.ed.CursorPos()
+			parts = append(parts, fmt.Sprintf("行 %d，列 %d", p.Line+1, utf8.RuneCountInString(a.ed.Buffer.Line(p.Line)[:min(p.Col, len(a.ed.Buffer.Line(p.Line)))])+1))
+			if sels := a.selections(); len(sels) > 0 {
+				n, lines := 0, 0
+				for _, s := range sels {
+					t := a.ed.Buffer.Slice(s.Start(), s.End())
+					n += utf8.RuneCountInString(t)
+					lines += strings.Count(t, "\n") + 1
+				}
+				parts = append(parts, fmt.Sprintf("已选 %d 字 · %d 行", n, lines))
+			}
+		}
 		lines := strings.Count(a.Text, "\n") + 1
 		if a.Text == "" {
 			lines = 0
 		}
-		words := len(strings.Fields(a.Text))
-		for i, s := range []string{fmt.Sprintf("%d 字符", engine.RuneLen(a.Text)), fmt.Sprintf("%d 词", words), fmt.Sprintf("%d 行", lines)} {
+		parts = append(parts, fmt.Sprintf("%d 字符", engine.RuneLen(a.Text)), fmt.Sprintf("%d 词", len(strings.Fields(a.Text))), fmt.Sprintf("%d 行", lines))
+		if a.Page == PageClipboard && a.view.fontSize != 15 && a.view.fontSize != 0 {
+			parts = append(parts, fmt.Sprintf("%d%%", int(a.view.fontSize/15*100+0.5)))
+		}
+		for i, s := range parts {
 			if i > 0 {
-				ui.Box(c).Size(1, 10).Background(k.hairStrong)
+				ui.Text(c, "·").FontSize(11).TextColor(k.faint.Alpha(0.6))
 			}
-			ui.Text(c, s).FontSize(11.5).TextColor(k.muted).FontFeatures("tnum").SingleLine()
+			c2 := k.faint
+			if strings.HasPrefix(s, "已选") {
+				c2 = k.accent
+			}
+			ui.Text(c, s).FontSize(11).TextColor(c2).FontFeatures("tnum").SingleLine()
 		}
 	})
 }

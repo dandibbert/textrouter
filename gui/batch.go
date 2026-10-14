@@ -36,9 +36,9 @@ type batchResult struct {
 var batchMemo memo
 
 func (a *App) runRules(rules []engine.Rule) batchResult {
-	key := hashOf("batch", a.Text, fmt.Sprintf("%+v", rules))
+	key := hashOf("batch", a.scopeText(), fmt.Sprintf("%+v", rules))
 	return batchMemo.get(key, func() any {
-		out, counts, err := engine.ApplyRules(a.Text, rules)
+		out, counts, err := engine.ApplyRules(a.scopeText(), rules)
 		return batchResult{out, counts, err}
 	}).(batchResult)
 }
@@ -56,9 +56,11 @@ func (a *App) batchView(c *ui.Context) {
 		res = a.runRules(rs.Rules)
 	}
 	pageHeader(c, "批量替换", "从上到下依次执行，每条作用于上一条的结果", func() {
-		if rs != nil && primary(c, "applybatch", "应用到剪贴板空间", "play", "", res.out == a.Text).Clicked() && res.out != a.Text {
-			out := res.out
-			a.Transform("批量替换："+rs.Name, func(string) string { return out })
+		a.scopePill(c, k)
+		ui.Box(c).Width(sp2)
+		if rs != nil && primary(c, "applybatch", "应用到剪贴板空间", "play", "", res.out == a.scopeText()).Clicked() && res.out != a.scopeText() {
+			rules := rs.Rules
+			a.Transform("批量替换："+rs.Name, func(in string) string { out, _, _ := engine.ApplyRules(in, rules); return out })
 		}
 	})
 	// Rule set bar.
@@ -168,7 +170,7 @@ func (a *App) batchView(c *ui.Context) {
 		canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
 			ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
 				ui.Text(c, "结果预览").FontSize(13).FontWeight(600).TextColor(k.text)
-				diffBadge(c, a.Text, res.out)
+				diffBadge(c, a.scopeText(), res.out)
 				ui.Spacer(c)
 				idx := map[bool]int{false: 0, true: 1}[b.showDiff]
 				if segmented(c, "bview", &idx, "结果", "改动对照") {
@@ -177,7 +179,7 @@ func (a *App) batchView(c *ui.Context) {
 			})
 			ui.Scroll(c).Grow(1).Padding(sp5, sp6).Children(func() {
 				if b.showDiff {
-					diffView(c, a.Text, res.out)
+					diffView(c, a.scopeText(), res.out)
 				} else {
 					ui.Text(c, res.out).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
 				}

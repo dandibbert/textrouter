@@ -38,12 +38,12 @@ type findResult struct {
 var findMemo memo
 
 func (a *App) runFind(o engine.FindOptions) findResult {
-	key := hashOf("find", a.Text, o.Find, o.Replace, fmt.Sprint(o.Regex, o.MatchCase), o.RegexOptions)
+	key := hashOf("find", a.scopeText(), o.Find, o.Replace, fmt.Sprint(o.Regex, o.MatchCase), o.RegexOptions)
 	return findMemo.get(key, func() any {
-		ms, err := o.FindAll(a.Text, 0)
-		r := findResult{matches: ms, err: err, out: a.Text}
+		ms, err := o.FindAll(a.scopeText(), 0)
+		r := findResult{matches: ms, err: err, out: a.scopeText()}
 		if err == nil && len(ms) > 0 {
-			r.out = engine.ApplyMatches(a.Text, ms)
+			r.out = engine.ApplyMatches(a.scopeText(), ms)
 		}
 		return r
 	}).(findResult)
@@ -55,6 +55,8 @@ func (a *App) findView(c *ui.Context) {
 	o := f.options()
 	res := a.runFind(o)
 	pageHeader(c, "查找替换", "", func() {
+		a.scopePill(c, k)
+		ui.Box(c).Width(sp2)
 		if ghost(c, "torule", "加入批量规则", "replace-all", o.Find == "").Clicked() && o.Find != "" {
 			a.addRuleFromFind(o)
 		}
@@ -63,7 +65,7 @@ func (a *App) findView(c *ui.Context) {
 		}
 		ui.Box(c).Width(sp1)
 		if primary(c, "replaceall", fmt.Sprintf("全部替换（%d 处）", len(res.matches)), "replace-all", "", len(res.matches) == 0).Clicked() && len(res.matches) > 0 {
-			a.Transform("查找替换", func(string) string { return res.out })
+			a.Transform("查找替换", func(in string) string { out, _, _ := o.Apply(in); return out })
 		}
 	})
 	ui.Row(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp4).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
@@ -189,7 +191,7 @@ func (a *App) findView(c *ui.Context) {
 				if f.showResult == 1 {
 					ui.Text(c, res.out).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
 				} else {
-					matchView(c, a.Text, res.matches)
+					matchView(c, a.scopeText(), res.matches)
 				}
 			})
 			if len(res.matches) > 0 {

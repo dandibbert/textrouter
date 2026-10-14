@@ -34,8 +34,8 @@ var chainMemo memo
 func (a *App) runChain(ch *engine.Chain) chainRun {
 	js, _ := json.Marshal(ch.Steps)
 	libjs, _ := json.Marshal(a.Lib.Chains)
-	return chainMemo.get(hashOf("chain", a.Text, string(js), string(libjs)), func() any {
-		out, tr := ch.Run(a.Text, a.Lib.Resolver())
+	return chainMemo.get(hashOf("chain", a.scopeText(), string(js), string(libjs)), func() any {
+		out, tr := ch.Run(a.scopeText(), a.Lib.Resolver())
 		return chainRun{out, tr}
 	}).(chainRun)
 }
@@ -52,6 +52,8 @@ func (a *App) chainsView(c *ui.Context) {
 		s.selID = ch.ID
 	}
 	pageHeader(c, "动作链", "把多个动作串起来，一键完成", func() {
+		a.scopePill(c, k)
+		ui.Box(c).Width(sp2)
 		ui.MenuButton(c, "导入 / 导出", func(m *ui.Menu) {
 			if m.Item("导入 TextSoap 清理器库（.textsoap9Lib / plist）…").Chosen() {
 				a.importTextSoap()
@@ -69,9 +71,8 @@ func (a *App) chainsView(c *ui.Context) {
 		}).Height(30).Radius(rMd).Background(k.field).Border(1, ui.Transparent).FontSize(12.5)
 		if ch != nil {
 			run := a.runChain(ch)
-			if primary(c, "applychain", "应用到剪贴板空间", "play", "", run.out == a.Text).Clicked() && run.out != a.Text {
-				out := run.out
-				a.Transform(ch.Name, func(string) string { return out })
+			if primary(c, "applychain", "应用到剪贴板空间", "play", "", run.out == a.scopeText()).Clicked() && run.out != a.scopeText() {
+				a.Transform(ch.Name, a.chainFn(ch))
 			}
 		}
 	})
@@ -165,7 +166,7 @@ func (a *App) chainsView(c *ui.Context) {
 			ui.Scroll(c).Grow(1).Children(func() {
 				ui.Column(c).Gap(0).Padding(2, 6, 4, 2).Children(func() {
 					s.pending = nil
-					a.stepList(c, &ch.Steps, "", a.Text, run.trace)
+					a.stepList(c, &ch.Steps, "", a.scopeText(), run.trace)
 					if s.pending != nil {
 						s.pending()
 						s.pending = nil
@@ -176,7 +177,7 @@ func (a *App) chainsView(c *ui.Context) {
 						ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
 							ui.Icon(c, ic("circle-check")).FontSize(14).TextColor(k.green)
 							ui.Text(c, "最终结果").FontSize(13).FontWeight(600).TextColor(k.text)
-							diffBadge(c, a.Text, run.out)
+							diffBadge(c, a.scopeText(), run.out)
 							ui.Spacer(c)
 							idx := map[bool]int{false: 0, true: 1}[s.showDiff]
 							if segmented(c, "cview", &idx, "结果", "改动对照") {
@@ -185,7 +186,7 @@ func (a *App) chainsView(c *ui.Context) {
 						})
 						ui.Column(c).Padding(sp5, sp6).Children(func() {
 							if s.showDiff {
-								diffView(c, a.Text, run.out)
+								diffView(c, a.scopeText(), run.out)
 							} else {
 								ui.Text(c, clip(run.out)).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
 							}

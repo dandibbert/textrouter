@@ -9,114 +9,6 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// clipboardView is the main screen: the clipboard text on a large canvas,
-// a compact action bar, and one primary "copy & close".
-func (a *App) clipboardView(c *ui.Context) {
-	k := tok(c)
-	c.OnShortcut(ui.Cmd, ui.KeyEnter, a.done)
-	pageHeader(c, "剪贴板空间", "", func() {
-		if iconButton(c, "read", "clipboard-paste", "读取剪贴板", "重新读取剪贴板").Clicked() {
-			a.LoadClipboard(c.ReadClipboard())
-		}
-		u := iconButton(c, "undo", "undo-2", "撤销", "撤销 ⌘Z").Disabled(len(a.history) == 0)
-		if len(a.history) == 0 {
-			u.Opacity(0.35)
-		}
-		if u.Clicked() {
-			a.Undo()
-		}
-		r := iconButton(c, "redo", "redo-2", "重做", "重做 ⇧⌘Z").Disabled(len(a.future) == 0)
-		if len(a.future) == 0 {
-			r.Opacity(0.35)
-		}
-		if r.Clicked() {
-			a.Redo()
-		}
-		ui.Box(c).Width(sp2)
-		if primary(c, "done", "复制并完成", "copy", "⌘↩", false).Tooltip("复制回剪贴板并收起窗口").Clicked() {
-			a.done()
-		}
-	})
-	// Action bar: the palette launcher and a few pinned chips.
-	ui.Row(c).Padding(0, sp5, sp3, sp5).Gap(6).AlignItems(ui.Center).Children(func() {
-		launcher := ui.ButtonBase(c.Key("apply")).Height(30).Width(232).Padding(0, 8, 0, 10).Radius(rMd).Gap(8).AlignItems(ui.Center).Label("应用动作").Tooltip("搜索全部清理器、动作链和规则")
-		pressable(c, launcher, k, k.canvas)
-		launcher.Shadow(0, 0, 0, 1, k.hairStrong).Shadow(0, 1, 2, 0, k.shadowNear)
-		launcher.Children(func() {
-			ui.Icon(c, ic("wand-sparkles")).FontSize(14).TextColor(k.accent)
-			ui.Text(c, "应用动作…").FontSize(12.5).TextColor(k.muted).Grow(1).SingleLine()
-			kbd(c, "⌘K")
-		})
-		if launcher.Clicked() {
-			a.openPalette()
-		}
-		ui.Box(c).Size(1, 18).Background(k.hairStrong).Margin(0, 4)
-		ui.Row(c).Gap(6).Grow(1).MinWidth(0).Clip().AlignItems(ui.Center).Children(func() {
-			for _, id := range a.pins(4) {
-				label, fn := a.resolveAction(id)
-				name, icon := strings.TrimPrefix(strings.TrimPrefix(label, "⛓ "), "⇄ "), actionIcon(id)
-				if chip(c, "pin:"+id, icon, name, "应用「"+name+"」").Clicked() {
-					a.Transform(name, fn)
-				}
-			}
-		})
-		if iconButton(c, "more", "ellipsis", "更多动作", "全部动作 ⌘K").Clicked() {
-			a.openPalette()
-		}
-	})
-	// The canvas.
-	ui.Column(c).Grow(1).Padding(0, sp5, sp4, sp5).MinHeight(0).Children(func() {
-		canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
-			if a.last != nil && a.last.showDiff {
-				ui.Scroll(c).Grow(1).Padding(sp6, sp8).Children(func() {
-					diffView(c, a.last.before, a.last.after)
-				})
-			} else {
-				ed := ui.TextAreaBase(c, &a.Text).Grow(1).Padding(sp6, sp8).Label("剪贴板文本").
-					Placeholder("剪贴板是空的。粘贴或输入文字…").AutoFocus().FontSize(15).LineHeight(1.65).TextColor(k.text)
-				if a.monoEdit {
-					ed.Font(monoFont).FontSize(13.5)
-				} else {
-					ed.Font(editorFont)
-				}
-				if a.last != nil && a.last.after == a.Text {
-					ed.TextRanges(insertRanges(a.last.before, a.last.after, k.accent)...)
-				}
-			}
-			// Footer strip inside the card: what the last action did.
-			ui.Row(c).Height(40).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
-				if a.last != nil {
-					ui.Icon(c, ic("sparkles")).FontSize(13).TextColor(k.accent)
-					ui.Text(c, a.last.label).FontSize(12).FontWeight(500).TextColor(k.text).SingleLine()
-					diffBadge(c, a.last.before, a.last.after)
-					if ins, _ := engine.DiffStats(cachedDiff(a.last.before, a.last.after)); ins > 0 && !a.last.showDiff {
-						ui.Text(c, "改动的文字以强调色显示").FontSize(11.5).TextColor(k.faint).SingleLine().Shrink(1).MinWidth(0)
-					}
-				} else {
-					ui.Text(c, "选一个动作，或直接编辑。改动会高亮显示，并可随时撤销。").FontSize(11.5).TextColor(k.faint).SingleLine().Shrink(1).MinWidth(0)
-				}
-				ui.Spacer(c)
-				if a.last != nil {
-					label, icon := "对照改动", "git-compare-arrows"
-					if a.last.showDiff {
-						label, icon = "返回编辑", "type"
-					}
-					if ghost(c, "diff", label, icon, false).Clicked() {
-						a.last.showDiff = !a.last.showDiff
-					}
-				}
-				mono := iconButton(c, "mono", "type", "等宽字体", "切换等宽字体")
-				if a.monoEdit {
-					mono.Background(k.accentSoft)
-				}
-				if mono.Clicked() {
-					a.monoEdit = !a.monoEdit
-				}
-			})
-		})
-	})
-}
-
 // pins returns up to n pinned action ids that still resolve.
 func (a *App) pins(n int) []string {
 	var out []string
@@ -144,6 +36,10 @@ func actionIcon(id string) string {
 		return "workflow"
 	case strings.HasPrefix(id, "rules:"):
 		return "replace-all"
+	case strings.HasPrefix(id, "page:"):
+		return "arrow-right"
+	case strings.HasPrefix(id, "cmd:"):
+		return "type"
 	}
 	l := strings.ToLower(id)
 	switch {
@@ -163,26 +59,6 @@ func actionIcon(id string) string {
 		return "wrap-text"
 	}
 	return "wand-sparkles"
-}
-
-// insertRanges returns the rune ranges of after that the diff inserted.
-func insertRanges(before, after string, col ui.Color) []ui.TextRange {
-	if engine.RuneLen(before)+engine.RuneLen(after) > 2*maxPreview {
-		return nil
-	}
-	var out []ui.TextRange
-	pos := 0
-	for _, s := range cachedDiff(before, after) {
-		n := engine.RuneLen(s.Text)
-		switch s.Op {
-		case '=':
-			pos += n
-		case '+':
-			out = append(out, ui.TextRange{Start: pos, End: pos + n, Color: col, Weight: 600})
-			pos += n
-		}
-	}
-	return out
 }
 
 // done copies the text back and hides the window.
@@ -252,14 +128,25 @@ func (a *App) paletteItems() []paletteItem {
 		}
 		items = append(items, paletteItem{id, title, sub, badge, score})
 	}
+	for _, id := range a.Lib.Settings.Pinned {
+		if label, fn := a.resolveAction(id); fn != nil && !strings.HasPrefix(id, "chain:") {
+			add(id, label, "已固定", "")
+		}
+	}
 	for i := range a.Lib.Chains {
 		add("chain:"+a.Lib.Chains[i].ID, a.Lib.Chains[i].Name, "动作链", "")
+	}
+	for _, ec := range editorCommands {
+		add("cmd:"+ec.name, ec.title, "编辑 "+ec.keys, "")
+	}
+	for _, it := range append(append([]navItem{}, navMain[1:]...), append(navTools, navItem{PageSettings, "settings-2", "设置"})...) {
+		add("page:"+it.id, "前往："+it.label, "页面", "")
 	}
 	for i := range a.Lib.RuleSets {
 		add("rules:"+a.Lib.RuleSets[i].ID, a.Lib.RuleSets[i].Name, "批量替换规则", "")
 	}
 	for _, cl := range engine.Cleaners() {
-		if !cl.Implemented {
+		if !cl.Implemented || a.isPinned(cl.Name) {
 			continue
 		}
 		badge := ""
@@ -299,6 +186,15 @@ func (a *App) openPalette() {
 
 func (a *App) runPaletteItem(it paletteItem) {
 	a.paletteOpen = false
+	if strings.HasPrefix(it.id, "page:") {
+		a.Page = strings.TrimPrefix(it.id, "page:")
+		return
+	}
+	if ec := editorCommandNamed(strings.TrimPrefix(it.id, "cmd:")); ec != nil && strings.HasPrefix(it.id, "cmd:") {
+		a.Page = PageClipboard
+		a.RunEditorCommand(ec.cmd)
+		return
+	}
 	label, fn := a.resolveAction(it.id)
 	if fn != nil {
 		a.Transform(label, fn)

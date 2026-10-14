@@ -3,7 +3,7 @@
 > 一个重新设计的 TextSoap：剪贴板一键清理、看得懂的查找替换、表格式批量替换、可视化动作链。
 > A TextSoap-style text cleaner for macOS, written in pure Go with [MyGo](https://github.com/egoist/mygo) native UI.
 
-![剪贴板空间](docs/screenshots/clipboard.png)
+![剪贴板空间](docs/screenshots/editor.png)
 
 ## 功能
 
@@ -33,6 +33,8 @@
 
 **清理器库**：189 个 TextSoap 9 内置清理器，163 个已实现；每个都能预览对当前文本的效果并固定到主界面。标签：`已实测`（38 个，与 TextSoap 实测输出逐条一致）/ `未验证`（按官方说明实现）/ `富文本`（只影响字体格式，纯文本下不改变内容）。
 
+**编辑器**（基于 MyGo 的 ui/editor）：行号、当前行高亮、选中即「作用于选区」（动作 / 查找替换 / 批量替换 / 动作链都只改选区，多选区也行），编辑器内查找替换栏（⌘F / ⌥⌘F，高亮全部匹配、上一个 / 下一个、正则、全词、仅选区），显示不可见字符（空格、制表符、换行 ¬、NBSP ⍽、全角空格 □、零宽字符），自动换行、⌘+ / ⌘- 缩放、等宽 / 比例字体切换，多光标（⌘D、⇧⌘L、⌥⌘↑↓、⌥ 拖动列选），转到行（⌘L），⌥↑↓ 移动行、⇧⌥↓ 复制行、⇧⌘K 删除行、排序 / 反转 / 去重 / 合并行、大小写转换，括号和引号自动配对；打字与动作共用一条撤销历史；拖入文本文件打开，⌘O / ⌘S 打开存储。侧边栏默认收起（⌘\\），其它页面用 ⌘K 或 ⌘1–5 进入。
+
 **批量处理文件**：选文件或文件夹 → 选动作链/规则集/清理器 → 先预览哪些文件会变 → 再写入（可选 `.bak` 备份）。
 
 **其他**：浅色 / 深色 / 跟随系统；键盘优先（⌘1–5 切换页面、⌘, 设置、⌘K、⌘↩）。
@@ -42,6 +44,8 @@
 | ![](docs/screenshots/find.png) | ![](docs/screenshots/batch-dark.png) |
 | **动作链** | **⌘K 动作面板** |
 | ![](docs/screenshots/chains.png) | ![](docs/screenshots/palette.png) |
+| **显示不可见字符 + 选区** | **编辑器内查找** |
+| ![](docs/screenshots/editor-selection-invisibles.png) | ![](docs/screenshots/editor-find-dark.png) |
 
 ## 下载与安装（macOS）
 
