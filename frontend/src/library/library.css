@@ -3,16 +3,17 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr) 290px;
+  padding-bottom: 8px;
 }
 .groups-body {
   grid-template-columns: 236px minmax(0, 1fr);
+  padding-right: 8px;
 }
 .lib-list {
   display: flex;
   flex-direction: column;
   min-height: 0;
   background: var(--sidebar);
-  border-right: 1px solid var(--border);
 }
 .lib-list-head {
   padding: 12px 12px 8px;
@@ -39,15 +40,8 @@
   background: var(--hover);
 }
 .lib-item.on {
-  background: var(--accent);
-  color: #fff;
-}
-.lib-item.on .s {
-  color: rgba(255, 255, 255, 0.85);
-}
-.lib-item.on .ico-tile {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: var(--sel);
+  box-shadow: inset 0 0 0 0.5px var(--border);
 }
 .lib-item .names {
   display: flex;
@@ -81,7 +75,13 @@
   justify-content: center;
   gap: 12px;
   color: var(--text-3);
-  background: var(--bg);
+  background: var(--sheet);
+  border-radius: 12px;
+  box-shadow: var(--sheet-shadow);
+  margin-right: 8px;
+}
+.groups-body .lib-empty {
+  margin-right: 0;
 }
 .lib-empty > svg {
   width: 36px;
@@ -96,12 +96,14 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  background: var(--bg);
+  background: var(--sheet);
+  border-radius: 12px;
+  box-shadow: var(--sheet-shadow);
+  overflow: hidden;
 }
 .lib-head {
   padding: 16px 20px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
 }
 .name-input {
   width: 100%;
@@ -311,7 +313,7 @@
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--border-strong);
   overflow: hidden;
-  background: var(--surface);
+  background: var(--field);
 }
 table.grid {
   width: 100%;
@@ -362,7 +364,7 @@ table.grid .x {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-top: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--surface-2);
   position: relative;
   min-height: 120px;
 }
@@ -418,7 +420,6 @@ table.grid .x {
   flex-direction: column;
   min-height: 0;
   background: var(--sidebar);
-  border-left: 1px solid var(--border);
 }
 .toolbox-head {
   padding: 12px 12px 8px;
