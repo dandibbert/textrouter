@@ -11,6 +11,7 @@ export const isMac = (() => {
 })();
 
 if (isMac) document.documentElement.classList.add("mac");
+if (new URLSearchParams(location.search).has("glass")) document.documentElement.classList.add("glass");
 
 /** Formats a MyGo accelerator ("CmdOrCtrl+Shift+V") for display. */
 export function keys(acc: string): string {
