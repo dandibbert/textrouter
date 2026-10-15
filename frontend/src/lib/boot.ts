@@ -11,8 +11,6 @@ export const isMac = (() => {
 })();
 
 if (isMac) document.documentElement.classList.add("mac");
-// Go gives every macOS window a vibrancy material; elsewhere ?glass opts in.
-if ((isMac && isMyGo()) || new URLSearchParams(location.search).has("glass")) document.documentElement.classList.add("glass");
 
 /** Formats a MyGo accelerator ("CmdOrCtrl+Shift+V") for display. */
 export function keys(acc: string): string {

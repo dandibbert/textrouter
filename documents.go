@@ -93,32 +93,7 @@ func docWindows() []*doc {
 	return out
 }
 
-func windowBackground() string { return "light-dark(#ececf1, #1a1a1e)" }
-
-// glass reports whether windows get a translucent, blurred background.
-// Linux has no blur material, so there it is opt-in (TEXTROUTER_GLASS=1).
-func glass() bool {
-	return runtime.GOOS == "darwin" || os.Getenv("TEXTROUTER_GLASS") == "1"
-}
-
-// withGlass makes a window transparent over the system material, so the
-// page's translucent surfaces read as frosted glass.
-func withGlass(o mygo.WindowOptions) mygo.WindowOptions {
-	if glass() {
-		o.Transparent = true
-		// A background color would also paint under the page.
-		o.BackgroundColor = ""
-		if runtime.GOOS == "darwin" {
-			o.Vibrancy = mygo.VibrancySidebar
-		}
-		sep := "?"
-		if strings.Contains(o.URL, "?") {
-			sep = "&"
-		}
-		o.URL += sep + "glass=1"
-	}
-	return o
-}
+func windowBackground() string { return "light-dark(#fbfbfc, #1c1c1f)" }
 
 // openDocument opens a document window.
 func openDocument(kind, path, text string) *mygo.Window {
@@ -147,7 +122,7 @@ func openDocument(kind, path, text string) *mygo.Window {
 			opts.X, opts.Y = x+28, y+28
 		}
 	}
-	w := mygo.NewWindow(withGlass(opts))
+	w := mygo.NewWindow(opts)
 	d.win = w
 	docs.Lock()
 	docs.byWin[w.ID()] = d
@@ -505,7 +480,7 @@ func openSingle(kind string) *mygo.Window {
 	case "batch":
 		opts.Title, opts.Width, opts.Height, opts.MinWidth, opts.MinHeight = "批量处理文件", 820, 640, 680, 520
 	}
-	w = mygo.NewWindow(withGlass(opts))
+	w = mygo.NewWindow(opts)
 	singles.Lock()
 	singles.m[kind] = w
 	singles.Unlock()
