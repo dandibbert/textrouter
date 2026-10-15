@@ -200,8 +200,14 @@ export function Segmented<T extends string>({ value, options, onChange, small }:
   onChange: (v: T) => void;
   small?: boolean;
 }) {
+  const i = Math.max(0, options.findIndex((o) => o.value === value));
   return (
     <div className={"segmented" + (small ? " small" : "")} role="tablist">
+      <span
+        className="segmented-thumb"
+        aria-hidden
+        style={{ width: `calc((100% - 6px) / ${options.length})`, transform: `translateX(${i * 100}%)` }}
+      />
       {options.map((o) => (
         <button key={o.value} className={o.value === value ? "on" : ""} title={o.title} onClick={() => onChange(o.value)} role="tab">
           {o.icon}
