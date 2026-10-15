@@ -17,6 +17,7 @@ type Cleaner struct {
 	Name     string // TextSoap English name; also the id used by chains
 	ZhName   string // Chinese display name
 	Category string // Chinese category
+	Section  string // TextSoap inventory section: markdown, html, plist, bbcode, deprecated
 	Desc     string // vendor description (English)
 	// Measured is true when the cleaner is one of the 38 with measured
 	// TextSoap truth (behaviour_truth.json). Others are UNVERIFIED: they
@@ -65,12 +66,15 @@ func loadCleaners() {
 	_ = json.Unmarshal(inventoryJSON, &inv)
 	cleanerByID = map[string]*Cleaner{}
 	category := "常用"
+	section := ""
 	for _, e := range inv.Cleaners {
 		if strings.HasPrefix(e.Token, "#LABEL:") {
-			category = labelZh(strings.TrimPrefix(e.Token, "#LABEL:"))
+			label := strings.TrimPrefix(e.Token, "#LABEL:")
+			category = labelZh(label)
+			section = strings.ToLower(strings.Fields(label)[0])
 			continue
 		}
-		c := &Cleaner{Token: e.Token, Name: e.Name, Desc: e.Description, Measured: measuredNames[e.Name]}
+		c := &Cleaner{Token: e.Token, Name: e.Name, Desc: e.Description, Measured: measuredNames[e.Name], Section: section}
 		c.Category = guessCategory(e.Token, category)
 		if impl, ok := builtinImpls[e.Token]; ok {
 			c.Fn, c.ZhName, c.Implemented = impl.fn, impl.zh, impl.fn != nil

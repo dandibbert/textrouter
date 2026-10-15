@@ -1,0 +1,237 @@
+{
+ "built": "2026-10-14 07:19 UTC",
+ "source_app": "TextSoap 9.7.6 (3278)",
+ "counts": {
+  "real_desc": 188,
+  "truth_cleaners": 38,
+  "truth_cases": 1482,
+  "impl_cleaners": 27,
+  "impl_agree": "943/1053 cases (89.6%)",
+  "chain_cases": 15,
+  "regex_cases": 51
+ },
+ "files": [
+  {
+   "path": "OVERVIEW.md",
+   "bytes": 5129
+  },
+  {
+   "path": "actions/action_reference.md",
+   "bytes": 8850
+  },
+  {
+   "path": "actions/action_registry.json",
+   "bytes": 12733
+  },
+  {
+   "path": "actions/action_strings.json",
+   "bytes": 8156
+  },
+  {
+   "path": "actions/chain_examples.json",
+   "bytes": 7858
+  },
+  {
+   "path": "actions/chain_examples.md",
+   "bytes": 1357
+  },
+  {
+   "path": "actions/chain_format.md",
+   "bytes": 3164
+  },
+  {
+   "path": "cleaners/acceptance_cleaners.json",
+   "bytes": 871
+  },
+  {
+   "path": "cleaners/behaviour_truth.json",
+   "bytes": 213239
+  },
+  {
+   "path": "cleaners/builtin_inventory.json",
+   "bytes": 33700
+  },
+  {
+   "path": "cleaners/builtin_inventory.md",
+   "bytes": 20915
+  },
+  {
+   "path": "cleaners/corpus.json",
+   "bytes": 2229
+  },
+  {
+   "path": "cleaners/judge.py",
+   "bytes": 3869
+  },
+  {
+   "path": "cleaners/reference_implementation.py",
+   "bytes": 11223
+  },
+  {
+   "path": "cleaners/spec_notes.md",
+   "bytes": 7616
+  },
+  {
+   "path": "docs/README.md",
+   "bytes": 822
+  },
+  {
+   "path": "docs/vendor_help/batch_cleaning.md",
+   "bytes": 2585
+  },
+  {
+   "path": "docs/vendor_help/cleaner_descriptions.md",
+   "bytes": 9331
+  },
+  {
+   "path": "docs/vendor_help/clipboard_workspace.md",
+   "bytes": 2641
+  },
+  {
+   "path": "docs/vendor_help/custom_cleaner_tutorial_1.md",
+   "bytes": 2201
+  },
+  {
+   "path": "docs/vendor_help/custom_cleaner_tutorial_2.md",
+   "bytes": 3276
+  },
+  {
+   "path": "docs/vendor_help/custom_cleaner_tutorial_3.md",
+   "bytes": 2930
+  },
+  {
+   "path": "docs/vendor_help/custom_cleaner_tutorial_4.md",
+   "bytes": 2700
+  },
+  {
+   "path": "docs/vendor_help/date_actions.md",
+   "bytes": 3342
+  },
+  {
+   "path": "docs/vendor_help/files_and_folders.md",
+   "bytes": 1099
+  },
+  {
+   "path": "docs/vendor_help/glossary.md",
+   "bytes": 3020
+  },
+  {
+   "path": "docs/vendor_help/groups.md",
+   "bytes": 2862
+  },
+  {
+   "path": "docs/vendor_help/html_actions.md",
+   "bytes": 3445
+  },
+  {
+   "path": "docs/vendor_help/my_cleaner_actions.md",
+   "bytes": 17338
+  },
+  {
+   "path": "docs/vendor_help/my_cleaners.md",
+   "bytes": 4745
+  },
+  {
+   "path": "docs/vendor_help/my_groups.md",
+   "bytes": 1945
+  },
+  {
+   "path": "docs/vendor_help/plist_actions.md",
+   "bytes": 1253
+  },
+  {
+   "path": "docs/vendor_help/preferences.md",
+   "bytes": 9022
+  },
+  {
+   "path": "docs/vendor_help/regex_syntax.md",
+   "bytes": 19972
+  },
+  {
+   "path": "docs/vendor_help/tour.md",
+   "bytes": 4123
+  },
+  {
+   "path": "docs/vendor_help/welcome.md",
+   "bytes": 2434
+  },
+  {
+   "path": "docs/vendor_help/whats_new.md",
+   "bytes": 5319
+  },
+  {
+   "path": "guides/reimplementation_guide.md",
+   "bytes": 3185
+  },
+  {
+   "path": "guides/unknown_behaviour.md",
+   "bytes": 3065
+  },
+  {
+   "path": "measure/README.md",
+   "bytes": 2651
+  },
+  {
+   "path": "measure/baseline_library.bplist",
+   "bytes": 377
+  },
+  {
+   "path": "measure/measure.py",
+   "bytes": 1104
+  },
+  {
+   "path": "measure/oracle.py",
+   "bytes": 13641
+  },
+  {
+   "path": "measure/run_oracle.py",
+   "bytes": 1372
+  },
+  {
+   "path": "regex/raw/gen_matrix.py",
+   "bytes": 2885
+  },
+  {
+   "path": "regex/raw/gen_regex.py",
+   "bytes": 2646
+  },
+  {
+   "path": "regex/raw/gen_regex2.py",
+   "bytes": 2767
+  },
+  {
+   "path": "regex/raw/gen_regex3.py",
+   "bytes": 2085
+  },
+  {
+   "path": "regex/raw/matrix.log",
+   "bytes": 101038
+  },
+  {
+   "path": "regex/raw/regex.log",
+   "bytes": 12229
+  },
+  {
+   "path": "regex/raw/regex2.log",
+   "bytes": 10823
+  },
+  {
+   "path": "regex/raw/regex3.log",
+   "bytes": 6484
+  },
+  {
+   "path": "regex/regex_cases.json",
+   "bytes": 10751
+  },
+  {
+   "path": "regex/regex_measured.md",
+   "bytes": 10414
+  },
+  {
+   "path": "regex/regex_syntax.md",
+   "bytes": 20066
+  }
+ ],
+ "missing_required": [],
+ "self_contained": true
+}

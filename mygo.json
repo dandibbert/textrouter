@@ -1,9 +1,14 @@
 {
   "name": "TextRouter",
   "identifier": "com.dandibbert.textrouter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "out": "build",
-  "macos": {
-    "minimumSystemVersion": "12.0"
-  }
+  "devUrl": "http://localhost:5173",
+  "devCommand": "npm --prefix frontend run dev",
+  "buildCommand": "npm --prefix frontend run build",
+  "frontendDist": "frontend/dist",
+  "bindings": "frontend/src/mygo.ts",
+  "fileAssociations": [{ "ext": ["txt", "text", "md"], "name": "Text Document", "mimeType": "text/plain", "role": "Editor" }],
+  "macos": { "minimumSystemVersion": "12.0" },
+  "linux": { "comment": "TextSoap 风格的文本清理与剪贴板工作区", "categories": ["Utility", "TextEditor"] }
 }

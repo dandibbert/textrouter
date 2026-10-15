@@ -1,0 +1,120 @@
+(lldb) process attach --pid 502
+Process 502 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x0000000195879c34 libsystem_kernel.dylib`mach_msg2_trap + 8
+libsystem_kernel.dylib`mach_msg2_trap:
+->  0x195879c34 <+8>: ret    
+
+libsystem_kernel.dylib`macx_swapon:
+    0x195879c38 <+0>: mov    x16, #-0x30               ; =-48 
+    0x195879c3c <+4>: svc    #0x80
+    0x195879c40 <+8>: ret    
+Target 0: (textsoap9) stopped.
+Executable binary set to "/Applications/textsoap9.app/Contents/MacOS/textsoap9".
+Architecture set to: arm64-apple-macosx-.
+(lldb) command source -s 0 'lldb_cmds/regex3.lldb'
+Executing commands in '/Users/suzu/Documents/projects/pixpin/recon/textsoap/lldb_cmds/regex3.lldb'.
+(lldb) expr -l objc -- id $t = (id)[(id)objc_getClass("TSText") performSelector:(SEL)sel_registerName("new")]
+(lldb) expr -l objc -O -- @"@@@ tok-none"
+@@@ tok-none
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"ABC abc"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"abc", @"Y", @"")
+2
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+Y Y
+
+(lldb) expr -l objc -O -- @"@@@ tok-matchcase"
+@@@ tok-matchcase
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"ABC abc"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"abc", @"Y", @"matchcase")
+2
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+Y Y
+
+(lldb) expr -l objc -O -- @"@@@ tok-ignorecase"
+@@@ tok-ignorecase
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"ABC abc"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"abc", @"Y", @"ignorecase")
+2
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+Y Y
+
+(lldb) expr -l objc -O -- @"@@@ tok-both"
+@@@ tok-both
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"ABC abc"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"abc", @"Y", @"matchcase,ignorecase")
+2
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+Y Y
+
+(lldb) expr -l objc -O -- @"@@@ tok-matchlines"
+@@@ tok-matchlines
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\nb\na"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"^a", @"X", @"lm")
+1
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+X<LF>b<LF>a
+
+(lldb) expr -l objc -O -- @"@@@ tok-linesoff"
+@@@ tok-linesoff
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\nb\na"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"^a", @"X", @"")
+1
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+X<LF>b<LF>a
+
+(lldb) expr -l objc -O -- @"@@@ tok-dotall"
+@@@ tok-dotall
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\nb"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"a.b", @"Z", @"dotall")
+<nil>
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF>b
+
+(lldb) expr -l objc -O -- @"@@@ tok-dotall2"
+@@@ tok-dotall2
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a\nb"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"a.b", @"Z", @"s")
+<nil>
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+a<LF>b
+
+(lldb) expr -l objc -O -- @"@@@ tok-words"
+@@@ tok-words
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"a-b"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"\\ba", @"W", @"unicodewords")
+1
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+W-b
+
+(lldb) expr -l objc -O -- @"@@@ tok-comments"
+@@@ tok-comments
+
+(lldb) expr -l objc -O -- (void)[$t performSelector:(SEL)sel_registerName("setString:") withObject:@"ab"]
+(lldb) expr -l objc -O -- (long)((long(*)(id,SEL,id,id,id))objc_msgSend)((id)$t, (SEL)sel_registerName("regexFind:replace:options:"), @"a #note\\n b", @"C", @"comments")
+<nil>
+
+(lldb) expr -l objc -O -- (id)[(id)[$t performSelector:(SEL)sel_registerName("string")] performSelector:(SEL)sel_registerName("stringByReplacingOccurrencesOfString:withString:") withObject:@"\n" withObject:@"<LF>"]
+ab
+
+(lldb) detach
+Process 502 detached
+(lldb) quit

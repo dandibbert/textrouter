@@ -7,7 +7,8 @@ import (
 	"testing"
 )
 
-// TestChainExamples runs the 15 chains executed on the real TextSoap engine.
+// TestChainExamples runs, unchanged, the 15 action lists executed on the
+// real TextSoap engine.
 func TestChainExamples(t *testing.T) {
 	data, err := os.ReadFile("testdata/chain_examples.json")
 	if err != nil {
@@ -24,8 +25,7 @@ func TestChainExamples(t *testing.T) {
 	}
 	pass := 0
 	for _, c := range cases {
-		ch := Chain{Steps: NodesToSteps(c.Actions)}
-		got, _ := ch.Run(c.Input, nil)
+		got, _ := RunActions(NodesToActions(c.Actions), c.Input, nil)
 		if got != c.Output {
 			t.Errorf("%s: got %q want %q", c.ID, got, c.Output)
 			continue
@@ -35,55 +35,156 @@ func TestChainExamples(t *testing.T) {
 	t.Logf("chain examples: %d/%d", pass, len(cases))
 }
 
-func TestBatchRulesAndCSV(t *testing.T) {
-	rules := []Rule{
-		{Find: "colour", Replace: "color", MatchCase: false},
-		{Find: `(\d+)元`, Replace: "¥$1", Regex: true, MatchCase: true},
-		{Find: "x", Replace: "y", Disabled: true},
+func a(id string, p Params, kids ...Action) Action { return act(id, p, kids...) }
+
+func TestListsAndProcessList(t *testing.T) {
+	list := a("runtime.definelist", Params{"name": "L", "columns": 2, "rows": []any{[]any{"cat", "dog"}, []any{"red", "blue"}}})
+	cases := []struct {
+		name    string
+		actions []Action
+		in, out string
+	}{
+		{"find with list", []Action{
+			a("find", Params{"find": "$v{A}", "replace": "$v{B}", "type": 0, "list_name": "L"}),
+			list, // lists may be defined after their use
+		}, "a red cat", "a blue dog"},
+		{"process list", []Action{list,
+			a("runtime.processlist", Params{"list_name": "L"},
+				a("find", Params{"find": `\b$v{A}\b`, "replace": "[$v{B}]", "type": 1})),
+		}, "cat cats red", "[dog] cats [blue]"},
+		{"escaped var", []Action{list,
+			a("find", Params{"find": "x", "replace": `\$v{A}`, "type": 0, "list_name": "L"}),
+		}, "x", "$v{A}"},
+		{"batch id", []Action{list,
+			a("find.batch", Params{"find": "$v{A}", "replace": "$v{B}", "list_name": "L"}),
+		}, "red.cat", "blue.dog"},
+		{"tsv list text", []Action{
+			a("runtime.definelist", Params{"name": "T", "columns": 2, "text": "a\tb\nc\td"}),
+			a("find", Params{"find": "$v{A}", "replace": "$v{B}", "type": 0, "list_name": "T"}),
+		}, "ac", "bd"},
 	}
-	out, counts, err := ApplyRules("Colour 5元 x", rules)
-	if err != nil || out != "color ¥5 x" || counts[0] != 1 || counts[1] != 1 || counts[2] != 0 {
-		t.Fatalf("got %q %v %v", out, counts, err)
-	}
-	for _, sep := range []rune{',', '\t'} {
-		back, err := ParseRules(FormatRules(rules, sep))
-		if err != nil || len(back) != 3 || back[1].Find != `(\d+)元` || !back[1].Regex || back[0].MatchCase {
-			t.Errorf("roundtrip %q: %+v %v", sep, back, err)
+	for _, c := range cases {
+		got, _ := RunActions(c.actions, c.in, nil)
+		if got != c.out {
+			t.Errorf("%s: got %q want %q", c.name, got, c.out)
 		}
 	}
 }
 
+func TestConditionalsMacrosLines(t *testing.T) {
+	cases := []struct {
+		name    string
+		actions []Action
+		in, out string
+	}{
+		{"if regex + group", []Action{a("if.match.text.regex", Params{"find": `<b>(.*?)</b>`, "group": 1},
+			a("applycleaner", Params{"cleaner": "Uppercase"}))}, "<b>hi</b> there", "<b>HI</b> there"},
+		{"if text invert", []Action{a("if.match.text", Params{"find": "x", "type": 0, "invert": true},
+			a("applycleaner", Params{"cleaner": "Uppercase"}))}, "axbxc", "AxBxC"},
+		{"skip/limit", []Action{a("if.match.text.regex", Params{"find": `\d`, "skip": 1, "limit": 2},
+			a("text.tag", Params{"prefix": "[", "suffix": "]"}))}, "1234", "1[2][3]4"},
+		{"modify nodes", []Action{a("if.match.text.regex", Params{"find": `\d`},
+			a("modify.results.limit", Params{"count": 1}), a("text.delete", nil))}, "1234", "234"},
+		{"for each line skips blanks", []Action{a("if.match.text.processlines", nil,
+			a("text.insert", Params{"text": "- ", "position": 0}))}, "a\n\nb", "- a\n\n- b"},
+		{"macro", []Action{
+			a("runtime.applymacro", Params{"name": "M"}),
+			a("runtime.macro", Params{"name": "M"}, a("text.tag", Params{"prefix": "(", "suffix": ")"})),
+		}, "x", "(x)"},
+		{"repeat", []Action{a("runtime.repeat", Params{"count": 3}, a("text.insert", Params{"text": "!", "position": 1}))}, "a", "a!!!"},
+		{"sort numeric desc", []Action{a("line.sort", Params{"numeric": true, "descending": true})}, "2\n10\n1", "10\n2\n1\n"},
+		{"sort ignore case", []Action{a("line.sort", nil)}, "b\nA\nc", "A\nb\nc\n"},
+		{"number lines", []Action{a("line.number", Params{"format": `000\t`, "lines": 1})}, "a\n\nb\n", "001\ta\n\n002\tb\n"},
+		{"add/remove line text", []Action{a("line.addto", Params{"text": ";", "position": 1}), a("line.removefrom", Params{"text": "#"})}, "#a\nb", "a;\nb;"},
+		{"extract group", []Action{a("text.extract", Params{"find": `(\w+)@`, "group": 1})}, "a@x b@y", "a\nb"},
+		{"substring", []Action{a("text.substring", Params{"mode": 2, "start": 2, "length": 3})}, "abcdef", "bcd"},
+		{"quote level 2", []Action{a("text.quote", Params{"level": 2, "wrap": false})}, "a\nb", ">> a\n>> b"},
+		{"url", []Action{a("if.match.url", nil, a("text.tag", Params{"prefix": "<", "suffix": ">"}))}, "see https://x.org/a, ok", "see <https://x.org/a>, ok"},
+		{"disabled group", []Action{{ID: "runtime.group", Enabled: false, Children: []Action{a("text.delete", nil)}}}, "keep", "keep"},
+		{"style is a no-op", []Action{a("style.text.font", nil)}, "keep", "keep"},
+	}
+	for _, c := range cases {
+		got, _ := RunActions(c.actions, c.in, nil)
+		if got != c.out {
+			t.Errorf("%s: got %q want %q", c.name, got, c.out)
+		}
+	}
+}
+
+func TestNestedCustomCleaner(t *testing.T) {
+	lib := &Library{Prefs: DefaultPrefs()}
+	lib.PutCleaner(CustomCleaner{Name: "Inner", Actions: []Action{a("text.insert", Params{"text": ">", "position": 0})}})
+	outer := lib.PutCleaner(CustomCleaner{Name: "Outer", Actions: []Action{a("applycleaner", Params{"cleaner": "Inner"}), a("applycleaner", Params{"cleaner": "Uppercase"})}})
+	got, _ := outer.Run("a", lib.Env(nil))
+	if got != ">A" {
+		t.Errorf("got %q", got)
+	}
+	loop := lib.PutCleaner(CustomCleaner{Name: "Loop", Actions: []Action{a("applycleaner", Params{"cleaner": "Loop"})}})
+	if got, _ := loop.Run("a", lib.Env(nil)); got != "a" {
+		t.Errorf("self-recursion changed text: %q", got)
+	}
+	if lib.PutCleaner(CustomCleaner{Name: "Uppercase"}).Name == "Uppercase" {
+		t.Error("custom cleaner may not shadow a built-in name")
+	}
+}
+
 func TestTextSoapRoundTrip(t *testing.T) {
-	in := []Chain{{Name: "Demo", Steps: []Step{
-		{Kind: KindFind, Find: FindOptions{Find: "a.", Replace: "b", Regex: true, MatchCase: true}},
-		{Kind: KindCleaner, Cleaner: "Uppercase"},
+	in := []CustomCleaner{{Name: "Demo", Actions: []Action{
+		a("find", Params{"find": "a.", "replace": "b", "type": 1, "match_case": true}),
+		a("runtime.group", nil, a("applycleaner", Params{"cleaner": "Uppercase"})),
+		a("runtime.definelist", Params{"name": "L", "columns": 2, "rows": []any{[]any{"x", "y"}}}),
 	}}}
-	data, err := ExportTextSoapLibrary(in)
+	data, err := ExportTextSoap(in)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !regexp.MustCompile(`<key>fileVersion</key>\s*<integer>6</integer>`).Match(data) {
 		t.Errorf("fileVersion 6 missing:\n%s", data)
 	}
-	out, err := ImportTextSoapLibrary(data)
-	if err != nil || len(out) != 1 {
-		t.Fatal(out, err)
+	res, err := ImportTextSoap(data)
+	if err != nil || len(res.Cleaners) != 1 {
+		t.Fatal(res, err)
 	}
-	got, _ := out[0].Run("xa1", nil)
+	got, _ := res.Cleaners[0].Run("xa1", nil)
 	if got != "XB" {
+		t.Errorf("got %q", got)
+	}
+	if l := ListFromParams(res.Cleaners[0].Actions[2].Params); len(l.Rows) != 1 || l.Rows[0][1] != "y" {
+		t.Errorf("list did not round trip: %+v", l)
+	}
+}
+
+func TestFlatConditionalsNest(t *testing.T) {
+	nodes := []any{
+		map[string]any{"identifier": "cleaner.actions"},
+		map[string]any{"identifier": "if.match.text", "enabled": true, "parameters": map[string]any{"find": "b", "type": 0}},
+		map[string]any{"identifier": "applycleaner", "enabled": true, "parameters": map[string]any{"cleaner": "Uppercase"}},
+		map[string]any{"identifier": "if.end", "enabled": true},
+		map[string]any{"identifier": "endlist"},
+	}
+	acts := NodesToActions(nodes)
+	if len(acts) != 1 || len(acts[0].Children) != 1 {
+		t.Fatalf("got %+v", acts)
+	}
+	if got, _ := RunActions(acts, "abc", nil); got != "aBc" {
 		t.Errorf("got %q", got)
 	}
 }
 
-func TestChainTraceAndContainers(t *testing.T) {
-	ch := Chain{Steps: []Step{
-		{Kind: KindEachLine, Children: []Step{{Kind: KindCleaner, Cleaner: "Capitalize Words"}}},
-		{Kind: KindIfMatch, Find: FindOptions{Find: `\d+`, Regex: true, MatchCase: true}, Children: []Step{{Kind: KindTag, Text: "[", Text2: "]"}}},
-		{Kind: KindLineSort, Flag: true},
-		{Kind: KindNote, Text: "noop"},
-	}}
-	got, trace := ch.Run("hello 1\nworld 22", nil)
-	if got != "World [22]\nHello [1]\n" || len(trace) != 4 {
-		t.Errorf("got %q trace %d", got, len(trace))
+func TestBuiltinGroups(t *testing.T) {
+	gs := BuiltinGroups()
+	byID := map[string]Group{}
+	for _, g := range gs {
+		byID[g.ID] = g
+	}
+	if len(byID["html"].Items) < 20 || len(byID["library"].Items) < 180 || len(byID["basics"].Items) < 10 {
+		t.Errorf("groups too small: html %d library %d basics %d", len(byID["html"].Items), len(byID["library"].Items), len(byID["basics"].Items))
+	}
+	for _, g := range gs {
+		for _, it := range g.Items {
+			if CleanerByName(it.Name) == nil {
+				t.Errorf("group %s lists unknown cleaner %q", g.ID, it.Name)
+			}
+		}
 	}
 }

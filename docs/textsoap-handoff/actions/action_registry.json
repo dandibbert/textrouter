@@ -1,0 +1,385 @@
+{
+ "schema": 1,
+ "source_app": "TextSoap 9.7.6 (3278)",
+ "counts": {
+  "action_ids": 60,
+  "defined_groups": 7,
+  "action_classes": 85
+ },
+ "note": "action ids, titles and descriptions are the app's own strings; parameter keys marked serialized_only were observed in real saved cleaner data.",
+ "actions": {
+  "applycleaner": {
+   "title": "Apply Cleaner",
+   "alt": "Apply Cleaner: %@",
+   "description": "Applies the selected cleaner to the provided text."
+  },
+  "applycleaner.static": {
+   "title": "Apply Existing Cleaner",
+   "alt": "Apply: %@",
+   "description": "Applies the selected cleaner to the provided text."
+  },
+  "find": {
+   "title": "Find and Replace",
+   "description": "Finds and replaces specified text."
+  },
+  "find.assignlinks": {
+   "title": "Create Hyperlink URLs",
+   "description": "Finds provided text and associates a hyperlinked URL to that text."
+  },
+  "find.batch": {
+   "title": "Find and Replace with List",
+   "description": "Find and Replace using specified list values."
+  },
+  "find.batch.regex": {
+   "title": "Regex Find and Replace with List"
+  },
+  "find.delete": {
+   "title": "Find and Delete Text",
+   "alt": "Regex Find and Delete Text",
+   "description": "Finds specified text and deletes it."
+  },
+  "find.regex": {
+   "title": "Regex Find and Replace",
+   "description": "Finds and replaces specified text using regular expressions."
+  },
+  "if.end": {
+   "title": "Endif",
+   "description": "Marks the end of a conditional block."
+  },
+  "if.match.attribute": {
+   "title": "If Has Attribute",
+   "description": "Finds text matching specified attribute, then applies contained actions to it."
+  },
+  "if.match.date": {
+   "title": "If Date",
+   "description": "Finds any dates using Apple's Data Detector."
+  },
+  "if.match.font": {
+   "title": "If Matches Font",
+   "alt": "If Matches",
+   "description": "Finds text matching specific font, size, color attributes, then applies contained actions to it."
+  },
+  "if.match.text": {
+   "title": "If Matches Text",
+   "description": "Finds provided text then applies contained actions to it."
+  },
+  "if.match.text.processlines": {
+   "title": "For Each Line",
+   "description": "Perform specified actions on each line specified."
+  },
+  "if.match.text.regex": {
+   "title": "If Matches Regex"
+  },
+  "if.match.url": {
+   "title": "If URL",
+   "description": "Finds any URLS using Apple's Data Detector"
+  },
+  "line.addto": {
+   "title": "Add Text to Lines",
+   "alt": "Add %@ to Lines",
+   "description": "Add specified text to each line."
+  },
+  "line.loop": {
+   "title": "Loop through Lines",
+   "description": "Loop through each line, allowing each specified line to be processed separately"
+  },
+  "line.removefrom": {
+   "title": "Remove Text from Lines",
+   "alt": "Remove %@ from Lines",
+   "description": "Remove specified text from the beginning of each line."
+  },
+  "line.sort": {
+   "title": "Sort Lines",
+   "description": "Sorts the selected lines in either ascending or descending order."
+  },
+  "modify.results.invert": {
+   "title": "Modify Results: Invert Matches",
+   "description": "Inverts the selected text of the this condition."
+  },
+  "modify.results.limit": {
+   "title": "Modify Results: Limit Matches",
+   "description": "Set the maximum matches for this condition."
+  },
+  "modify.results.skip": {
+   "title": "Modify Results: Skip Matches",
+   "description": "Ignore the specified matches for this condition."
+  },
+  "runtime.applymacro": {
+   "title": "Apply Macro",
+   "alt": "Apply Macro:",
+   "description": "Applies the defined Macro to the current text."
+  },
+  "runtime.askuser": {
+   "title": "Ask User (BETA)",
+   "description": "Define a Variable by Asking User"
+  },
+  "runtime.definelist": {
+   "title": "Define List",
+   "alt": "Define List: %@",
+   "description": "Defines a list that can be used with Find & Replace"
+  },
+  "runtime.definevar": {
+   "title": "Define Variable (BETA)",
+   "description": "Define Variable from Expression"
+  },
+  "runtime.group": {
+   "title": "Group",
+   "alt": "Group: ",
+   "description": "Container to organize actions within a cleaner."
+  },
+  "runtime.javascript": {
+   "title": "Run Javascript (BETA)",
+   "description": "Applies the provided Javascript on the provided text."
+  },
+  "runtime.macro": {
+   "title": "Define Macro",
+   "alt": "Define Macro: %@",
+   "description": "Defines a macro (collection of actions) that you apply using 'Apply Macro' action."
+  },
+  "runtime.macrolist": {
+   "title": "Macro List",
+   "description": "Placed at the top level, specifies named groups which should be considered macros (containing collections of actions). Can be applied with 'Apply Macro' action."
+  },
+  "runtime.processlist": {
+   "title": "Process List",
+   "description": "Loop through each row and apply contained cleaners."
+  },
+  "runtime.repeat": {
+   "title": "Repeat",
+   "description": "Repeat contained items using the rules provided."
+  },
+  "runtime.shellscript": {
+   "title": "Run Shell Script (BETA)",
+   "description": "Run the given shell script."
+  },
+  "runtime.usernote": {
+   "title": "Note",
+   "description": "Allows user to specify notes within a cleaner."
+  },
+  "runtime.workflow": {
+   "title": "Run Automator Workflow",
+   "description": "This action runs an Automator Workflow (located in the ~/Library/Application Support/TextSoap/Workflows folder)."
+  },
+  "style.attribute.remove": {
+   "title": "Remove Character Attribute",
+   "description": "Finds and removes the specified character attribute from text."
+  },
+  "style.text.adjustsize": {
+   "title": "Adjust Font Size",
+   "description": "Provides relative adjustments to the font size of the text."
+  },
+  "style.text.backcolor": {
+   "title": "Set Background Color",
+   "description": "Set background color of the text."
+  },
+  "style.text.color": {
+   "title": "Set Text Color",
+   "description": "Set text color of the text."
+  },
+  "style.text.exactfont": {
+   "title": "Set Font (Advanced)",
+   "description": "Applies specific font name, size to the text."
+  },
+  "style.text.face": {
+   "title": "Set Style",
+   "description": "Change Typeface of text."
+  },
+  "style.text.font": {
+   "title": "Set Font",
+   "description": "Applies font family, face, size attributes to the text."
+  },
+  "style.text.strikethru": {
+   "title": "Set Strikethrough",
+   "description": "Set strikethrough options of the text."
+  },
+  "style.text.superscript": {
+   "title": "Set Script Attribute",
+   "description": "Set text as superscript, subscript, or no script."
+  },
+  "style.text.underline": {
+   "title": "Set Underline",
+   "description": "Set underline options of the text."
+  },
+  "text.appendtoclip": {
+   "title": "Append Text to Clipboard",
+   "description": "Append the provided text on the clipboard."
+  },
+  "text.clipaction": {
+   "title": "Clipboard Action",
+   "description": "Perform clipboard-related action on text."
+  },
+  "text.copytoclip": {
+   "title": "Copy to Clipboard",
+   "description": "Copy current 'text' to clipboard."
+  },
+  "text.delete": {
+   "title": "Delete Text",
+   "description": "Deletes the provided text. Use with a conditional statement to remove matched text."
+  },
+  "text.extract": {
+   "title": "Extract Text",
+   "description": "Extracts text matching the provided regular expression."
+  },
+  "text.hyperlinks2text": {
+   "title": "Hyperlinks To Text",
+   "description": "Converts rich text hyperlinks to text."
+  },
+  "text.insert": {
+   "title": "Insert Text",
+   "description": "Inserts specified text."
+  },
+  "text.pastefromclip": {
+   "title": "Paste Text from Clipboard",
+   "description": "Set the provided text to the contents of the clipboard."
+  },
+  "text.performservice": {
+   "title": "Perform Named Service",
+   "description": "Perform named OS X Service on provided text."
+  },
+  "text.quote": {
+   "title": "Quote Text",
+   "description": "Rewraps text using the selected maximum line length, placing quote characters as appropriate."
+  },
+  "text.substring": {
+   "title": "Extract Characters",
+   "description": "Extracts specified number of characters from text."
+  },
+  "text.tag": {
+   "title": "Tag Text",
+   "description": "Wraps the selected text in a prefix and suffix of text. Useful for tagging HTML or XML text."
+  },
+  "text.titlecase": {
+   "title": "Title Case (Extended)",
+   "description": "Capitalizes words for title case but allows specifying additional small words (which are always lowercase) as well as exception words (which are ignored)."
+  },
+  "text.wrap": {
+   "title": "Custom Text Wrap",
+   "description": "Rewraps specified text using the indicated maximum line length."
+  }
+ },
+ "actions_by_define_group": {
+  "defineFindActions": [
+   "find.assignlinks",
+   "find.batch",
+   "find.batch.regex",
+   "find.delete",
+   "find.regex"
+  ],
+  "defineTextActions": [
+   "text.appendtoclip",
+   "text.clipaction",
+   "text.copytoclip",
+   "text.delete",
+   "text.extract",
+   "text.hyperlinks2text",
+   "text.insert",
+   "text.pastefromclip",
+   "text.performservice",
+   "text.quote",
+   "text.substring",
+   "text.tag",
+   "text.titlecase",
+   "text.wrap"
+  ],
+  "defineLineActions": [
+   "line.addto",
+   "line.loop",
+   "line.removefrom",
+   "line.sort"
+  ],
+  "defineStyleActions": [
+   "style.attribute.remove",
+   "style.text.adjustsize",
+   "style.text.backcolor",
+   "style.text.color",
+   "style.text.exactfont",
+   "style.text.face",
+   "style.text.font",
+   "style.text.strikethru",
+   "style.text.superscript",
+   "style.text.underline"
+  ],
+  "defineConditionalActions": [
+   "if.end",
+   "if.match.attribute",
+   "if.match.date",
+   "if.match.font",
+   "if.match.text",
+   "if.match.text.processlines",
+   "if.match.text.regex",
+   "if.match.url"
+  ],
+  "defineRuntimeActions": [
+   "runtime.applymacro",
+   "runtime.askuser",
+   "runtime.definelist",
+   "runtime.definevar",
+   "runtime.group",
+   "runtime.javascript",
+   "runtime.macro",
+   "runtime.macrolist",
+   "runtime.processlist",
+   "runtime.repeat",
+   "runtime.shellscript",
+   "runtime.usernote",
+   "runtime.workflow"
+  ],
+  "defineAltTextActions": [
+   "text.tag"
+  ],
+  "(no define group seen)": [
+   "applycleaner",
+   "applycleaner.static",
+   "find",
+   "modify.results.invert",
+   "modify.results.limit",
+   "modify.results.skip"
+  ]
+ },
+ "serialized_parameter_keys": {
+  "find": {
+   "accessor": "-[TSCleanerFindAction findString] (returns self->_findField stringValue)",
+   "write_site": "-[TSCleanerFindAction applyTextParams:] setObject:forKeyedSubscript:@\"find\"",
+   "serialized_only": true
+  },
+  "replace": {
+   "accessor": null,
+   "write_site": "-[TSCleanerFindAction applyTextParams:] setObject:forKeyedSubscript:@\"replace\"",
+   "note": "written only when the replace field is present",
+   "serialized_only": true
+  },
+  "type": {
+   "accessor": "-[TSCleanerFindAction findType]",
+   "write_site": "-[TSCleanerFindAction setFindType:] setParamInteger:forName:@\"type\""
+  },
+  "match_case": {
+   "accessor": "-[TSCleanerFindAction matchCase]",
+   "write_site": "-[TSCleanerFindAction setMatchCase:] setParamInteger:forName:@\"match_case\""
+  },
+  "granularity": {
+   "accessor": "-[TSCleanerFindAction granularity]",
+   "write_site": "-[TSCleanerFindAction setGranularity:] setParamInteger:forName:@\"granularity\""
+  },
+  "regex_options": {
+   "accessor": "-[TSCleanerFindAction regexOptions]",
+   "write_site": "-[TSCleanerFindAction setRegexOptions:] setObject:forKeyedSubscript:@\"regex_options\""
+  },
+  "batch_mode": {
+   "accessor": null,
+   "write_site": null,
+   "registered_by": "TSCleanerActionManagerDefinitions +defineFindActions",
+   "note": "registered directly in the definition table with the literal kCFBooleanTrue, i.e. it is a fixed flag of the 'find with list' action and not a per-cleaner setting; no accessor or writer seen."
+  },
+  "list_name": {
+   "accessor": null,
+   "write_site": null,
+   "registered_by": "TSCleanerActionManagerDefinitions +defineFindActions (default @\"\")",
+   "note": "default value is the empty string and it is present in saved cleaners, so it is a real per-instance setting; the writer has not been decompiled."
+  }
+ },
+ "known_gaps": [
+  "definition-table parameter lists are lower bounds: keys written through setParam*:forName: are constructed inside the callee and do not appear in the harvested literal set.",
+  "SingleAction factories are assembled from tables the tables' own literals do not repeat, so `define*Actions` names fewer action ids than it registers. Which body registers which id is not yet pinned down for more than a few ids.",
+  "no writer has been decompiled for list_name, so the 'find with list' path is described by name only (batch_mode is known to be a fixed true flag, not a setting)."
+ ]
+}
