@@ -16,7 +16,23 @@ var inf = float32(math.Inf(1))
 
 func finite(v float32) bool { return v < inf }
 
-func (e *node) padX() float32 { return e.pad[1] + e.pad[3] + e.border[1] + e.border[3] }
+func (e *node) padX() float32 {
+	return e.pad[1] + e.pad[3] + e.border[1] + e.border[3] + e.scrollGutter()
+}
+
+// scrollGutter is the room a vertical scroll container keeps at its right for
+// bordered scroll bars (Theme.ScrollbarOutline), so that its content never
+// runs under them (TextRouter fork): the bar's track is 6 DIPs wider than its
+// thumb.
+func (e *node) scrollGutter() float32 {
+	if e.flags&flagScrollY == 0 || e.c == nil || e.c.theme == nil || e.c.theme.ScrollbarOutline.A == 0 {
+		return 0
+	}
+	if e.kind != kindBox {
+		return 0
+	}
+	return e.c.theme.scrollbarWidth() + 6
+}
 func (e *node) padY() float32 { return e.pad[0] + e.pad[2] + e.border[0] + e.border[2] }
 
 // contentX and contentY place the content box in the border box.

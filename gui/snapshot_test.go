@@ -139,6 +139,7 @@ func TestSnapshots(t *testing.T) {
 			tt.Scroll(500, 400, 0, -3000)
 			settle(tt, 3)
 		}},
+		{"cleaners-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageCleaners); a.clean.selected = "Scrub" }},
 		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
 		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},
 	}
