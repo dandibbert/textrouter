@@ -6,6 +6,15 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Publish a release with this tag (e.g. v0.2.0) from the commit being built; empty = only build"
+        required: false
+        default: ""
+      release_notes:
+        description: "Text put above the generated release notes"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -50,10 +59,15 @@ jobs:
             build/*.zip
             build/**/*.dmg
           if-no-files-found: error
-      - name: Attach to release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach to release (version tags, or a manual run with release_tag)
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
+          NOTES: ${{ inputs.release_notes }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" build/*.zip build/*/*.dmg --clobber
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            # A new tag is created at the commit being built.
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "TextRouter ${TAG#v}" --generate-notes --notes "$NOTES"
+          fi
+          gh release upload "$TAG" build/*.zip build/*/*.dmg --clobber
