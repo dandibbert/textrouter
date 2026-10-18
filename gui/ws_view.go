@@ -96,6 +96,9 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 			for i, d := range a.docs {
 				a.docTab(c, k, i, d)
 			}
+		} else if d := a.doc(); !d.clip {
+			ui.Icon(c, ic("file-text")).FontSize(16).TextColor(Ink)
+			ui.Text(c, d.name).FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
 		} else {
 			ui.Text(c, "剪贴板").FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
 			if age := a.clipAge(); age != "" && a.doc().clip {

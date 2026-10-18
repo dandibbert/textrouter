@@ -70,6 +70,9 @@ func (a *App) currentView() engine.View {
 // persistView saves the view options when they changed. Called each
 // frame; writes only on change.
 func (a *App) persistView() {
+	if a.detached {
+		return
+	}
 	v := a.currentView()
 	if v != a.Lib.Settings.View || !a.viewSaved {
 		changed := v != a.Lib.Settings.View

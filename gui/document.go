@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 
+	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
 )
@@ -64,6 +65,35 @@ func (a *App) closeDoc(i int) {
 	}
 }
 
+// NewDetached is the interface of a window that holds one file document, as
+// made by dragging its tab out of the main window. It shares the library
+// (settings, action chains) with the main window.
+func NewDetached(lib *engine.Library, p Platform, name, path, text string) *App {
+	a := New(lib, p)
+	a.detached = true
+	a.docs = []*document{{name: name, path: path, text: text}}
+	a.cur = 0
+	a.Text = text
+	return a
+}
+
+// detachDoc moves file tab i into a window of its own, with its text as it
+// is now (unsaved edits included).
+func (a *App) detachDoc(i int) {
+	if i <= 0 || i >= len(a.docs) {
+		return // the clipboard workspace stays
+	}
+	a.syncEditor()
+	d := a.docs[i]
+	text := d.text
+	if i == a.cur {
+		text = a.Text
+	}
+	name, path := d.name, d.path
+	a.closeDoc(i)
+	a.Platform.OpenWindow(name, path, text)
+}
+
 // ShowClipboard makes the clipboard workspace current.
 func (a *App) ShowClipboard() { a.switchDoc(0) }
 
@@ -96,6 +126,31 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 	}
 	b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 120e6})).Border(strokeW, bd)
 	focusRing(b)
+	if !d.clip && i > 0 {
+		// A file tab can be torn off: drag it down out of the title bar, or
+		// right-click it, to open it in a window of its own.
+		b.Draggable(nil, ui.DraggableOptions{Snap: func(ui.Point) ui.Point { return ui.Point{} }})
+		if b.Dragging() {
+			a.tabDrag = b.DragOffset()
+		}
+		if _, _, ended := b.DragEnded(); ended {
+			if off := a.tabDrag; off.Y > 36 || off.Y < -36 || off.X > 160 || off.X < -160 {
+				a.detachDoc(i)
+				return
+			}
+		}
+		if b.RightClicked() {
+			*a.menuFlag("tab" + d.path) = true
+		}
+		a.ctxMenu(c, "tab"+d.path, b, func(m *pm) {
+			if m.Item("在新窗口中打开").Chosen() {
+				a.detachDoc(i)
+			}
+			if m.Item("关闭标签").Chosen() {
+				a.closeDoc(i)
+			}
+		})
+	}
 	b.Children(func() {
 		icon := "file-text"
 		if d.clip {

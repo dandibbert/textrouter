@@ -23,6 +23,9 @@ type Platform interface {
 	SetHotkey(acc string) error
 	// SetAppIcon changes the Dock icon to the PNG.
 	SetAppIcon(png []byte)
+	// OpenWindow opens a file document in a window of its own (a tab
+	// dragged out of the title bar); the window runs NewDetached.
+	OpenWindow(name, path, text string)
 	// Update runs fn on the UI thread and redraws (used after dialogs,
 	// which block and so run on goroutines).
 	Update(fn func())
@@ -37,6 +40,7 @@ func (NopPlatform) HideWindow()                                     {}
 func (NopPlatform) SetTheme(string)                                 {}
 func (NopPlatform) SetHotkey(string) error                          { return nil }
 func (NopPlatform) SetAppIcon([]byte)                               {}
+func (NopPlatform) OpenWindow(name, path, text string)              {}
 func (NopPlatform) Update(fn func())                                { fn() }
 
 // Page ids of the sidebar.
@@ -72,6 +76,8 @@ type App struct {
 	ws            workspace
 	clipAt        time.Time
 	appIcon       string
+	detached      bool // a window made by tearing off a tab: it leaves the saved view options to the main window
+	tabDrag       ui.Point
 	openedAt      time.Time
 	menus         map[string]*bool
 	sheetFresh    string

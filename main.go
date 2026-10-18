@@ -26,6 +26,8 @@ type desktop struct {
 	win    *mygo.Window
 	hotkey string
 	show   func()
+	lib    *engine.Library
+	parent *desktop // the main window's, for the windows made by tearing off a tab
 }
 
 func (d *desktop) OpenFiles(title string, exts []string, multiple, dirs bool) []string {
@@ -51,6 +53,10 @@ func (d *desktop) SaveFile(title, name string) string {
 // HideWindow hides the window; on macOS the whole app hides so the
 // previous app comes back to the front, ready for ⌘V.
 func (d *desktop) HideWindow() {
+	if d.parent != nil {
+		d.win.Close()
+		return
+	}
 	if runtime.GOOS == "darwin" {
 		mygo.App.Hide()
 		return
@@ -70,6 +76,9 @@ func (d *desktop) SetTheme(theme string) {
 }
 
 func (d *desktop) SetHotkey(acc string) error {
+	if d.parent != nil {
+		return d.parent.SetHotkey(acc)
+	}
 	if d.hotkey != "" {
 		mygo.GlobalShortcut.Unregister(d.hotkey)
 	}
@@ -89,6 +98,34 @@ func (d *desktop) SetHotkey(acc string) error {
 
 func (d *desktop) Update(fn func()) { d.win.Update(fn) }
 
+// OpenWindow opens a file document in a window of its own, a little below
+// and to the right of this one.
+func (d *desktop) OpenWindow(name, path, text string) {
+	root := d
+	if d.parent != nil {
+		root = d.parent
+	}
+	child := &desktop{parent: root, lib: root.lib}
+	ca := gui.NewDetached(root.lib, child, name, path, text)
+	x, y := d.win.Position()
+	w, h := d.win.Size()
+	child.win = mygo.NewWindow(mygo.WindowOptions{
+		Title:          name,
+		Width:          w,
+		Height:         h,
+		X:              x + 36,
+		Y:              y + 36,
+		MinWidth:       820,
+		MinHeight:      520,
+		TitleBarStyle:  mygo.TitleBarHiddenInset,
+		TitleBarHeight: 42,
+		Vibrancy:       mygo.VibrancySidebar,
+		Content:        ui.View(ca.View),
+	})
+	child.win.Show()
+	child.win.Focus()
+}
+
 // SetAppIcon changes the Dock icon; the .app bundle keeps its own.
 func (d *desktop) SetAppIcon(png []byte) {
 	if err := mygo.App.Dock.SetIcon(png); err != nil {
@@ -98,7 +135,7 @@ func (d *desktop) SetAppIcon(png []byte) {
 
 func main() {
 	lib := engine.LoadLibrary(engine.LibraryPath())
-	d := &desktop{}
+	d := &desktop{lib: lib}
 	a := gui.New(lib, d)
 	quitting := false
 

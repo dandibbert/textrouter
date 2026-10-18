@@ -63,6 +63,16 @@ func (a *App) menuFlag(key string) *bool {
 // popMenu opens a menu under anchor when it is clicked; build fills it with
 // Item and Separator, as for ui.Menu. Escape or a click outside closes it.
 func (a *App) popMenu(c *ui.Context, key string, anchor ui.Element, build func(m *pm)) {
+	a.menuAt(c, key, anchor, true, build)
+}
+
+// ctxMenu is a menu that the caller opens (by setting menuFlag(key), as a
+// right click does) and that clicks on the anchor do not toggle.
+func (a *App) ctxMenu(c *ui.Context, key string, anchor ui.Element, build func(m *pm)) {
+	a.menuAt(c, key, anchor, false, build)
+}
+
+func (a *App) menuAt(c *ui.Context, key string, anchor ui.Element, toggle bool, build func(m *pm)) {
 	open := a.menuFlag(key)
 	was := *open
 	ui.PopoverBase(c, anchor, open, func(panel ui.Element) {
@@ -70,7 +80,7 @@ func (a *App) popMenu(c *ui.Context, key string, anchor ui.Element, build func(m
 		hard(panel, shadowLg)
 		panel.Children(func() { build(&pm{c: c, open: open}) })
 	})
-	if anchor.Clicked() {
+	if toggle && anchor.Clicked() {
 		*open = !was
 	}
 }

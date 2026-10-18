@@ -10,6 +10,7 @@ import (
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/editor"
 )
 
 // settle runs a few frames, as the pointer and previews take two to catch up.
@@ -534,5 +535,104 @@ func TestFileOpenedBySystemStaysOpenThroughActivation(t *testing.T) {
 	a.LoadClipboard("new clipboard text")
 	if a.cur != 0 {
 		t.Fatalf("a later activation should show the clipboard again, cur=%d", a.cur)
+	}
+}
+
+type windowRecorder struct {
+	NopPlatform
+	name, path, text *string
+}
+
+func (r windowRecorder) OpenWindow(name, path, text string) {
+	*r.name, *r.path, *r.text = name, path, text
+}
+
+func TestTearingOffATabOpensAWindow(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	var name, path, text string
+	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	p := filepath.Join(t.TempDir(), "notes.txt")
+	if err := os.WriteFile(p, []byte("file body"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 9, End: 9, Text: "!"}) // an unsaved edit travels with it
+	a.detachDoc(0)                                             // the clipboard tab never leaves
+	if name != "" || len(a.docs) != 2 {
+		t.Fatal("the clipboard tab was torn off")
+	}
+	a.detachDoc(1)
+	settle(tt, 2)
+	if name != "notes.txt" || path != p || text != "file body!" {
+		t.Fatalf("window for %q %q %q", name, path, text)
+	}
+	if len(a.docs) != 1 || a.cur != 0 || a.Text != "clip" {
+		t.Fatalf("main window kept docs=%d cur=%d %q", len(a.docs), a.cur, a.Text)
+	}
+}
+
+func TestDetachedWindowHoldsOneFile(t *testing.T) {
+	lib := engine.LoadLibrary(filepath.Join(t.TempDir(), "library.json"))
+	a := NewDetached(lib, nil, "notes.txt", "/x/notes.txt", "hello")
+	tt := ui.NewTester(a.View, 1100, 700)
+	settle(tt, 3)
+	if !tt.HasText("notes.txt") || tt.HasText("复制并完成") || a.Text != "hello" {
+		t.Fatalf("detached window: %q", tt.Texts())
+	}
+	before := lib.Settings.View
+	a.view.zoom = 1.5
+	settle(tt, 2)
+	if lib.Settings.View != before {
+		t.Fatal("a detached window must not rewrite the saved view options")
+	}
+}
+
+func TestDraggingATabDownTearsItOff(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	var name, path, text string
+	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	p := filepath.Join(t.TempDir(), "drag.txt")
+	if err := os.WriteFile(p, []byte("body"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	settle(tt, 3)
+	r, ok := tt.Find("drag.txt")
+	if !ok {
+		t.Fatalf("no tab: %q", tt.Texts())
+	}
+	x, y := r.X+r.W/2, r.Y+r.H/2
+	tt.Press(x, y)
+	for dy := float32(10); dy <= 90; dy += 20 {
+		tt.Move(x, y+dy)
+		settle(tt, 1)
+	}
+	tt.Release(x, y+90)
+	settle(tt, 3)
+	if name != "drag.txt" || path != p || len(a.docs) != 1 {
+		t.Fatalf("drag did not tear the tab off: %q docs=%d", name, len(a.docs))
+	}
+}
+
+func TestShortDragOfATabIsNoTearOff(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	var name, path, text string
+	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	p := filepath.Join(t.TempDir(), "wobble.txt")
+	if err := os.WriteFile(p, []byte("body"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	settle(tt, 3)
+	r, _ := tt.Find("wobble.txt")
+	x, y := r.X+r.W/2, r.Y+r.H/2
+	tt.Press(x, y)
+	tt.Move(x, y+8)
+	settle(tt, 2)
+	tt.Release(x, y+8)
+	settle(tt, 3)
+	if name != "" || len(a.docs) != 2 {
+		t.Fatal("a short drag tore the tab off")
 	}
 }
