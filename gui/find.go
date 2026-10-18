@@ -38,120 +38,77 @@ type findResult struct {
 var findMemo memo
 
 func (a *App) runFind(o engine.FindOptions) findResult {
-	key := hashOf("find", a.Text, o.Find, o.Replace, fmt.Sprint(o.Regex, o.MatchCase), o.RegexOptions)
+	key := hashOf("find", a.findText(), o.Find, o.Replace, fmt.Sprint(o.Regex, o.MatchCase), o.RegexOptions)
 	return findMemo.get(key, func() any {
-		ms, err := o.FindAll(a.Text, 0)
-		r := findResult{matches: ms, err: err, out: a.Text}
+		ms, err := o.FindAll(a.findText(), 0)
+		r := findResult{matches: ms, err: err, out: a.findText()}
 		if err == nil && len(ms) > 0 {
-			r.out = engine.ApplyMatches(a.Text, ms)
+			r.out = engine.ApplyMatches(a.findText(), ms)
 		}
 		return r
 	}).(findResult)
 }
 
-func (a *App) findView(c *ui.Context) {
-	t := c.Theme()
-	f := &a.find
-	o := f.options()
-	res := a.runFind(o)
-	header(c, "查找替换", "默认按文字查找；需要模式匹配时切到「正则」。右侧实时显示每一处会变成什么。", func() {
-		if ui.Button(c, "加入批量规则").Disabled(o.Find == "").Clicked() {
-			a.addRuleFromFind(o)
+// fieldBg is the fill of an inline-styled field.
+func fieldBg(c *ui.Context, _ string) ui.Color { return tok(c).field }
+
+// fieldShell adds the focus ring to the field's container.
+func fieldShell(c *ui.Context, in ui.Element) {}
+
+// patternRanges colors a regex by its explanation parts.
+func patternRanges(k tokens, pat string) []ui.TextRange {
+	var out []ui.TextRange
+	parts := engine.ExplainPattern(pat, true)
+	rs := []rune(pat)
+	pos := 0
+	for _, p := range parts {
+		pr := []rune(p.Text)
+		if len(pr) == 0 {
+			continue
 		}
-		if ui.Button(c, "存为动作链步骤").Disabled(o.Find == "").Clicked() {
-			a.addFindToChain(o)
+		at := indexRunes(rs, pr, pos)
+		if at < 0 {
+			continue
 		}
-		if ui.PrimaryButton(c, fmt.Sprintf("全部替换（%d 处）", len(res.matches))).Disabled(len(res.matches) == 0).Clicked() {
-			a.Transform("查找替换", func(string) string { return res.out })
-		}
-	})
-	ui.Row(c).Grow(1).PaddingX(20).PaddingY(4).Gap(16).MinHeight(0).Children(func() {
-		// Left: the form and the plain-language explanation.
-		ui.Scroll(c).Width(380).FillHeight().Children(func() {
-			ui.Column(c).Gap(12).Padding(0, 6, 0, 0).Children(func() {
-				card(c).Children(func() {
-					ui.Segmented(c, &f.modeIdx, "文字", "正则表达式").Label("查找方式")
-					ui.Text(c, "查找").FontSize(12).Bold()
-					ui.TextInput(c, &f.opts.Find).Font("monospace").Label("查找").Placeholder(placeholderFind(f.modeIdx)).AutoFocus()
-					ui.Text(c, "替换为").FontSize(12).Bold()
-					ui.TextInput(c, &f.opts.Replace).Font("monospace").Label("替换为").Placeholder("留空 = 删除匹配内容")
-					ui.Row(c).Gap(12).Wrap().Children(func() {
-						ui.Checkbox(c, &f.opts.MatchCase, "区分大小写")
-						if f.modeIdx == 1 {
-							ui.Checkbox(c, &f.multiline, "多行（^ $ 按行）").Tooltip("TextSoap 选项 m")
-							ui.Checkbox(c, &f.dotall, ". 匹配换行").Tooltip("TextSoap 选项 s")
-						}
-					})
-				})
-				if f.modeIdx == 1 {
-					card(c).Children(func() {
-						ui.Text(c, "常用模式").FontSize(12).Bold()
-						ui.Row(c).Gap(6).Wrap().Children(func() {
-							for _, p := range engine.Presets() {
-								if ui.Button(c.Key("preset:"+p.Name), p.Name).Tooltip(p.Desc).Clicked() {
-									f.opts.Find, f.opts.Replace = p.Pattern, p.Replace
-									if p.Name == "行首行尾空白" || p.Name == "空行" || p.Name == "每行首字母大写" {
-										f.multiline = true
-									}
-								}
-							}
-						})
-					})
-				}
-				card(c).Children(func() {
-					ui.Text(c, "这个规则的意思").FontSize(12).Bold()
-					if o.Find == "" {
-						muted(c, "在上面输入要查找的内容，这里会逐段解释。")
-					}
-					explainParts(c, "f", engine.ExplainPattern(o.Find, o.Regex))
-					if o.Find != "" {
-						ui.Divider(c)
-						muted(c, "替换为：")
-						explainParts(c, "r", engine.ExplainTemplate(o.Replace, o.Regex))
-					}
-					if o.Regex {
-						ui.Divider(c)
-						muted(c, "替换记号：$0 整个匹配 · $1…$9 第几组 · $U/$L 之后全大写/小写 · $u/$l 下一个字大写/小写 · $E 结束 · \\$ 美元符号。不支持 ${1}，$$ 会变成空。")
-					}
-				})
-			})
-		})
-		// Right: live preview.
-		ui.Column(c).Grow(1).FillHeight().Gap(8).MinWidth(0).Children(func() {
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				switch {
-				case res.err != nil:
-					ui.Text(c, "⚠ 规则有误："+res.err.Error()).FontSize(12).TextColor(t.Danger).Grow(1)
-				case o.Find == "":
-					muted(c, "预览：剪贴板空间里的文本").Grow(1)
-				default:
-					ui.Textf(c, "找到 %d 处", len(res.matches)).Bold().Grow(1)
-				}
-				ui.Segmented(c, &f.showResult, "高亮对照", "替换结果").Label("预览方式")
-			})
-			ui.Scroll(c).Grow(1).Background(t.Surface).Radius(8).Border(1, t.Border).Padding(12).Children(func() {
-				if f.showResult == 1 {
-					ui.Text(c, res.out).Selectable().Font("monospace").FontSize(13)
-				} else {
-					matchView(c, a.Text, res.matches)
-				}
-			})
-			if len(res.matches) > 0 {
-				ui.Text(c, "逐条查看").FontSize(12).Bold()
-				ui.Scroll(c).Height(170).Children(func() {
-					ui.Column(c).Gap(4).Children(func() {
-						for i, m := range res.matches {
-							if i >= 200 {
-								muted(c, fmt.Sprintf("…还有 %d 处", len(res.matches)-i))
-								break
-							}
-							matchRow(c, i, m)
-						}
-					})
-				})
+		if p.Kind != "literal" {
+			w := 500
+			if p.Kind == "group" || p.Kind == "error" {
+				w = 700
 			}
-		})
-	})
+			out = append(out, ui.TextRange{Start: at, End: at + len(pr), Color: tokenColor(k, p.Kind), Weight: w})
+		}
+		pos = at + len(pr)
+	}
+	return out
+}
+
+// templateRanges colors $-tokens of a replacement template.
+func templateRanges(k tokens, tpl string) []ui.TextRange {
+	var out []ui.TextRange
+	rs := []rune(tpl)
+	for i := 0; i < len(rs); i++ {
+		if (rs[i] == '$' || rs[i] == '\\') && i+1 < len(rs) {
+			out = append(out, ui.TextRange{Start: i, End: i + 2, Color: tokenColor(k, "group"), Weight: 700})
+			i++
+		}
+	}
+	return out
+}
+
+func indexRunes(hay, needle []rune, from int) int {
+	for i := from; i+len(needle) <= len(hay); i++ {
+		ok := true
+		for j := range needle {
+			if hay[i+j] != needle[j] {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return i
+		}
+	}
+	return -1
 }
 
 func placeholderFind(mode int) string {
@@ -187,19 +144,24 @@ func matchView(c *ui.Context, text string, ms []engine.Match) {
 		last = m.End
 	}
 	spans = append(spans, ui.Span{Text: string(r[last:])})
-	ui.RichText(c, spans...).Selectable().Font("monospace").FontSize(13)
+	ui.RichText(c, spans...).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(tok(c).text)
 }
 
 func matchRow(c *ui.Context, i int, m engine.Match) {
+	k := tok(c)
 	t := c.Theme()
-	ui.Row(c.Key(fmt.Sprint("m", i))).Gap(8).Padding(6, 8).Radius(6).Background(t.Surface).AlignItems(ui.Start).Children(func() {
-		ui.Textf(c, "#%d", i+1).FontSize(11).TextColor(t.TextMuted).Width(34)
+	row := ui.Row(c.Key(fmt.Sprint("m", i))).Gap(sp3).Padding(6, 8).Radius(rSm).AlignItems(ui.Start)
+	if row.Hovered() {
+		row.Background(k.hover)
+	}
+	row.Children(func() {
+		ui.Textf(c, "%d", i+1).FontSize(11).FontWeight(600).TextColor(k.faint).Width(22).FontFeatures("tnum").TextAlign(ui.End)
 		ui.Column(c).Grow(1).Gap(3).MinWidth(0).Children(func() {
 			ui.RichText(c,
 				ui.Span{Text: visible(m.Groups[0].Text), Background: hlMatch(t)},
-				ui.Span{Text: "  →  ", Color: t.TextMuted},
+				ui.Span{Text: "  →  ", Color: k.faint},
 				ui.Span{Text: visible(m.Result), Background: hlAdd(t)},
-			).Font("monospace").FontSize(12)
+			).Font(monoFont).FontSize(12.5)
 			if len(m.Groups) > 1 {
 				var spans []ui.Span
 				for gi, g := range m.Groups[1:] {
@@ -207,33 +169,29 @@ func matchRow(c *ui.Context, i int, m engine.Match) {
 					if !g.Ok {
 						v = "（未参与）"
 					}
-					spans = append(spans, ui.Span{Text: fmt.Sprintf("$%d=", gi+1), Color: t.TextMuted}, ui.Span{Text: visible(v) + "   "})
+					spans = append(spans, ui.Span{Text: fmt.Sprintf("$%d ", gi+1), Color: k.accent, Weight: 600}, ui.Span{Text: visible(v) + "    ", Color: k.muted})
 				}
-				ui.RichText(c, spans...).Font("monospace").FontSize(11)
+				ui.RichText(c, spans...).Font(monoFont).FontSize(11.5)
 			}
 		})
 	})
 }
 
 func explainParts(c *ui.Context, prefix string, parts []engine.Part) {
-	t := c.Theme()
+	k := tok(c)
 	for i, p := range parts {
-		ui.Row(c.Key(fmt.Sprint(prefix, i))).Gap(8).AlignItems(ui.Start).Children(func() {
-			bg := t.SurfaceHover
-			switch p.Kind {
-			case "error":
-				bg = hlDel(t)
-			case "token", "group":
-				bg = hlMatch(t)
-			case "class", "quant", "anchor":
-				bg = hlAdd(t)
-			}
+		ui.Row(c.Key(fmt.Sprint(prefix, i))).Gap(sp3).AlignItems(ui.Start).Padding(3, 0).Children(func() {
 			txt := p.Text
 			if txt == "" {
 				txt = "∅"
 			}
-			ui.Text(c, txt).Font("monospace").FontSize(12).Background(bg).Radius(4).Padding(1, 5).MaxWidth(150)
-			ui.Text(c, p.Desc).FontSize(12).Grow(1).Wrap()
+			col := tokenColor(k, p.Kind)
+			bg := k.field
+			if p.Kind == "error" {
+				bg = k.redSoft
+			}
+			ui.Text(c, txt).Font(monoFont).FontSize(12).FontWeight(600).TextColor(col).Background(bg).Radius(5).Padding(2, 6).MaxWidth(140)
+			ui.Text(c, p.Desc).FontSize(12.5).TextColor(k.text).LineHeight(1.45).Grow(1).Wrap().Padding(2, 0, 0, 0)
 		})
 	}
 }

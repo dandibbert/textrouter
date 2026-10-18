@@ -14,3 +14,5 @@ require (
 	golang.org/x/text v0.43.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
+
+replace github.com/egoist/mygo => ./third_party/mygo

@@ -6,9 +6,12 @@ package gui
 import (
 	"fmt"
 	"strings"
+	"time"
+	"unicode/utf8"
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/editor"
 )
 
 // Platform is what the interface needs from the desktop. All methods may
@@ -53,13 +56,30 @@ type App struct {
 	Page string
 	Text string // the Clipboard Space text, shared by every page as the sample
 
-	history []snapshot // undo stack of applied operations
-	future  []snapshot
-	last    *lastOp
+	last *lastOp
+
+	ed            *editor.State // the Clipboard Space editor; its buffer holds Text
+	edVer         uint64
+	edSynced      string
+	view          editorPrefs
+	sideOpen      bool
+	docs          []*document
+	cur           int
+	inspector     string // "", "cleaners" or "find"
+	insp          inspectorState
+	sheetFresh    string
+	fakeMenu      []string
+	changes       []changeSpan
+	changesVer    uint64
+	changesAt     time.Time
+	viewSaved     bool
+	fontUI        fontUI
+	freezeChanges bool // screenshots: no fade // screenshots only: stand-in for the native popup menu
 
 	paletteOpen  bool
 	paletteQuery string
 	paletteSel   int
+	paletteFresh bool
 
 	find    findState
 	batch   batchState
@@ -70,17 +90,26 @@ type App struct {
 
 	sections  map[string]*bool
 	status    string
+	toast     string
+	toastUndo bool
+	monoEdit  bool
 	writeClip func(string)
-}
-
-type snapshot struct {
-	text, label string
+	// clipLoaded is the clipboard text last loaded into (or copied from)
+	// the 剪贴板 document; clipPrev is that document's text right after.
+	clipSeen   bool
+	clipLoaded string
+	clipPrev   string
+	// clipPending is a newer clipboard not loaded because the document
+	// had edits; the toolbar offers it.
+	clipPending    string
+	clipHasPending bool
 }
 
 type lastOp struct {
 	label    string
 	before   string
 	after    string
+	scope    string
 	showDiff bool
 }
 
@@ -98,65 +127,126 @@ func New(lib *engine.Library, p Platform) *App {
 		a.chains.selID = lib.Chains[0].ID
 	}
 	a.clean.category = "全部"
+	a.batch.showDiff = true
+	a.restoreView()
 	return a
 }
 
-// LoadClipboard replaces the workspace text (called when the window opens).
-func (a *App) LoadClipboard(s string) {
+// LoadClipboard is what every activation calls (launch, Dock icon, app
+// activation, menu bar icon, global shortcut) with the clipboard's text:
+// it switches to the 剪贴板 document and reads the clipboard into it.
+//
+//   - Clipboard unchanged since it was last loaded or copied from here:
+//     the document is left alone (carets, undo history, edits).
+//   - Changed, document unedited: replaced silently (one undoable edit).
+//   - Changed, document has edits not yet copied out: the document is
+//     kept exactly as is (text, carets, undo); a pill in the toolbar,
+//     「剪贴板有新内容 · 载入」, loads it on click as an undoable edit.
+//   - Auto-read off in the settings: only switches to the document.
+//
+// It reports whether the document was replaced.
+func (a *App) LoadClipboard(s string) bool {
+	a.ShowClipboard()
+	if a.Lib.Settings.NoAutoReadClipboard {
+		return false
+	}
+	a.syncEditor()
+	if a.clipSeen && s == a.clipLoaded {
+		return false // nothing new on the clipboard
+	}
+	first := !a.clipSeen
+	a.clipSeen, a.clipLoaded = true, s
 	if s == a.Text {
-		return
+		a.clipHasPending, a.clipPending = false, ""
+		return false
 	}
-	a.push("读取剪贴板")
-	a.Text = s
+	edited := !first && a.Text != a.clipPrev && a.Text != ""
+	if edited {
+		// Edits not yet copied out: keep the document exactly as it is and
+		// offer the new clipboard in a pill instead.
+		a.clipPending, a.clipHasPending = s, true
+		return false
+	}
+	a.applyClipboard(s)
+	a.status = "已读取剪贴板"
+	return true
+}
+
+// applyClipboard loads s into the 剪贴板 document as one undoable edit.
+func (a *App) applyClipboard(s string) {
+	a.clipHasPending, a.clipPending = false, ""
+	a.replaceAll(s)
+	a.clipPrev = a.Text
+	a.clearDiffBase()
+	a.changes = nil
 	a.last = nil
 }
 
-func (a *App) push(label string) {
-	a.history = append(a.history, snapshot{a.Text, label})
-	if len(a.history) > 200 {
-		a.history = a.history[1:]
+// LoadPendingClipboard loads the clipboard the pill offers (undoable).
+func (a *App) LoadPendingClipboard() {
+	if !a.clipHasPending {
+		return
 	}
-	a.future = nil
-}
-
-// Transform applies fn to the workspace text as one undoable operation.
-func (a *App) Transform(label string, fn func(string) string) {
+	a.ShowClipboard()
+	a.syncEditor()
 	before := a.Text
-	after := fn(before)
+	a.applyClipboard(a.clipPending)
+	a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
+	a.status = "已载入新剪贴板（⌘Z 可找回之前的编辑）"
+}
+
+// noteCopied records text this app put on the clipboard, so the next
+// activation sees nothing new and leaves the document alone.
+func (a *App) noteCopied(s string) {
+	a.clipSeen, a.clipLoaded = true, s
+	a.clipHasPending, a.clipPending = false, ""
+	if a.cur == 0 {
+		a.syncEditor()
+		a.clipPrev = a.Text
+	}
+}
+
+// Transform applies fn as one undoable operation: to each selection of
+// the editor when there is one, else to the whole text.
+func (a *App) Transform(label string, fn func(string) string) {
+	a.syncEditor()
+	before := a.Text
+	scope := a.applyScoped(fn)
+	after := a.Text
 	if after == before {
-		a.status = "「" + label + "」没有改变文本"
+		a.status = "「" + label + "」没有改变" + scope
 		return
 	}
-	a.push(label)
-	a.Text = after
-	a.last = &lastOp{label: label, before: before, after: after}
+	a.last = &lastOp{label: label, before: before, after: after, scope: scope}
+	a.ed.DiffBase = editor.NewBuffer(before)
+	a.markChanges(before, after)
 	ins, del := engine.DiffStats(engine.Diff(before, after))
-	a.status = fmt.Sprintf("已应用「%s」：+%d −%d 字符", label, ins, del)
+	a.status = fmt.Sprintf("已对%s应用「%s」：+%d −%d 字符", scope, label, ins, del)
+	a.toast, a.toastUndo = fmt.Sprintf("「%s」· %s · +%d −%d", label, scope, ins, del), true
 }
 
-// Undo restores the text before the last operation.
+// Undo undoes the last edit or action (one shared history).
 func (a *App) Undo() {
-	if len(a.history) == 0 {
+	a.syncEditor()
+	if !a.ed.Buffer.CanUndo() {
 		return
 	}
-	s := a.history[len(a.history)-1]
-	a.history = a.history[:len(a.history)-1]
-	a.future = append(a.future, snapshot{a.Text, s.label})
-	a.Text = s.text
+	a.ed.Buffer.Undo()
+	a.syncEditor()
 	a.last = nil
-	a.status = "已撤销「" + s.label + "」"
+	a.clearDiffBase()
+	a.status = "已撤销"
 }
 
-// Redo re-applies an undone operation.
+// Redo re-applies an undone edit.
 func (a *App) Redo() {
-	if len(a.future) == 0 {
+	a.syncEditor()
+	if !a.ed.Buffer.CanRedo() {
 		return
 	}
-	s := a.future[len(a.future)-1]
-	a.future = a.future[:len(a.future)-1]
-	a.history = append(a.history, snapshot{a.Text, s.label})
-	a.Text = s.text
-	a.status = "已重做「" + s.label + "」"
+	a.ed.Buffer.Redo()
+	a.syncEditor()
+	a.status = "已重做"
 }
 
 func (a *App) save() {
@@ -175,127 +265,186 @@ func (a *App) open(name string) *bool {
 	return b
 }
 
-// View is the window content.
-func (a *App) View(c *ui.Context) {
-	t := c.Theme()
-	a.writeClip = c.WriteClipboard
-	c.OnShortcut(ui.Cmd, ui.KeyK, func() { a.openPalette() })
-	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyZ, a.Redo)
-	c.OnShortcut(ui.Cmd, ui.Key1, func() { a.Page = PageClipboard })
-	ui.Row(c).Fill().Background(t.Background).Children(func() {
-		ui.Column(c).Width(212).FillHeight().Background(t.Surface).Children(func() {
-			ui.Row(c).Padding(18, 16, 10, 16).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Box(c).Size(22, 22).Radius(6).Gradient(ui.Hex("#7C5CFF"), ui.Hex("#22C3EE"), 135)
-				ui.Text(c, "TextRouter").FontSize(16).Bold()
-			})
-			ui.Sidebar(c, &a.Page, func() {
-				ui.SidebarSection(c, "日常", nil, func() {
-					ui.SidebarItem(c, PageClipboard, nil, "剪贴板空间")
-					ui.SidebarItem(c, PageFind, nil, "查找替换")
-					ui.SidebarItem(c, PageBatch, nil, "批量替换")
-				})
-				ui.SidebarSection(c, "工具箱", nil, func() {
-					ui.SidebarItem(c, PageChains, nil, "动作链").Children(func() {
-						ui.Badge(c, fmt.Sprint(len(a.Lib.Chains)))
-					})
-					ui.SidebarItem(c, PageCleaners, nil, "清理器库")
-					ui.SidebarItem(c, PageFiles, nil, "批量处理文件")
-					ui.SidebarItem(c, PageSettings, nil, "设置")
-				})
-			}).Grow(1)
-			ui.Column(c).Padding(12, 16).Gap(4).Children(func() {
-				if ui.Button(c, "全部动作  ⌘K").FillWidth().Clicked() {
-					a.openPalette()
-				}
-			})
-		})
-		ui.Divider(c).Vertical()
-		ui.Column(c).Grow(1).FillHeight().MinWidth(0).Children(func() {
-			switch a.Page {
-			case PageFind:
-				a.findView(c)
-			case PageBatch:
-				a.batchView(c)
-			case PageChains:
-				a.chainsView(c)
-			case PageCleaners:
-				a.cleanersView(c)
-			case PageFiles:
-				a.filesView(c)
-			case PageSettings:
-				a.settingsView(c)
-			default:
-				a.clipboardView(c)
-			}
-			a.statusBar(c)
-		})
-	})
-	a.paletteView(c)
+// navItem describes a secondary tool (opened as a sheet).
+type navItem struct{ id, icon, label string }
+
+// Tools are second-level: opened as sheets over the document from the
+// Tools menu, the app menu bar or ⌘K.
+var tools = []navItem{
+	{PageBatch, "replace-all", "批量替换"},
+	{PageChains, "workflow", "我的清理器（动作链）"},
+	{PageCleaners, "library-big", "清理器库"},
+	{PageFiles, "files", "批量处理文件"},
+	{PageSettings, "settings-2", "设置"},
 }
 
-func (a *App) statusBar(c *ui.Context) {
-	t := c.Theme()
-	ui.Divider(c)
-	ui.Row(c).Padding(6, 16).Gap(12).AlignItems(ui.Center).Children(func() {
-		st := a.status
-		if st == "" {
-			st = "就绪"
+// View is the window content: one text document (the clipboard or an
+// opened file) with the cleaner/find inspector on the right.
+func (a *App) View(c *ui.Context) {
+	registerFonts()
+	uiFontFamily = a.uiFamily()
+	k := applyTheme(c)
+	a.writeClip = func(t string) { c.WriteClipboard(t); a.noteCopied(t) }
+	a.ensureDocs()
+	a.persistView()
+	if a.Page == PageFind {
+		a.Page = PageClipboard
+		a.showFind()
+	}
+	c.OnShortcut(ui.Cmd, ui.KeyK, func() { a.openPalette() })
+	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyZ, a.Redo)
+	c.OnShortcut(ui.Cmd, ui.KeyF, a.showFind)
+	c.OnShortcut(ui.Cmd|ui.Alt, ui.KeyS, func() { a.toggleInspector("cleaners") })
+	c.OnShortcut(ui.Cmd, ui.KeyComma, func() { a.Page = PageSettings })
+	if a.Page != PageClipboard && a.Page != "" && !a.paletteOpen {
+		c.OnShortcut(0, ui.KeyEscape, func() { a.Page = PageClipboard })
+	}
+	a.syncEditor()
+	ui.Column(c).Fill().Background(k.canvas).Children(func() {
+		a.titleBar(c, k)
+		ui.Row(c).Grow(1).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
+			a.documentView(c, k)
+			target := float32(0)
+			if a.inspector != "" {
+				target = inspectorW
+			}
+			holder := ui.Box(c.Key("inspwrap")).FillHeight().Clip().Width(target)
+			if target > 0 {
+				holder.Children(func() { a.inspectorView(c, k) })
+			}
+		})
+		a.statusBar(c)
+	})
+	if a.Page != PageClipboard && a.Page != "" {
+		a.sheetView(c, k)
+	}
+	if a.fakeMenu != nil {
+		a.fakeMenuView(c, k)
+	}
+	a.paletteView(c)
+	if a.toast != "" {
+		msg := a.toast
+		a.toast = ""
+		if a.toastUndo {
+			c.ToastAction(msg, "撤销", a.Undo)
+		} else {
+			c.Toast(msg)
 		}
-		ui.Text(c, st).FontSize(11).TextColor(t.TextMuted).Grow(1).MaxLines(1)
+	}
+}
+
+// statusBar is the editor options bar under the text, as TextSoap's:
+// zoom, line numbers, wrap, invisibles, font, and statistics.
+func (a *App) statusBar(c *ui.Context) {
+	k := tok(c)
+	ui.Row(c).Height(30).Padding(0, sp3).Gap(2).AlignItems(ui.Center).Background(k.canvas).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
+		small := func(key, icon, label string, on bool) bool {
+			b := iconButton(c, key, icon, label, label).Size(24, 24)
+			if on {
+				b.Background(k.accentSoft)
+			}
+			return b.Clicked()
+		}
+		if small("zout", "minus", "缩小 ⌘-", false) {
+			a.zoomBy(-1)
+		}
+		ui.Textf(c, "%d%%", int(a.view.zoom*100+0.5)).FontSize(11).TextColor(k.muted).FontFeatures("tnum").Width(36).TextAlign(ui.Center)
+		if small("zin", "plus", "放大 ⌘+", false) {
+			a.zoomBy(1)
+		}
+		ui.Box(c).Size(1, 14).Background(k.hair).Margin(0, sp1)
+		if small("lnum", "list-ordered", "行号", a.view.lineNumbers) {
+			a.view.lineNumbers = !a.view.lineNumbers
+		}
+		if small("wrap", "wrap-text", "自动换行", a.view.wrap) {
+			a.view.wrap = !a.view.wrap
+		}
+		if small("invis", "pilcrow", "显示不可见字符（空格、制表符、换行、NBSP、全角空格）⌥⌘I", a.view.invisibles) {
+			a.view.invisibles = !a.view.invisibles
+		}
+		if small("mono", "type", "等宽字体", a.view.mono) {
+			a.view.mono = !a.view.mono
+		}
+		ui.Box(c).Width(sp3)
+		st := a.status
+		col := k.faint
+		if strings.Contains(st, "失败") || strings.Contains(st, "错误") {
+			col = k.red
+		}
+		ui.Text(c, st).FontSize(11).TextColor(col).Grow(1).Shrink(1).MinWidth(0).SingleLine()
+		if a.last != nil {
+			u := ui.ButtonBase(c.Key("sb-undo")).Height(20).Padding(0, 6).Radius(4).Label("撤销上一步")
+			if u.Hovered() {
+				u.Background(k.hover)
+			}
+			u.Children(func() { ui.Text(c, "撤销").FontSize(11).FontWeight(600).TextColor(k.accent) })
+			if u.Clicked() {
+				a.Undo()
+			}
+		}
+		var parts []string
+		if a.ed != nil {
+			p := a.ed.CursorPos()
+			ln := a.ed.Buffer.Line(p.Line)
+			parts = append(parts, fmt.Sprintf("行 %d，列 %d", p.Line+1, utf8.RuneCountInString(ln[:min(p.Col, len(ln))])+1))
+			if sels := a.selections(); len(sels) > 0 {
+				n, lines := 0, 0
+				for _, s := range sels {
+					t := a.ed.Buffer.Slice(s.Start(), s.End())
+					n += utf8.RuneCountInString(t)
+					lines += strings.Count(t, "\n") + 1
+				}
+				parts = append(parts, fmt.Sprintf("已选 %d 字 · %d 行", n, lines))
+			}
+		}
 		lines := strings.Count(a.Text, "\n") + 1
 		if a.Text == "" {
 			lines = 0
 		}
-		ui.Textf(c, "%d 字符 · %d 行", engine.RuneLen(a.Text), lines).FontSize(11).TextColor(t.TextMuted)
-	})
-}
-
-// header draws a page title with a subtitle and right-side actions.
-func header(c *ui.Context, title, subtitle string, actions func()) {
-	t := c.Theme()
-	ui.Row(c).Padding(18, 20, 12, 20).Gap(10).AlignItems(ui.Center).Children(func() {
-		ui.Column(c).Grow(1).Gap(3).MinWidth(0).Children(func() {
-			ui.Text(c, title).FontSize(20).Bold()
-			if subtitle != "" {
-				ui.Text(c, subtitle).FontSize(12).TextColor(t.TextMuted)
+		parts = append(parts, fmt.Sprintf("%d 字符", engine.RuneLen(a.Text)), fmt.Sprintf("%d 词", len(strings.Fields(a.Text))), fmt.Sprintf("%d 行", lines))
+		for i, s := range parts {
+			if i > 0 {
+				ui.Text(c, "·").FontSize(11).TextColor(k.faint.Alpha(0.6)).Margin(0, 4)
 			}
-		})
-		if actions != nil {
-			actions()
+			c2 := k.faint
+			if strings.HasPrefix(s, "已选") {
+				c2 = k.accent
+			}
+			ui.Text(c, s).FontSize(11).TextColor(c2).FontFeatures("tnum").SingleLine()
 		}
 	})
 }
 
-// card is a rounded panel.
-func card(c *ui.Context) ui.Element {
-	t := c.Theme()
-	return ui.Column(c).Background(t.Surface).Radius(10).Border(1, t.Border).Padding(12).Gap(8)
+// header is kept for pages: title, subtitle and right-side actions.
+func header(c *ui.Context, title, subtitle string, actions func()) {
+	pageHeader(c, title, subtitle, actions)
 }
 
-func muted(c *ui.Context, s string) ui.Element {
-	return ui.Text(c, s).FontSize(12).TextColor(c.Theme().TextMuted)
-}
+// card is a raised panel.
+func card(c *ui.Context) ui.Element { return panel(c) }
+
+func muted(c *ui.Context, s string) ui.Element { return hint(c, s) }
 
 // colors used for highlights, adapted to light/dark.
 func hlAdd(t *ui.Theme) ui.Color {
 	if t.Dark {
-		return ui.RGBA(46, 160, 67, 0.35)
+		return ui.RGBA(74, 222, 128, 0.20)
 	}
-	return ui.RGBA(46, 160, 67, 0.22)
+	return ui.RGBA(34, 197, 94, 0.20)
 }
 
 func hlDel(t *ui.Theme) ui.Color {
 	if t.Dark {
-		return ui.RGBA(248, 81, 73, 0.35)
+		return ui.RGBA(248, 113, 113, 0.20)
 	}
-	return ui.RGBA(248, 81, 73, 0.2)
+	return ui.RGBA(239, 68, 68, 0.14)
 }
 
 func hlMatch(t *ui.Theme) ui.Color {
 	if t.Dark {
-		return ui.RGBA(250, 204, 21, 0.35)
+		return ui.RGBA(250, 204, 21, 0.26)
 	}
-	return ui.RGBA(250, 204, 21, 0.45)
+	return ui.RGBA(250, 204, 21, 0.38)
 }
 
 // visible makes whitespace visible inside highlighted snippets.
@@ -311,7 +460,7 @@ func diffView(c *ui.Context, before, after string) {
 	t := c.Theme()
 	if engine.RuneLen(before)+engine.RuneLen(after) > 2*maxPreview {
 		ui.Text(c, "文本较大，只显示结果：").FontSize(11).TextColor(t.TextMuted)
-		ui.Text(c, after).Selectable().Font("monospace").FontSize(13)
+		ui.Text(c, after).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65)
 		return
 	}
 	segs := cachedDiff(before, after)
@@ -323,21 +472,28 @@ func diffView(c *ui.Context, before, after string) {
 		case '+':
 			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlAdd(t)})
 		case '-':
-			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: t.TextMuted})
+			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: tok(c).red.Alpha(0.85), DecorationColor: tok(c).red.Alpha(0.6)})
 		}
 	}
 	if len(spans) == 0 {
 		spans = []ui.Span{{Text: " "}}
 	}
-	ui.RichText(c, spans...).Selectable().Font("monospace").FontSize(13)
+	ui.RichText(c, spans...).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(tok(c).text)
 }
 
 // diffBadge summarises a change.
 func diffBadge(c *ui.Context, before, after string) {
 	if before == after {
-		ui.Badge(c, "无变化")
+		badge(c, "无变化", toneNeutral)
 		return
 	}
 	ins, del := engine.DiffStats(cachedDiff(before, after))
-	ui.Badge(c, fmt.Sprintf("+%d −%d", ins, del))
+	ui.Row(c).Gap(4).Children(func() {
+		if ins > 0 {
+			badge(c, fmt.Sprintf("+%d", ins), toneGreen)
+		}
+		if del > 0 {
+			badge(c, fmt.Sprintf("−%d", del), toneRed)
+		}
+	})
 }
