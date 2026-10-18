@@ -821,7 +821,12 @@ func (p *Painter) scrollbars(e *node) {
 		}
 	}
 	dragging := rt.scrollDrag.st == st
-	if !hovered && !dragging {
+	outlined := theme.ScrollbarOutline.A > 0
+	minThumb = 24
+	if theme.ScrollbarMinThumb > 0 {
+		minThumb = theme.ScrollbarMinThumb
+	}
+	if !hovered && !dragging && !outlined {
 		return
 	}
 	color := theme.Scrollbar
@@ -836,6 +841,10 @@ func (p *Painter) scrollbars(e *node) {
 		y = rescale(y, e.contentH-float64(e.h), h-float64(e.h))
 	}
 	g := scrollBars(Rect{e.x, e.y, e.w, e.h}, e.barInset, float32(w), float32(h), float32(x), float32(y), e.flags, theme.scrollbarWidth())
+	if outlined {
+		p.outlinedScrollbars(g, theme, dragging, rt.scrollDrag.horizontal)
+		return
+	}
 	if g.vertical {
 		bar := g.v
 		if dragging && !rt.scrollDrag.horizontal {
@@ -849,6 +858,35 @@ func (p *Painter) scrollbars(e *node) {
 			bar.Y, bar.H = bar.Y-2, bar.H+2
 		}
 		p.fill(bar, [4]float32{bar.H / 2, bar.H / 2, bar.H / 2, bar.H / 2}, color, 0, Color{})
+	}
+}
+
+// outlinedScrollbars draws the fork's bordered scroll bars: a thin line
+// down the middle of the track and a pill with a border for the thumb.
+func (p *Painter) outlinedScrollbars(g scrollGeometry, theme *Theme, dragging, dragH bool) {
+	line := theme.ScrollbarOutline
+	thumb := func(bar Rect, over, drag bool) {
+		fill := theme.Scrollbar
+		switch {
+		case drag:
+			fill = line
+		case over:
+			fill = theme.ScrollbarHover
+		}
+		p.Fill(bar, fill, min(bar.W, bar.H)/2)
+		p.Stroke(bar, line, min(bar.W, bar.H)/2, 2)
+	}
+	if g.vertical {
+		tr := g.vTrack
+		p.Fill(Rect{X: tr.X + tr.W/2 - 1, Y: tr.Y, W: 2, H: tr.H}, line, 0)
+		over := g.v.Contains(p.rt.pointerX, p.rt.pointerY)
+		thumb(g.v, over, dragging && !dragH)
+	}
+	if g.horizontal {
+		tr := g.hTrack
+		p.Fill(Rect{X: tr.X, Y: tr.Y + tr.H/2 - 1, W: tr.W, H: 2}, line, 0)
+		over := g.h.Contains(p.rt.pointerX, p.rt.pointerY)
+		thumb(g.h, over, dragging && dragH)
 	}
 }
 
@@ -900,9 +938,11 @@ func scrollBars(box Rect, inset [4]float32, w, h, x, y float32, flags uint32, wi
 // scrollThumb returns the thumb's position (Y) and length (H) along a
 // track starting at pos, track long, for a view of content of size content
 // scrolled by offset.
+var minThumb float32 = 24
+
 func scrollThumb(pos, track, view, content, offset float32) Rect {
 	inner := track - 4
-	thumb := min(max(inner*view/content, 24), inner)
+	thumb := min(max(inner*view/content, minThumb), inner)
 	travel := inner - thumb
 	at := float32(0)
 	if content > view {

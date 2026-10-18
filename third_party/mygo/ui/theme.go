@@ -44,6 +44,15 @@ type Theme struct {
 	// default; 0 is 6).
 	Scrollbar      Color
 	ScrollbarWidth float32
+	// ScrollbarOutline, when set, gives scroll bars a bordered thumb that
+	// is always shown over a centred track line (TextRouter fork):
+	// ScrollbarOutline is the border and track line, ScrollbarHover and
+	// ScrollbarDrag the thumb's fill while hovered and dragged, and
+	// ScrollbarMinThumb its shortest length.
+	ScrollbarOutline  Color
+	ScrollbarHover    Color
+	ScrollbarDrag     Color
+	ScrollbarMinThumb float32
 	// Radius rounds the corners of controls.
 	Radius float32
 	// Spacing is the unit of the room widgets leave inside and between

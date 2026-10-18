@@ -79,6 +79,11 @@ type State struct {
 	// edit. (TextRouter fork.)
 	Highlights       []Highlight
 	HighlightVersion uint64
+	// HighlightInset shrinks highlights by this much at the top and bottom
+	// of their line, so that a tall line shows a snug box (TextRouter fork).
+	HighlightInset float32
+	// Gutter styles the gutter (TextRouter fork).
+	Gutter GutterStyle
 
 	// OnCompletion asks the app for completions where the caret is, as
 	// a word is typed or Ctrl+Space pressed: answer with ShowCompletions,
@@ -152,6 +157,48 @@ type Highlight struct {
 	Start, End int
 	Color      ui.Color
 	Outline    ui.Color
+	// Strike and Underline draw a 2 DIP line through the middle and along
+	// the bottom of the range; Ring draws a ring of that many DIPs around
+	// it in RingColor; Wipe, between 0 and 1, shows only that fraction of
+	// the range's width from its left, 0 showing all (TextRouter fork).
+	Strike, Underline ui.Color
+	Ring              float32
+	RingColor         ui.Color
+	Wipe              float32
+}
+
+// GutterStyle styles the gutter when On: it is DigitWidth per digit (at
+// least MinDigits) plus Pad wide, with numbers of NumberSize in NumberFont
+// NumberRight from its edge, a Border line down its right edge, and the
+// text TextGap further. Bars are marks of changes at its left edge and
+// Lines the lines to shade (TextRouter fork).
+type GutterStyle struct {
+	On                                     bool
+	DigitWidth, Pad, NumberRight, TextGap  float32
+	MinDigits                              int
+	NumberSize                             float32
+	NumberFont                             string
+	Background, Border, Hover, NumberColor ui.Color
+	BorderWidth                            float32
+	Bars                                   []GutterBar
+	Lines                                  []GutterLine
+}
+
+// GutterBar is a bar of Color along a line's left edge, grown to Grow of
+// its height (0 is all).
+type GutterBar struct {
+	Line  int
+	Color ui.Color
+	Grow  float32
+}
+
+// GutterLine shades a line: Fill across its text, NumberFill behind its
+// number, Edge down the number's right side, NumberColor and Bold for the
+// number.
+type GutterLine struct {
+	Line                              int
+	Fill, NumberFill, Edge, NumberTxt ui.Color
+	Bold                              bool
 }
 
 // GutterMark marks a line in the gutter.
@@ -170,6 +217,7 @@ func (st *State) options() options {
 		invisibles: st.Invisibles, highlights: st.Highlights, highlightVersion: st.HighlightVersion,
 		diffBase: st.DiffBase, onCompletion: st.OnCompletion, onHover: st.OnHover, onDefinition: st.OnDefinition,
 		onGutterClick: st.OnGutterClick, contextMenu: st.ContextMenu, minDigits: 3,
+		gutter: st.Gutter, hlInset: st.HighlightInset,
 		renderFindBar: st.RenderFindBar, renderGoToLine: st.RenderGoToLine,
 		renderCompletions: st.RenderCompletions, renderHover: st.RenderHover,
 	}
@@ -384,4 +432,28 @@ func (st *State) ensure() {
 		ed.init(st.Buffer, st.options(), ui.LightTheme())
 	}
 	ed.sync()
+}
+
+// ScrollOffset returns how far the editor is scrolled, in DIPs.
+func (st *State) ScrollOffset() float64 {
+	st.ensure()
+	return st.ed.scrollY
+}
+
+// SetScrollOffset scrolls the editor to y DIPs.
+func (st *State) SetScrollOffset(y float64) {
+	st.ensure()
+	st.ed.setScroll(y)
+}
+
+// LineTop returns the offset of a line's top, in DIPs.
+func (st *State) LineTop(line int) float64 {
+	st.ensure()
+	return st.ed.view.heights.top(line)
+}
+
+// ViewHeight returns the height of the editor as it last painted.
+func (st *State) ViewHeight() float32 {
+	st.ensure()
+	return st.ed.viewH
 }

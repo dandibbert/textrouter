@@ -15,7 +15,8 @@ type scrollbarDrag struct {
 	grab       float32 // where in the thumb the press caught it
 }
 
-const scrollbarWidth = 10
+// scrollbarWidth is the scroll bar's width: 10, or the theme's.
+var scrollbarWidth float32 = 10
 
 // input takes the editor's input as it comes.
 func (ed *editor) input(ev ui.InputEvent) bool {
@@ -464,7 +465,7 @@ func (ed *editor) thumb(horizontal bool) (float32, float32) {
 	if horizontal {
 		track := ed.r.W - ed.textX - scrollbarWidth
 		content := ed.view.maxLine + ed.view.charWidth*4
-		size := max(24, track*track/max(content, track))
+		size := max(ed.thumbMin(), track*track/max(content, track))
 		f := float32(0)
 		if m := ed.maxScrollX(); m > 0 {
 			f = ed.scrollX / m
@@ -473,7 +474,7 @@ func (ed *editor) thumb(horizontal bool) (float32, float32) {
 	}
 	track := ed.viewH
 	content := float32(ed.scrollMax()) + ed.viewH
-	size := max(24, track*track/max(content, track))
+	size := max(ed.thumbMin(), track*track/max(content, track))
 	f := float32(0)
 	if m := ed.scrollMax(); m > 0 {
 		f = float32(ed.scrollY / m)
@@ -797,4 +798,12 @@ func abs(f float32) float32 {
 		return -f
 	}
 	return f
+}
+
+// thumbMin is the shortest a scroll bar's thumb gets.
+func (ed *editor) thumbMin() float32 {
+	if m := ed.theme.ScrollbarMin; m > 0 {
+		return m
+	}
+	return 24
 }

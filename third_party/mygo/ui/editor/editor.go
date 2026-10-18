@@ -13,36 +13,36 @@ import (
 // options are a code editor's options for a frame, from a
 // State or a DiffState.
 type options struct {
-	readOnly      bool
-	font          ui.Font
-	lineHeight    float32
-	tabSize       int
-	indent        IndentStyle
-	wrap          bool
-	wrapColumn    int
-	lineNumbers   LineNumbers
-	whitespace    Whitespace
-	wrapGuides    []int
-	indentGuides  bool
-	scrollPastEnd bool
-	autoClose     bool
-	folding       bool
-	activeLine    bool
-	fitContent    bool
-	placeholder   string
-	label         string
-	theme         *Theme
-	bindings      []Binding
-	gutterMarks   []GutterMark
-	diffBase      *Buffer
+	readOnly         bool
+	font             ui.Font
+	lineHeight       float32
+	tabSize          int
+	indent           IndentStyle
+	wrap             bool
+	wrapColumn       int
+	lineNumbers      LineNumbers
+	whitespace       Whitespace
+	wrapGuides       []int
+	indentGuides     bool
+	scrollPastEnd    bool
+	autoClose        bool
+	folding          bool
+	activeLine       bool
+	fitContent       bool
+	placeholder      string
+	label            string
+	theme            *Theme
+	bindings         []Binding
+	gutterMarks      []GutterMark
+	diffBase         *Buffer
 	invisibles       bool
 	highlights       []Highlight
 	highlightVersion uint64
-	onCompletion  func(CompletionRequest)
-	onHover       func(HoverRequest)
-	onDefinition  func(int)
-	onGutterClick func(int)
-	contextMenu   func(m *ui.Menu)
+	onCompletion     func(CompletionRequest)
+	onHover          func(HoverRequest)
+	onDefinition     func(int)
+	onGutterClick    func(int)
+	contextMenu      func(m *ui.Menu)
 	// The parts' render functions, nil for the editor's own.
 	renderFindBar     func(*ui.Context, ui.Element, *FindBar)
 	renderGoToLine    func(*ui.Context, ui.Element, *GoToLineBar)
@@ -55,6 +55,9 @@ type options struct {
 	noScrollbar bool
 	// minDigits is how many digits the gutter has room for at least.
 	minDigits int
+	// gutter and hlInset are the State's Gutter and HighlightInset.
+	gutter  GutterStyle
+	hlInset float32
 	// sharedScroll scrolls the sides of a split diff together.
 	sharedScroll *sharedScroll
 	// signs leaves room for a diff's + and - before the text.
@@ -593,6 +596,13 @@ func (ed *editor) numbersOn() bool {
 func (ed *editor) gutterWidth() float32 {
 	v := &ed.view
 	w := float32(0)
+	if g := ed.o.gutter; g.On {
+		if !ed.numbersOn() {
+			return 0
+		}
+		digits := max(max(g.MinDigits, 2), len(strconv.Itoa(v.text.LineCount())))
+		return float32(math.Ceil(float64(float32(digits)*g.DigitWidth + g.Pad)))
+	}
 	if ed.numbersOn() {
 		digits := max(ed.o.minDigits, len(strconv.Itoa(v.text.LineCount())))
 		w += float32(digits)*v.charWidth + v.charWidth*1.5

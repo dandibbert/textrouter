@@ -8,10 +8,10 @@ import (
 
 // Families used when the settings leave a font empty.
 const (
-	defaultEditorFamily = "Inter"
-	defaultCJKFamily    = "PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Microsoft YaHei"
-	defaultMonoFamily   = "SF Mono, JetBrains Mono, Menlo"
-	defaultUIFamily     = "Inter"
+	defaultEditorFamily = fontMono
+	defaultCJKFamily    = fontCJK
+	defaultMonoFamily   = fontMono
+	defaultUIFamily     = fontSans
 )
 
 func orDefault(s, d string) string {

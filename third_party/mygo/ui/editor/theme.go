@@ -43,6 +43,14 @@ type Theme struct {
 	Added, Deleted, Modified ui.Color
 	// Tokens styles the kinds of tokens; a zero color is Text.
 	Tokens [tokenKinds]TokenStyle
+
+	// ScrollbarOutline, when set, draws the scroll bars with a border: a
+	// track line down the middle and a thumb of ScrollbarThumb, bordered
+	// with ScrollbarOutline, ScrollbarHover while hovered and ScrollbarDrag
+	// while dragged. ScrollbarWidth is the track's width and ScrollbarMin
+	// the thumb's shortest length (TextRouter fork).
+	ScrollbarOutline, ScrollbarThumb, ScrollbarHover, ScrollbarDrag ui.Color
+	ScrollbarWidth, ScrollbarMin                                    float32
 }
 
 // TokenStyle is how a kind of token shows.

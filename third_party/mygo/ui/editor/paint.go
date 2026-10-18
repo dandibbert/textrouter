@@ -35,10 +35,17 @@ type frame struct {
 func (ed *editor) layout(w, h, scale float32) {
 	v := &ed.view
 	v.setStyle(ed.o.font, ed.o.lineHeight, scale, ed.tabSize())
+	scrollbarWidth = 10
+	if w := ed.theme.ScrollbarWidth; w > 0 {
+		scrollbarWidth = w
+	}
 	ed.gutterW = ed.gutterWidth()
 	pad := float32(4)
 	if ed.gutterW == 0 {
 		pad = 8
+	}
+	if ed.o.gutter.On && ed.gutterW > 0 {
+		pad = ed.o.gutter.TextGap
 	}
 	ed.textX = ed.gutterW + pad
 	if ed.o.signs {
@@ -325,7 +332,13 @@ func (ed *editor) paintLine(p *ui.Painter, r ui.Rect, f *frame, line int, g line
 		if style.bg.A > 0 {
 			p.Fill(ui.Rect{X: textRect.X, Y: y, W: textRect.W, H: lh}, style.bg, 0)
 		}
-		if active && !lineSelected {
+		if ed.o.gutter.On {
+			for _, gl := range ed.o.gutter.Lines {
+				if gl.Line == line && gl.Fill.A > 0 {
+					p.Fill(ui.Rect{X: textRect.X, Y: y, W: textRect.W, H: lh}, gl.Fill, 0)
+				}
+			}
+		} else if active && !lineSelected {
 			p.Fill(ui.Rect{X: textRect.X, Y: y, W: textRect.W, H: lh}, ct.ActiveLine, 0)
 		}
 		// Words a diff changed.
@@ -352,13 +365,7 @@ func (ed *editor) paintLine(p *ui.Painter, r ui.Rect, f *frame, line int, g line
 				}
 				a, b := max(h.Start-l.start, 0), min(h.End-l.start, len(l.text))
 				da, db := l.toDisp(a, false), l.toDisp(b, false)
-				ed.fillRange(p, f, l, row, ox, y, da, db, h.Color, 3)
-				if h.Outline.A > 0 && db > da {
-					f.rects = mergeRects(v.rangeRects(l, row, da, db, f.rects[:0]))
-					for _, rc := range f.rects {
-						p.Stroke(ui.Rect{X: ox + rc.X, Y: y + 1, W: rc.W, H: lh - 2}, h.Outline, 3, 1)
-					}
-				}
+				ed.paintHighlight(p, f, l, row, ox, y, da, db, h)
 				// A change that ends in the line break: mark the break.
 				if h.End > end && ri == len(l.rows)-1 {
 					x := ox + row.indent + row.width
@@ -606,6 +613,10 @@ func (ed *editor) paintGutter(p *ui.Painter, r ui.Rect, f *frame) {
 	if ed.gutterW <= 0 {
 		return
 	}
+	if ed.o.gutter.On {
+		ed.paintStyledGutter(p, r, f)
+		return
+	}
 	v := &ed.view
 	ct := ed.theme
 	h := &v.heights
@@ -731,6 +742,10 @@ func (ed *editor) paintScrollbars(p *ui.Painter, r ui.Rect, f *frame) {
 	ct := ed.theme
 	t := p.Theme()
 	vertical, horizontal := ed.scrollbars()
+	if ct.ScrollbarOutline.A > 0 {
+		ed.paintOutlinedScrollbars(p, r, vertical, horizontal)
+		return
+	}
 	if vertical {
 		x := r.X + r.W - scrollbarWidth
 		track := ui.Rect{X: x, Y: r.Y, W: scrollbarWidth, H: r.H}
@@ -819,4 +834,149 @@ func (ed *editor) paintScrollbars(p *ui.Painter, r ui.Rect, f *frame) {
 		}
 		p.Fill(ui.Rect{X: r.X + ed.textX + t0, Y: y + 2, W: t1 - t0, H: scrollbarWidth - 4}, t.Scrollbar.Alpha(alpha), (scrollbarWidth-4)/2)
 	}
+}
+
+// paintOutlinedScrollbars draws the fork's bordered scroll bars: a line
+// down the middle of the track and a pill with a border for the thumb.
+func (ed *editor) paintOutlinedScrollbars(p *ui.Painter, r ui.Rect, vertical, horizontal bool) {
+	ct := ed.theme
+	thumb := func(rc ui.Rect, over, drag bool) {
+		fill := ct.ScrollbarThumb
+		switch {
+		case drag:
+			fill = ct.ScrollbarDrag
+		case over:
+			fill = ct.ScrollbarHover
+		}
+		rad := min(rc.W, rc.H) / 2
+		p.Fill(rc, fill, rad)
+		p.Stroke(rc, ct.ScrollbarOutline, rad, 2)
+	}
+	if vertical {
+		x := r.X + r.W - scrollbarWidth
+		p.Fill(ui.Rect{X: x + scrollbarWidth/2 - 1, Y: r.Y, W: 2, H: r.H}, ct.ScrollbarOutline, 0)
+		t0, t1 := ed.thumb(false)
+		thumb(ui.Rect{X: x + 3, Y: r.Y + t0, W: scrollbarWidth - 6, H: t1 - t0},
+			ed.pointerIn && ed.region == regionVScroll, ed.scrollbar.active && !ed.scrollbar.horizontal)
+	}
+	if horizontal {
+		y := r.Y + r.H - scrollbarWidth
+		t0, t1 := ed.thumb(true)
+		p.Fill(ui.Rect{X: r.X + ed.textX, Y: y + scrollbarWidth/2 - 1, W: r.W - ed.textX - scrollbarWidth, H: 2}, ct.ScrollbarOutline, 0)
+		thumb(ui.Rect{X: r.X + ed.textX + t0, Y: y + 3, W: t1 - t0, H: scrollbarWidth - 6},
+			ed.pointerIn && ed.region == regionHScroll, ed.scrollbar.active && ed.scrollbar.horizontal)
+	}
+}
+
+// paintStyledGutter draws the gutter as the app's GutterStyle says.
+func (ed *editor) paintStyledGutter(p *ui.Painter, r ui.Rect, f *frame) {
+	v := &ed.view
+	g := ed.o.gutter
+	h := &v.heights
+	gutter := ui.Rect{X: r.X, Y: r.Y, W: ed.gutterW, H: r.H}
+	shade := map[int]GutterLine{}
+	for _, gl := range g.Lines {
+		shade[gl.Line] = gl
+	}
+	style := v.style
+	style.Family, style.Size = g.NumberFont, g.NumberSize
+	bold := style
+	bold.Weight = 700
+	p.Clip(gutter, 0, func() {
+		if g.Background.A > 0 {
+			p.Fill(gutter, g.Background, 0)
+		}
+		var cc runColors
+		for line := f.first; line <= f.last; line++ {
+			geo := h.geometry(line)
+			if geo.hidden {
+				continue
+			}
+			y := r.Y + float32(geo.rows-ed.scrollY)
+			rowsH := float32(geo.below - geo.rows)
+			col := ed.theme.LineNumber
+			if g.NumberColor.A > 0 {
+				col = g.NumberColor
+			}
+			if ed.pointerIn && ed.hoverLine == line && g.Hover.A > 0 {
+				col = g.Hover
+			}
+			st := style
+			if sl, ok := shade[line]; ok {
+				if sl.NumberFill.A > 0 {
+					p.Fill(ui.Rect{X: r.X, Y: y, W: ed.gutterW, H: v.lineHeight}, sl.NumberFill, 0)
+				}
+				if sl.Edge.A > 0 {
+					p.Fill(ui.Rect{X: r.X + ed.gutterW - 2, Y: y, W: 2, H: v.lineHeight}, sl.Edge, 0)
+				}
+				if sl.NumberTxt.A > 0 {
+					col = sl.NumberTxt
+				}
+				if sl.Bold {
+					st = bold
+				}
+			}
+			s := strconv.Itoa(line + 1)
+			lay := v.shaped.get(s, st)
+			row := rowLayout{pieces: []rowPiece{{to: len(s), l: lay, ascii: true, width: lay.Width}}, to: len(s)}
+			v.paintRow(p, &lineLayout{disp: s}, &row, r.X+ed.gutterW-g.NumberRight-lay.Width, y, &cc, func(int, ui.Color) ui.Color { return col })
+			for _, b := range g.Bars {
+				if b.Line != line {
+					continue
+				}
+				hh := max(rowsH-10, 2)
+				if b.Grow > 0 && b.Grow < 1 {
+					hh *= b.Grow
+				}
+				p.Fill(ui.Rect{X: r.X + 3, Y: y + 5, W: 3, H: hh}, b.Color, 2)
+			}
+		}
+		if g.Border.A > 0 && g.BorderWidth > 0 {
+			p.Fill(ui.Rect{X: r.X + ed.gutterW - g.BorderWidth, Y: r.Y, W: g.BorderWidth, H: r.H}, g.Border, 0)
+		}
+	})
+}
+
+// paintHighlight fills one highlight's part in a row, with the fork's
+// strike, underline, ring and wipe.
+func (ed *editor) paintHighlight(p *ui.Painter, f *frame, l *lineLayout, row *rowLayout, ox, y float32, da, db int, h Highlight) {
+	if db <= da {
+		return
+	}
+	lh := ed.view.lineHeight
+	in := ed.o.hlInset
+	f.rects = mergeRects(ed.view.rangeRects(l, row, da, db, f.rects[:0]))
+	if len(f.rects) == 0 {
+		return
+	}
+	paint := func() {
+		for _, rc := range f.rects {
+			box := ui.Rect{X: ox + rc.X, Y: y + in, W: rc.W, H: lh - 2*in}
+			if h.Color.A > 0 {
+				p.Fill(box, h.Color, 3)
+			}
+			if h.Underline.A > 0 {
+				p.Fill(ui.Rect{X: box.X, Y: box.Y + box.H - 2, W: box.W, H: 2}, h.Underline, 0)
+			}
+			if h.Strike.A > 0 {
+				p.Fill(ui.Rect{X: box.X, Y: box.Y + box.H/2 - 1, W: box.W, H: 2}, h.Strike, 0)
+			}
+			if h.Ring > 0 && h.RingColor.A > 0 {
+				p.Stroke(ui.Rect{X: box.X - 1 - h.Ring/2, Y: box.Y - 1 - h.Ring/2, W: box.W + 2 + h.Ring, H: box.H + 2 + h.Ring}, h.RingColor, 3+h.Ring/2, h.Ring)
+			}
+			if h.Outline.A > 0 {
+				p.Stroke(ui.Rect{X: box.X - 1, Y: box.Y - 1, W: box.W + 2, H: box.H + 2}, h.Outline, 3, 2)
+			}
+		}
+	}
+	if h.Wipe > 0 && h.Wipe < 1 {
+		x0, x1 := f.rects[0].X, f.rects[0].X+f.rects[0].W
+		for _, rc := range f.rects {
+			x0, x1 = min(x0, rc.X), max(x1, rc.X+rc.W)
+		}
+		w := (x1 - x0) * h.Wipe
+		p.Clip(ui.Rect{X: ox + x0 - 4, Y: y, W: w + 4, H: lh}, 0, paint)
+		return
+	}
+	paint()
 }

@@ -29,12 +29,12 @@ func (a *App) fontSettings(c *ui.Context, k tokens, row func(title, sub string, 
 			ui.Row(c).Gap(sp2).AlignItems(ui.Center).Children(func() {
 				eyebrow(c, "实时预览")
 				ui.Box(c).Grow(1)
-				ui.Textf(c, "%s · %g pt · 行高 %.1f", orDefault(v.EditorFont, "Inter（默认）"), v.FontSize, v.LineHeight).FontSize(11).TextColor(k.faint)
+				ui.Textf(c, "%s · %g pt · 行高 %.1f", orDefault(v.EditorFont, "Space Mono（默认）"), v.FontSize, v.LineHeight).FontSize(11).TextColor(k.faint)
 			})
 			ui.Text(c, fontSample).Font(a.editorFamily()).FontSize(size).LineHeight(float32(v.LineHeight)).TextColor(k.text).Wrap()
 			ui.Text(c, "func main() { fmt.Println(\"等宽 Mono 0O1lI\") }").Font(a.monoFamily()).FontSize(size - 1.5).LineHeight(float32(v.LineHeight)).TextColor(k.muted)
 		})
-		a.fontRow(c, k, row, "editor", "正文字体", "编辑器显示文本用的字体", &v.EditorFont, "Inter（默认）", fams, ready, func(f fontlist.Family) bool { return true })
+		a.fontRow(c, k, row, "editor", "正文字体", "编辑器显示文本用的字体", &v.EditorFont, "Space Mono（默认）", fams, ready, func(f fontlist.Family) bool { return true })
 		a.fontRow(c, k, row, "cjk", "中文后备字体", "正文字体里没有的汉字用这个字体显示", &v.CJKFont, "苹方（系统默认）", fams, ready, func(f fontlist.Family) bool { return f.CJK })
 		a.fontRow(c, k, row, "mono", "等宽字体", "底部「等宽」开关打开时使用", &v.MonoFont, "SF Mono（默认）", fams, ready, func(f fontlist.Family) bool { return f.Mono })
 		row("字号", "100% 缩放时的大小；⌘+ / ⌘- 只调缩放", false, func() {
@@ -61,7 +61,7 @@ func (a *App) fontSettings(c *ui.Context, k tokens, row func(title, sub string, 
 				a.save()
 			}
 		})
-		a.fontRow(c, k, row, "ui", "界面字体（可选）", "按钮、菜单和面板的字体", &v.UIFont, "Inter（默认）", fams, ready, func(f fontlist.Family) bool { return !f.Mono })
+		a.fontRow(c, k, row, "ui", "界面字体（可选）", "按钮、菜单和面板的字体", &v.UIFont, "Space Grotesk（默认）", fams, ready, func(f fontlist.Family) bool { return !f.Mono })
 	})
 }
 
