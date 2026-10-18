@@ -166,3 +166,8 @@ func tileColor(category string) ui.Color {
 	}
 	return AccentSoft
 }
+
+// dashed draws e's 2px stroke as dashes (empty states, the rule explanation).
+func dashed(e ui.Element) ui.Element {
+	return e.DrawOver(func(p *ui.Painter, r ui.Rect) { p.StrokeDashed(r, Ink, radiusSeg, strokeW) })
+}

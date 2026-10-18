@@ -100,12 +100,10 @@ func wordy(s string) bool {
 	return true
 }
 
-// changeHold and changeFade are how long the change highlight stays, then
-// how long it takes to fade out. Any edit clears it at once.
-const (
-	changeHold = 4 * time.Second
-	changeFade = 1200 * time.Millisecond
-)
+// changeFade is how long the new text's highlight takes to fade after an
+// action (§6 "点击应用": 1.3s); for the first 35% of it the text is boxed in
+// a 2px black frame. Any edit clears it at once.
+const changeFade = dApplyNew
 
 // markChanges remembers the spans of the last action for the editor.
 func (a *App) markChanges(before, after string) {
@@ -114,56 +112,47 @@ func (a *App) markChanges(before, after string) {
 	a.changesAt = time.Now()
 }
 
-// changeAlpha is how strongly the change highlight shows now.
-func (a *App) changeAlpha() float32 {
+// changeProgress is how far the fade of the change highlight has come, 0 to 1.
+func (a *App) changeProgress(c *ui.Context) float32 {
 	if a.freezeChanges {
+		return 0
+	}
+	if c.Preferences().ReduceMotion {
 		return 1
 	}
-	t := time.Since(a.changesAt)
-	if t < changeHold {
-		return 1
-	}
-	return max(0, 1-float32(t-changeHold)/float32(changeFade))
+	return min(1, float32(time.Since(a.changesAt))/float32(changeFade))
 }
 
-// updateHighlights gives the editor the change spans and the find
-// panel's matches, for the buffer's current version.
+// updateHighlights gives the editor the spans the last action changed, for
+// the buffer's current version: new text is green and boxed in black at
+// first, then fades away; deleted places show a thin bar.
 func (a *App) updateHighlights(c *ui.Context, k tokens) {
 	st := a.ed
 	ver := st.Buffer.Version()
 	var hs []editor.Highlight
 	if len(a.changes) > 0 && a.changesVer == ver {
-		al := a.changeAlpha()
-		if al <= 0 {
+		p := a.changeProgress(c)
+		if p >= 1 {
 			a.changes = nil
 		} else {
-			if al < 1 || time.Since(a.changesAt) < changeHold {
+			if !a.freezeChanges {
 				c.Invalidate()
 			}
-			fill := k.green.Alpha(map[bool]float32{true: 0.38, false: 0.30}[k.dark] * al)
-			line := k.green.Alpha(0.85 * al)
+			fill := Ins.Alpha(1 - p)
+			var frame ui.Color
+			if p < 0.35 {
+				frame = Ink
+			}
 			for _, s := range a.changes {
 				if s.Del {
-					hs = append(hs, editor.Highlight{Start: s.Start, End: s.End, Color: k.red.Alpha(0.9 * al)})
+					hs = append(hs, editor.Highlight{Start: s.Start, End: s.End, Color: MarkDel.Alpha(1 - p)})
 				} else {
-					hs = append(hs, editor.Highlight{Start: s.Start, End: s.End, Color: fill, Outline: line})
+					hs = append(hs, editor.Highlight{Start: s.Start, End: s.End, Color: fill, Outline: frame})
 				}
 			}
 		}
 	} else if len(a.changes) > 0 {
 		a.changes = nil // edited since: drop it
-	}
-	if a.inspector == "find" && a.find.opts.Find != "" {
-		res := a.runFind(a.find.options())
-		base, off := a.findBase()
-		cur := a.selections()
-		for _, m := range byteMatches(base, res.matches, off) {
-			h := editor.Highlight{Start: m[0], End: m[1], Color: st.Theme.Match}
-			if len(cur) == 1 && cur[0].Start() == m[0] && cur[0].End() == m[1] {
-				h.Color, h.Outline = st.Theme.CurrentMatch, st.Theme.CurrentMatch
-			}
-			hs = append(hs, h)
-		}
 	}
 	st.Highlights, st.HighlightVersion = hs, ver
 }

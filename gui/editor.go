@@ -167,83 +167,11 @@ func (a *App) RunEditorCommand(cmd editor.Command) {
 
 // ---------------------------------------------------------------- view
 
-// editorTheme matches the editor to the app tokens.
-func editorTheme(c *ui.Context, k tokens) *editor.Theme {
-	th := editor.DefaultTheme(c.Theme())
-	th.Background = k.canvas
-	th.Text = k.text
-	th.LineNumber = k.faint.Alpha(0.7)
-	th.ActiveLineNumber = k.muted
-	if k.dark {
-		th.ActiveLine = ui.RGBA(255, 255, 255, 0.035)
-	} else {
-		th.ActiveLine = ui.RGBA(0, 0, 0, 0.028)
-	}
-	th.Selection = k.accent.Alpha(0.22)
-	th.InactiveSelection = k.accent.Alpha(0.12)
-	th.Cursor = k.accent
-	th.Match = ui.RGBA(250, 204, 21, map[bool]float32{true: 0.28, false: 0.40}[k.dark])
-	th.CurrentMatch = ui.RGBA(249, 115, 22, map[bool]float32{true: 0.55, false: 0.55}[k.dark])
-	th.Whitespace = k.faint.Alpha(0.75)
-	th.Added = k.green.Alpha(0.75)
-	th.Modified = k.accent.Alpha(0.75)
-	th.Deleted = k.red.Alpha(0.75)
-	return th
-}
-
-// configureEditor sets the editor's options from the prefs, each frame.
-func (a *App) configureEditor(c *ui.Context, k tokens) {
-	st := a.ed
-	v := &a.view
-	if v.zoom <= 0 {
-		v.zoom = 1
-	}
-	vs := &a.Lib.Settings.View
-	family, size := a.editorFamily(), float32(vs.FontSize)*v.zoom
-	if v.mono {
-		family, size = a.monoFamily(), size-1.5
-	}
-	st.Font = ui.Font{Family: family, Size: size}
-	st.LineHeight = float32(vs.LineHeight)
-	st.SoftWrap = v.wrap
-	st.LineNumbers = editor.LineNumbersOff
-	if v.lineNumbers {
-		st.LineNumbers = editor.LineNumbersOn
-	}
-	st.Whitespace = editor.WhitespaceSelection
-	if v.invisibles {
-		st.Whitespace = editor.WhitespaceAll
-	}
-	st.Invisibles = v.invisibles
-	a.updateHighlights(c, k)
-	st.NoIndentGuides = true
-	st.NoFolding = true
-	st.TabSize = 4
-	st.Placeholder = "剪贴板是空的。粘贴、输入，或把文本文件拖进来…"
-	st.Label = "剪贴板文本"
-	st.Theme = editorTheme(c, k)
-	st.Bindings = []editor.Binding{
-		{Mods: ui.Cmd, Key: ui.KeyK, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyF, Command: editor.NoCommand},
-		{Mods: ui.Cmd | ui.Alt, Key: ui.KeyF, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyEnter, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyBackslash, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyEqual, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyMinus, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.Key0, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyO, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyS, Command: editor.NoCommand},
-		{Mods: ui.Cmd, Key: ui.KeyL, Command: editor.GoToLine},
-	}
-	st.RenderFindBar = a.renderFindBar
-	st.RenderGoToLine = a.renderGoToLine
-}
-
 // scopePill shows what the next action will apply to.
 func (a *App) scopePill(c *ui.Context, k tokens) {
 	sels := a.selections()
 	if len(sels) == 0 {
-		ui.Text(c, "作用于全文").FontSize(11.5).TextColor(k.faint).SingleLine().Tooltip("选中文字后，动作只作用于选区")
+		ui.Text(c, "作用于全文").FontSize(11.5).TextColor(Muted).SingleLine().Tooltip("选中文字后，动作只作用于选区")
 		return
 	}
 	n := 0
@@ -254,87 +182,14 @@ func (a *App) scopePill(c *ui.Context, k tokens) {
 	if len(sels) > 1 {
 		label = fmt.Sprintf("作用于 %d 个选区 · %d 字", len(sels), n)
 	}
-	ui.Row(c).Gap(5).Height(22).Padding(0, 8).Radius(999).Background(k.accentSoft).AlignItems(ui.Center).Children(func() {
-		ui.Box(c).Size(6, 6).Radius(3).Background(k.accent)
-		ui.Text(c, label).FontSize(11.5).FontWeight(600).TextColor(k.accent).SingleLine()
+	ui.Row(c).Gap(5).Height(24).Padding(0, 8).Radius(radiusPill).Background(Accent).Border(strokeW, Ink).AlignItems(ui.Center).Children(func() {
+		ui.Text(c, label).FontSize(11.5).FontWeight(700).TextColor(Ink).SingleLine()
 	}).Tooltip("动作、查找替换和批量替换只作用于选中的文字")
-}
-
-// renderFindBar draws the editor's find/replace bar as a floating card.
-func (a *App) renderFindBar(c *ui.Context, bar ui.Element, f *editor.FindBar) {
-	k := tok(c)
-	bar.Column().Gap(6).Padding(8).Radius(rLg).Background(k.canvas).Border(1, k.hairStrong).
-		Shadow(0, 10, 30, -8, ui.RGBA(0, 0, 0, map[bool]float32{true: 0.55, false: 0.18}[k.dark])).Shadow(0, 1, 3, 0, k.shadowNear).Width(440)
-	in := func(e ui.Element) ui.Element {
-		return e.Grow(1).FontSize(13).Font(monoFont).TextColor(k.text).Padding(5, 8).Radius(rSm).Background(k.field)
-	}
-	fl := func(key, text, tip string, on *bool) {
-		b := ui.ButtonBase(c.Key(key)).Height(24).MinWidth(26).Padding(0, 6).Radius(5).Center().Label(tip).Tooltip(tip).KeepFocus()
-		bg, col := ui.Transparent, k.faint
-		if *on {
-			bg, col = k.accentSoft, k.accent
-		} else if b.Hovered() {
-			bg = k.hover
-		}
-		b.Background(bg).Children(func() { ui.Text(c, text).FontSize(11.5).FontWeight(600).Font(monoFont).TextColor(col) })
-		if b.Clicked() {
-			*on = !*on
-		}
-	}
-	nav := func(key, icon, tip string) bool {
-		b := iconButton(c, key, icon, tip, tip).Size(26, 26).KeepFocus()
-		return b.Clicked()
-	}
-	bar.Children(func() {
-		ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
-			f.QueryInput(in(ui.TextInputBase(c, f.Query()).Placeholder("查找").Label("查找")))
-			fl("fcase", "Aa", "区分大小写", f.CaseSensitive())
-			fl("fword", "ab", "全词匹配", f.WholeWord())
-			fl("fre", ".*", "正则表达式", f.Regexp())
-			fl("fsel", "⌶", "只在选区中查找", f.InSelection())
-		})
-		ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
-			st := f.Status()
-			col := k.muted
-			if f.Err() != nil {
-				col = k.red
-			}
-			ui.Text(c, st).FontSize(11.5).TextColor(col).FontFeatures("tnum").Grow(1).SingleLine()
-			if nav("fprev", "arrow-up", "上一个 ⇧↩") {
-				f.Previous()
-			}
-			if nav("fnext", "arrow-down", "下一个 ↩") {
-				f.Next()
-			}
-			if nav("fall", "check", "全部选中 ⌥↩") {
-				f.SelectAll()
-			}
-			r := "replace-all"
-			if nav("frep", r, "替换 ⌥⌘F") {
-				f.SetReplacing(!f.Replacing())
-			}
-			if nav("fclose", "x", "关闭 esc") {
-				f.Close()
-			}
-		})
-		if f.Replacing() {
-			ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
-				f.ReplacementInput(in(ui.TextInputBase(c, f.Replacement()).Placeholder("替换为").Label("替换为")))
-				if ghost(c, "rone", "替换", "", false).KeepFocus().Clicked() {
-					f.Replace()
-				}
-				if ghost(c, "rall", "全部", "", false).KeepFocus().Clicked() {
-					f.ReplaceAll()
-				}
-			})
-		}
-	})
 }
 
 func (a *App) renderGoToLine(c *ui.Context, bar ui.Element, g *editor.GoToLineBar) {
 	k := tok(c)
-	bar.Row().Gap(8).Padding(8).Radius(rLg).Background(k.canvas).Border(1, k.hairStrong).AlignItems(ui.Center).
-		Shadow(0, 10, 30, -8, ui.RGBA(0, 0, 0, map[bool]float32{true: 0.55, false: 0.18}[k.dark])).Width(320)
+	hard(bar.Row().Gap(8).Padding(8).Radius(radiusCtl).Background(Paper).Border(strokeW, Ink).AlignItems(ui.Center).Width(320), shadowSm)
 	bar.Children(func() {
 		ui.Icon(c, ic("corner-down-left")).FontSize(13).TextColor(k.faint)
 		g.Input(ui.TextInputBase(c, g.Text()).Placeholder(fmt.Sprintf("转到行（1–%d）", g.LineCount())).Label("转到行").Grow(1).FontSize(13).TextColor(k.text).Padding(5, 8).Radius(rSm).Background(k.field))

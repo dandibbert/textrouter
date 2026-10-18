@@ -61,17 +61,6 @@ func actionIcon(id string) string {
 	return "wand-sparkles"
 }
 
-// done copies the text back and hides the window.
-func (a *App) done() {
-	if a.writeClip != nil {
-		a.writeClip(a.Text)
-	}
-	a.status = "已复制到剪贴板"
-	if a.Lib.Settings.CopyOnDone {
-		a.Platform.HideWindow()
-	}
-}
-
 func (a *App) chainFn(ch *engine.Chain) func(string) string {
 	return func(s string) string {
 		out, _ := ch.Run(s, a.Lib.Resolver())

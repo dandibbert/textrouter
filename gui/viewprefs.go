@@ -49,6 +49,9 @@ func (a *App) restoreView() {
 	v := a.Lib.Settings.View
 	a.view = editorPrefs{lineNumbers: v.LineNumbers, wrap: v.Wrap, invisibles: v.Invisibles, mono: v.Mono, zoom: float32(v.Zoom)}
 	a.inspector = v.Inspector
+	if v.Inspector == "find" {
+		a.ws.tab = 1
+	}
 	if v.FindRegex {
 		a.find.modeIdx = 1
 	}

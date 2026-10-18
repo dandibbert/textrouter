@@ -21,7 +21,7 @@ func newApp(t *testing.T, text string) (*App, *ui.Tester) {
 
 func TestClipboardSpaceApplyUndoCopy(t *testing.T) {
 	a, tt := newApp(t, "a   b\n> quoted")
-	if !tt.HasText("作用于全文") {
+	if !tt.HasText("悬停右侧动作先看改动，点击才应用") {
 		t.Fatalf("texts %q", tt.Texts())
 	}
 	cl := engine.CleanerByName("Remove Extra Spaces")
@@ -77,19 +77,20 @@ func TestSelectionScopedActions(t *testing.T) {
 	}
 	// Find/replace page applies to the selection too.
 	a.ed.Select(0, 5)
-	a.Page = PageFind
-	tt.Frame()
-	a.insp.inSel, a.insp.selRange = true, [2]int{0, 5}
+	a.setTab(1) // find/replace limits itself to the selection
 	a.find.opts.Find, a.find.opts.Replace = "l", "L"
 	tt.Frame()
-	if err := tt.Click("全部替换（2 处）"); err != nil {
+	if !tt.HasText("仅选区 ×") || !tt.HasText("2 处") {
+		t.Fatalf("scoped find: %q", tt.Texts())
+	}
+	if err := tt.Click("全部替换 ·"); err != nil {
 		t.Fatal(err)
 	}
 	if a.Text != "heLLo WORLD\nsecond line" {
 		t.Fatalf("scoped replace: %q", a.Text)
 	}
 	// Two selections: both change in one undo step.
-	a.insp.inSel = false
+	a.setTab(0)
 	tt.Frame()
 	a.ed.SetSelections(editor.Selection{Anchor: 0, Head: 2}, editor.Selection{Anchor: 12, Head: 18})
 	a.Transform(up.ZhName, up.Fn)
@@ -181,10 +182,14 @@ func TestFindPageLivePreview(t *testing.T) {
 	if !tt.HasText("2 处") || a.inspector != "find" {
 		t.Fatalf("texts %q", tt.Texts())
 	}
+	if err := tt.Click("解释"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
 	if !tt.HasText("第 1 组开始（替换里用 $1 引用）") {
 		t.Errorf("no explanation: %q", tt.Texts())
 	}
-	if err := tt.Click("全部替换（2 处）"); err != nil {
+	if err := tt.Click("全部替换 ·"); err != nil {
 		t.Fatal(err)
 	}
 	if a.Text != "price ¥5, ¥12" {

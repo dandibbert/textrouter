@@ -35,7 +35,7 @@ func TestSnapshots(t *testing.T) {
 			a.find.modeIdx = 1
 			a.find.opts.Find = `(\d+)元`
 			a.find.opts.Replace = "¥$1"
-			a.insp.explain = false
+			a.ws.find.explain = false
 		}},
 		{"main-cleaners", func(a *App, tt *ui.Tester) {
 			a.toggleInspector("cleaners")

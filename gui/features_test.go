@@ -71,6 +71,7 @@ func TestChangeHighlightShownThenClearedByEdit(t *testing.T) {
 	tt.Frame()
 	cl := engine.CleanerByName("Remove Extra Spaces")
 	a.Transform(cl.ZhName, cl.Fn)
+	a.ws.applyFx = nil // the 500ms collapse shows a preview first
 	tt.Frame()
 	if len(a.ed.Highlights) != 1 || a.ed.HighlightVersion != a.ed.Buffer.Version() {
 		t.Fatalf("highlights after action: %+v", a.ed.Highlights)
@@ -98,9 +99,17 @@ func TestFindMatchesHighlightedInEditor(t *testing.T) {
 	a.find.opts.Find = `\d+元`
 	tt.Frame()
 	tt.Frame()
+	// With matches the body shows the preview: matches struck through.
+	st := a.ws.pvEd.st
+	if st == nil {
+		t.Fatal("no preview editor")
+	}
+	merged := st.Buffer.String()
 	var got []string
-	for _, h := range a.ed.Highlights {
-		got = append(got, a.Text[h.Start:h.End])
+	for _, h := range st.Highlights {
+		if h.Strike.A > 0 {
+			got = append(got, merged[h.Start:h.End])
+		}
 	}
 	if strings.Join(got, ",") != "5元,12元" {
 		t.Fatalf("find highlights %q", got)
