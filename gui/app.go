@@ -6,9 +6,11 @@ package gui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/editor"
 )
 
 // Platform is what the interface needs from the desktop. All methods may
@@ -19,6 +21,11 @@ type Platform interface {
 	HideWindow()
 	SetTheme(theme string)
 	SetHotkey(acc string) error
+	// SetAppIcon changes the Dock icon to the PNG.
+	SetAppIcon(png []byte)
+	// OpenWindow opens a file document in a window of its own (a tab
+	// dragged out of the title bar); the window runs NewDetached.
+	OpenWindow(name, path, text string)
 	// Update runs fn on the UI thread and redraws (used after dialogs,
 	// which block and so run on goroutines).
 	Update(fn func())
@@ -32,6 +39,8 @@ func (NopPlatform) SaveFile(string, string) string                  { return "" 
 func (NopPlatform) HideWindow()                                     {}
 func (NopPlatform) SetTheme(string)                                 {}
 func (NopPlatform) SetHotkey(string) error                          { return nil }
+func (NopPlatform) SetAppIcon([]byte)                               {}
+func (NopPlatform) OpenWindow(name, path, text string)              {}
 func (NopPlatform) Update(fn func())                                { fn() }
 
 // Page ids of the sidebar.
@@ -53,13 +62,36 @@ type App struct {
 	Page string
 	Text string // the Clipboard Space text, shared by every page as the sample
 
-	history []snapshot // undo stack of applied operations
-	future  []snapshot
-	last    *lastOp
+	last *lastOp
+
+	ed            *editor.State // the Clipboard Space editor; its buffer holds Text
+	edVer         uint64
+	edSynced      string
+	view          editorPrefs
+	docs          []*document
+	cur           int
+	inspector     string // "cleaners" or "find": the tab of the right column
+	insp          inspectorState
+	tr            *trail
+	ws            workspace
+	clipAt        time.Time
+	appIcon       string
+	detached      bool // a window made by tearing off a tab: it leaves the saved view options to the main window
+	tabDrag       ui.Point
+	openedAt      time.Time
+	menus         map[string]*bool
+	sheetFresh    string
+	changes       []changeSpan
+	changesVer    uint64
+	changesAt     time.Time
+	viewSaved     bool
+	fontUI        fontUI
+	freezeChanges bool // screenshots: no fade // screenshots only: stand-in for the native popup menu
 
 	paletteOpen  bool
 	paletteQuery string
 	paletteSel   int
+	paletteFresh bool
 
 	find    findState
 	batch   batchState
@@ -70,17 +102,26 @@ type App struct {
 
 	sections  map[string]*bool
 	status    string
+	toast     string
+	toastUndo bool
+	monoEdit  bool
 	writeClip func(string)
-}
-
-type snapshot struct {
-	text, label string
+	// clipLoaded is the clipboard text last loaded into (or copied from)
+	// the 剪贴板 document; clipPrev is that document's text right after.
+	clipSeen   bool
+	clipLoaded string
+	clipPrev   string
+	// clipPending is a newer clipboard not loaded because the document
+	// had edits; the toolbar offers it.
+	clipPending    string
+	clipHasPending bool
 }
 
 type lastOp struct {
 	label    string
 	before   string
 	after    string
+	scope    string
 	showDiff bool
 }
 
@@ -98,65 +139,114 @@ func New(lib *engine.Library, p Platform) *App {
 		a.chains.selID = lib.Chains[0].ID
 	}
 	a.clean.category = "全部"
+	a.batch.showDiff = true
+	a.restoreView()
 	return a
 }
 
-// LoadClipboard replaces the workspace text (called when the window opens).
-func (a *App) LoadClipboard(s string) {
+// LoadClipboard is what every activation calls (launch, Dock icon, app
+// activation, menu bar icon, global shortcut) with the clipboard's text:
+// it switches to the 剪贴板 document and reads the clipboard into it.
+//
+//   - Clipboard unchanged since it was last loaded or copied from here:
+//     the document is left alone (carets, undo history, edits).
+//   - Changed, document unedited: replaced silently (one undoable edit).
+//   - Changed, document has edits not yet copied out: the document is
+//     kept exactly as is (text, carets, undo); a pill in the toolbar,
+//     「剪贴板有新内容 · 载入」, loads it on click as an undoable edit.
+//   - Auto-read off in the settings: only switches to the document.
+//
+// It reports whether the document was replaced.
+func (a *App) LoadClipboard(s string) bool {
+	if a.cur != 0 && time.Since(a.openedAt) < 2*time.Second {
+		return false // activated by opening a file: stay on it
+	}
+	a.ShowClipboard()
+	if a.Lib.Settings.NoAutoReadClipboard {
+		return false
+	}
+	a.syncEditor()
+	if a.clipSeen && s == a.clipLoaded {
+		return false // nothing new on the clipboard
+	}
+	first := !a.clipSeen
+	a.clipSeen, a.clipLoaded = true, s
 	if s == a.Text {
+		a.clipHasPending, a.clipPending = false, ""
+		return false
+	}
+	edited := !first && a.Text != a.clipPrev && a.Text != ""
+	if edited {
+		// Edits not yet copied out: keep the document exactly as it is and
+		// offer the new clipboard in a pill instead.
+		a.clipPending, a.clipHasPending = s, true
+		return false
+	}
+	a.applyClipboard(s)
+	a.status = "已读取剪贴板"
+	return true
+}
+
+// applyClipboard loads s into the 剪贴板 document as one undoable edit.
+func (a *App) applyClipboard(s string) {
+	a.clipHasPending, a.clipPending = false, ""
+	a.replaceAll(s)
+	a.clipPrev = a.Text
+	a.clearDiffBase()
+	a.changes = nil
+	a.last = nil
+	a.tr = nil
+	a.clipAt = time.Now()
+}
+
+// LoadPendingClipboard loads the clipboard the pill offers (undoable).
+func (a *App) LoadPendingClipboard() {
+	if !a.clipHasPending {
 		return
 	}
-	a.push("读取剪贴板")
-	a.Text = s
-	a.last = nil
+	a.ShowClipboard()
+	a.catchUp()
+	old, before := a.tr, a.Text
+	a.applyClipboard(a.clipPending)
+	a.tr = old // the load is a step of the same trail, so ⌘Z finds the edits again
+	a.pushStep("载入新剪贴板", nil)
+	a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
+	a.status = "已载入新剪贴板（⌘Z 可找回之前的编辑）"
 }
 
-func (a *App) push(label string) {
-	a.history = append(a.history, snapshot{a.Text, label})
-	if len(a.history) > 200 {
-		a.history = a.history[1:]
+// noteCopied records text this app put on the clipboard, so the next
+// activation sees nothing new and leaves the document alone.
+func (a *App) noteCopied(s string) {
+	a.clipSeen, a.clipLoaded = true, s
+	a.clipHasPending, a.clipPending = false, ""
+	if a.cur == 0 {
+		a.syncEditor()
+		a.clipPrev = a.Text
 	}
-	a.future = nil
 }
 
-// Transform applies fn to the workspace text as one undoable operation.
-func (a *App) Transform(label string, fn func(string) string) {
+// Transform applies fn as one step of the trail: to each selection of the
+// editor when there is one, else to the whole text.
+func (a *App) Transform(label string, fn func(string) string) { a.transformStep(label, nil, fn) }
+
+// transformStep is Transform that also records the chain step that redoes it
+// (nil when there is none), and plays the apply animation.
+func (a *App) transformStep(label string, act *engine.Step, fn func(string) string) {
+	a.catchUp()
 	before := a.Text
-	after := fn(before)
+	scope := a.applyScoped(fn)
+	after := a.Text
 	if after == before {
-		a.status = "「" + label + "」没有改变文本"
+		a.status = "「" + label + "」没有改变" + scope
 		return
 	}
-	a.push(label)
-	a.Text = after
-	a.last = &lastOp{label: label, before: before, after: after}
-	ins, del := engine.DiffStats(engine.Diff(before, after))
-	a.status = fmt.Sprintf("已应用「%s」：+%d −%d 字符", label, ins, del)
-}
-
-// Undo restores the text before the last operation.
-func (a *App) Undo() {
-	if len(a.history) == 0 {
-		return
-	}
-	s := a.history[len(a.history)-1]
-	a.history = a.history[:len(a.history)-1]
-	a.future = append(a.future, snapshot{a.Text, s.label})
-	a.Text = s.text
-	a.last = nil
-	a.status = "已撤销「" + s.label + "」"
-}
-
-// Redo re-applies an undone operation.
-func (a *App) Redo() {
-	if len(a.future) == 0 {
-		return
-	}
-	s := a.future[len(a.future)-1]
-	a.future = a.future[:len(a.future)-1]
-	a.history = append(a.history, snapshot{a.Text, s.label})
-	a.Text = s.text
-	a.status = "已重做「" + s.label + "」"
+	a.last = &lastOp{label: label, before: before, after: after, scope: scope}
+	a.ed.DiffBase = nil
+	a.markChanges(before, after)
+	ins, del := engine.DiffStats(cachedDiff(before, after))
+	a.status = fmt.Sprintf("已对%s应用「%s」：+%d −%d 字符", scope, label, ins, del)
+	a.pushStep(label, act)
+	a.ws.startApplyFx(before, after)
 }
 
 func (a *App) save() {
@@ -175,128 +265,35 @@ func (a *App) open(name string) *bool {
 	return b
 }
 
-// View is the window content.
-func (a *App) View(c *ui.Context) {
-	t := c.Theme()
-	a.writeClip = c.WriteClipboard
-	c.OnShortcut(ui.Cmd, ui.KeyK, func() { a.openPalette() })
-	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyZ, a.Redo)
-	c.OnShortcut(ui.Cmd, ui.Key1, func() { a.Page = PageClipboard })
-	ui.Row(c).Fill().Background(t.Background).Children(func() {
-		ui.Column(c).Width(212).FillHeight().Background(t.Surface).Children(func() {
-			ui.Row(c).Padding(18, 16, 10, 16).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Box(c).Size(22, 22).Radius(6).Gradient(ui.Hex("#7C5CFF"), ui.Hex("#22C3EE"), 135)
-				ui.Text(c, "TextRouter").FontSize(16).Bold()
-			})
-			ui.Sidebar(c, &a.Page, func() {
-				ui.SidebarSection(c, "日常", nil, func() {
-					ui.SidebarItem(c, PageClipboard, nil, "剪贴板空间")
-					ui.SidebarItem(c, PageFind, nil, "查找替换")
-					ui.SidebarItem(c, PageBatch, nil, "批量替换")
-				})
-				ui.SidebarSection(c, "工具箱", nil, func() {
-					ui.SidebarItem(c, PageChains, nil, "动作链").Children(func() {
-						ui.Badge(c, fmt.Sprint(len(a.Lib.Chains)))
-					})
-					ui.SidebarItem(c, PageCleaners, nil, "清理器库")
-					ui.SidebarItem(c, PageFiles, nil, "批量处理文件")
-					ui.SidebarItem(c, PageSettings, nil, "设置")
-				})
-			}).Grow(1)
-			ui.Column(c).Padding(12, 16).Gap(4).Children(func() {
-				if ui.Button(c, "全部动作  ⌘K").FillWidth().Clicked() {
-					a.openPalette()
-				}
-			})
-		})
-		ui.Divider(c).Vertical()
-		ui.Column(c).Grow(1).FillHeight().MinWidth(0).Children(func() {
-			switch a.Page {
-			case PageFind:
-				a.findView(c)
-			case PageBatch:
-				a.batchView(c)
-			case PageChains:
-				a.chainsView(c)
-			case PageCleaners:
-				a.cleanersView(c)
-			case PageFiles:
-				a.filesView(c)
-			case PageSettings:
-				a.settingsView(c)
-			default:
-				a.clipboardView(c)
-			}
-			a.statusBar(c)
-		})
-	})
-	a.paletteView(c)
+// navItem describes a secondary tool (opened as a sheet).
+type navItem struct{ id, icon, label string }
+
+// Tools are second-level: opened as sheets over the document from the
+// Tools menu, the app menu bar or ⌘K.
+var tools = []navItem{
+	{PageBatch, "replace-all", "批量替换"},
+	{PageChains, "workflow", "我的清理器（动作链）"},
+	{PageCleaners, "library-big", "清理器库"},
+	{PageFiles, "files", "批量处理文件"},
+	{PageSettings, "settings-2", "设置"},
 }
 
-func (a *App) statusBar(c *ui.Context) {
-	t := c.Theme()
-	ui.Divider(c)
-	ui.Row(c).Padding(6, 16).Gap(12).AlignItems(ui.Center).Children(func() {
-		st := a.status
-		if st == "" {
-			st = "就绪"
-		}
-		ui.Text(c, st).FontSize(11).TextColor(t.TextMuted).Grow(1).MaxLines(1)
-		lines := strings.Count(a.Text, "\n") + 1
-		if a.Text == "" {
-			lines = 0
-		}
-		ui.Textf(c, "%d 字符 · %d 行", engine.RuneLen(a.Text), lines).FontSize(11).TextColor(t.TextMuted)
-	})
-}
-
-// header draws a page title with a subtitle and right-side actions.
+// header is kept for pages: title, subtitle and right-side actions.
 func header(c *ui.Context, title, subtitle string, actions func()) {
-	t := c.Theme()
-	ui.Row(c).Padding(18, 20, 12, 20).Gap(10).AlignItems(ui.Center).Children(func() {
-		ui.Column(c).Grow(1).Gap(3).MinWidth(0).Children(func() {
-			ui.Text(c, title).FontSize(20).Bold()
-			if subtitle != "" {
-				ui.Text(c, subtitle).FontSize(12).TextColor(t.TextMuted)
-			}
-		})
-		if actions != nil {
-			actions()
-		}
-	})
+	pageHeader(c, title, subtitle, actions)
 }
 
-// card is a rounded panel.
-func card(c *ui.Context) ui.Element {
-	t := c.Theme()
-	return ui.Column(c).Background(t.Surface).Radius(10).Border(1, t.Border).Padding(12).Gap(8)
-}
+// card is a raised panel.
+func card(c *ui.Context) ui.Element { return panel(c) }
 
-func muted(c *ui.Context, s string) ui.Element {
-	return ui.Text(c, s).FontSize(12).TextColor(c.Theme().TextMuted)
-}
+func muted(c *ui.Context, s string) ui.Element { return hint(c, s) }
 
-// colors used for highlights, adapted to light/dark.
-func hlAdd(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(46, 160, 67, 0.35)
-	}
-	return ui.RGBA(46, 160, 67, 0.22)
-}
+// colours used for highlights in the pages' diffs.
+func hlAdd(t *ui.Theme) ui.Color { return Ins }
 
-func hlDel(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(248, 81, 73, 0.35)
-	}
-	return ui.RGBA(248, 81, 73, 0.2)
-}
+func hlDel(t *ui.Theme) ui.Color { return Del }
 
-func hlMatch(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(250, 204, 21, 0.35)
-	}
-	return ui.RGBA(250, 204, 21, 0.45)
-}
+func hlMatch(t *ui.Theme) ui.Color { return Hit }
 
 // visible makes whitespace visible inside highlighted snippets.
 func visible(s string) string {
@@ -311,7 +308,7 @@ func diffView(c *ui.Context, before, after string) {
 	t := c.Theme()
 	if engine.RuneLen(before)+engine.RuneLen(after) > 2*maxPreview {
 		ui.Text(c, "文本较大，只显示结果：").FontSize(11).TextColor(t.TextMuted)
-		ui.Text(c, after).Selectable().Font("monospace").FontSize(13)
+		ui.Text(c, after).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65)
 		return
 	}
 	segs := cachedDiff(before, after)
@@ -323,21 +320,28 @@ func diffView(c *ui.Context, before, after string) {
 		case '+':
 			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlAdd(t)})
 		case '-':
-			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: t.TextMuted})
+			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: Ink, DecorationColor: Ink, DecorationThickness: strokeW})
 		}
 	}
 	if len(spans) == 0 {
 		spans = []ui.Span{{Text: " "}}
 	}
-	ui.RichText(c, spans...).Selectable().Font("monospace").FontSize(13)
+	ui.RichText(c, spans...).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(tok(c).text)
 }
 
 // diffBadge summarises a change.
 func diffBadge(c *ui.Context, before, after string) {
 	if before == after {
-		ui.Badge(c, "无变化")
+		badge(c, "无变化", toneNeutral)
 		return
 	}
 	ins, del := engine.DiffStats(cachedDiff(before, after))
-	ui.Badge(c, fmt.Sprintf("+%d −%d", ins, del))
+	ui.Row(c).Gap(4).Children(func() {
+		if ins > 0 {
+			badge(c, fmt.Sprintf("+%d", ins), toneGreen)
+		}
+		if del > 0 {
+			badge(c, fmt.Sprintf("−%d", del), toneRed)
+		}
+	})
 }

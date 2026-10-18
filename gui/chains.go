@@ -34,14 +34,14 @@ var chainMemo memo
 func (a *App) runChain(ch *engine.Chain) chainRun {
 	js, _ := json.Marshal(ch.Steps)
 	libjs, _ := json.Marshal(a.Lib.Chains)
-	return chainMemo.get(hashOf("chain", a.Text, string(js), string(libjs)), func() any {
-		out, tr := ch.Run(a.Text, a.Lib.Resolver())
+	return chainMemo.get(hashOf("chain", a.scopeText(), string(js), string(libjs)), func() any {
+		out, tr := ch.Run(a.scopeText(), a.Lib.Resolver())
 		return chainRun{out, tr}
 	}).(chainRun)
 }
 
 func (a *App) chainsView(c *ui.Context) {
-	t := c.Theme()
+	k := tok(c)
 	s := &a.chains
 	if s.expanded == nil {
 		s.expanded = map[string]bool{}
@@ -51,8 +51,11 @@ func (a *App) chainsView(c *ui.Context) {
 		ch = &a.Lib.Chains[0]
 		s.selID = ch.ID
 	}
-	header(c, "动作链", "把多个动作串起来，一键完成。每一步下面都能展开看「做完这一步后」的文本。", func() {
-		ui.MenuButton(c, "导入/导出", func(m *ui.Menu) {
+	pageHeader(c, "动作链", "把多个动作串起来，一键完成", func() {
+		a.scopePill(c, k)
+		ui.Box(c).Width(sp2)
+		ioBtn := ghost(c, "chainio", "导入 / 导出", "chevron-down", false)
+		a.popMenu(c, "chainio", ioBtn, func(m *pm) {
 			if m.Item("导入 TextSoap 清理器库（.textsoap9Lib / plist）…").Chosen() {
 				a.importTextSoap()
 			}
@@ -69,28 +72,50 @@ func (a *App) chainsView(c *ui.Context) {
 		})
 		if ch != nil {
 			run := a.runChain(ch)
-			if ui.PrimaryButton(c, "应用到剪贴板空间").Disabled(run.out == a.Text).Clicked() {
-				out := run.out
-				a.Transform(ch.Name, func(string) string { return out })
+			if primary(c, "applychain", "应用到文档", "play", "", run.out == a.scopeText()).Clicked() && run.out != a.scopeText() {
+				a.Transform(ch.Name, a.chainFn(ch))
 			}
 		}
 	})
-	ui.Row(c).Grow(1).PaddingX(20).PaddingY(4).Gap(16).MinHeight(0).Children(func() {
+	ui.Row(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp4).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
 		// Chain list.
-		ui.Column(c).Width(210).FillHeight().Gap(6).Children(func() {
+		panel(c).Width(220).Padding(sp2).Gap(2).Children(func() {
+			ui.Row(c).Padding(sp1, sp1, sp2, sp2).AlignItems(ui.Center).Children(func() {
+				eyebrow(c, "我的动作链").Grow(1)
+				if iconButton(c, "newchain", "plus", "新建动作链", "新建动作链").Size(24, 24).Clicked() {
+					a.Lib.Chains = append(a.Lib.Chains, engine.Chain{ID: engine.NewID(), Name: fmt.Sprintf("动作链 %d", len(a.Lib.Chains)+1)})
+					s.selID = a.Lib.Chains[len(a.Lib.Chains)-1].ID
+					a.save()
+				}
+			})
 			ui.Scroll(c).Grow(1).Children(func() {
 				ui.Column(c).Gap(2).Children(func() {
 					for i := range a.Lib.Chains {
 						cc := &a.Lib.Chains[i]
-						row := ui.ButtonBase(c.Key("ch:"+cc.ID)).Justify(ui.Start).AlignItems(ui.Stretch).Padding(8, 10).Radius(6).FillWidth().Label(cc.Name)
-						if cc.ID == s.selID {
-							row.Background(t.Selection)
+						sel := cc.ID == s.selID
+						row := ui.ButtonBase(c.Key("ch:"+cc.ID)).Justify(ui.Start).AlignItems(ui.Center).Height(46).Padding(0, sp2).Radius(rMd).Gap(sp2).FillWidth().Label(cc.Name).Selected(sel)
+						bg := ui.Transparent
+						if sel {
+							bg = k.accentSoft
+						} else if row.Hovered() {
+							bg = k.hover
 						}
+						row.Background(row.AnimateColor("bg", bg, ui.Animation{Duration: 120e6}))
 						row.Children(func() {
-							ui.Column(c).Gap(1).FillWidth().Children(func() {
-								ui.Text(c, cc.Name).FontSize(13).MaxLines(1)
-								ui.Textf(c, "%d 步", len(cc.Steps)).FontSize(11).TextColor(t.TextMuted)
+							icol, ibg := k.muted, k.field
+							if sel {
+								icol, ibg = k.accentText, k.accent
+							}
+							ui.Box(c).Size(26, 26).Radius(7).Background(ibg).Center().Children(func() {
+								ui.Icon(c, ic("workflow")).FontSize(14).TextColor(icol)
 							})
+							ui.Column(c).Gap(1).Grow(1).MinWidth(0).Children(func() {
+								ui.Text(c, cc.Name).FontSize(13).FontWeight(map[bool]int{true: 600, false: 500}[sel]).TextColor(k.text).SingleLine()
+								ui.Textf(c, "%d 步", len(cc.Steps)).FontSize(11).TextColor(k.faint)
+							})
+							if a.isPinned("chain:" + cc.ID) {
+								ui.Icon(c, ic("pin")).FontSize(12).TextColor(k.faint)
+							}
 						})
 						if row.Clicked() {
 							s.selID = cc.ID
@@ -98,13 +123,33 @@ func (a *App) chainsView(c *ui.Context) {
 					}
 				})
 			})
-			ui.Row(c).Gap(6).Children(func() {
-				if ui.Button(c, "＋ 新建").Grow(1).Clicked() {
-					a.Lib.Chains = append(a.Lib.Chains, engine.Chain{ID: engine.NewID(), Name: fmt.Sprintf("动作链 %d", len(a.Lib.Chains)+1)})
-					s.selID = a.Lib.Chains[len(a.Lib.Chains)-1].ID
+		})
+		if ch == nil {
+			ui.Column(c).Grow(1).Center().Gap(sp2).Children(func() {
+				ui.Icon(c, ic("workflow")).FontSize(28).TextColor(k.faint)
+				hint(c, "新建一条动作链开始。")
+			})
+			return
+		}
+		run := a.runChain(ch)
+		ui.Column(c).Grow(1).FillHeight().Gap(sp3).MinWidth(0).Children(func() {
+			ui.Row(c).Gap(sp2).AlignItems(ui.Center).Children(func() {
+				name := ui.TextInputBase(c, &ch.Name).Label("动作链名称").FontSize(18).FontWeight(650).TextColor(k.text).Grow(1).Padding(4, 6).Radius(rSm)
+				if name.Hovered() || name.Focused() {
+					name.Background(k.field)
+				}
+				if name.Changed() {
 					a.save()
 				}
-				if ch != nil && ui.Button(c, "删除").Clicked() {
+				pinned := a.isPinned("chain:" + ch.ID)
+				label, icon := "固定到常用", "pin"
+				if pinned {
+					label, icon = "已固定", "pin-off"
+				}
+				if ghost(c, "pinchain", label, icon, false).Clicked() {
+					a.togglePin("chain:" + ch.ID)
+				}
+				if iconButton(c, "delchain", "trash-2", "删除", "删除这条动作链").Clicked() {
 					id := ch.ID
 					for i := range a.Lib.Chains {
 						if a.Lib.Chains[i].ID == id {
@@ -114,48 +159,39 @@ func (a *App) chainsView(c *ui.Context) {
 					}
 					s.selID = ""
 					a.save()
-					ch = nil
 				}
 			})
-		})
-		if ch == nil {
-			ui.Column(c).Grow(1).Center().Children(func() { muted(c, "新建一条动作链开始。") })
-			return
-		}
-		run := a.runChain(ch)
-		ui.Column(c).Grow(1).FillHeight().Gap(8).MinWidth(0).Children(func() {
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				if ui.TextInput(c, &ch.Name).Label("动作链名称").FontSize(15).Grow(1).Changed() {
-					a.save()
-				}
-				pinned := a.isPinned("chain:" + ch.ID)
-				if ui.Toggle(c, &pinned, "固定到剪贴板空间").Changed() {
-					a.togglePin("chain:" + ch.ID)
-				}
-			})
+			if a.Lib.ChainByID(ch.ID) == nil {
+				return
+			}
 			ui.Scroll(c).Grow(1).Children(func() {
-				ui.Column(c).Gap(8).Padding(0, 6, 0, 0).Children(func() {
+				ui.Column(c).Gap(0).Padding(2, 6, 4, 2).Children(func() {
 					s.pending = nil
-					a.stepList(c, &ch.Steps, "", a.Text, run.trace)
+					a.stepList(c, &ch.Steps, "", a.scopeText(), run.trace)
 					if s.pending != nil {
 						s.pending()
 						s.pending = nil
 						a.save()
 					}
-					a.addStepMenu(c, &ch.Steps, "＋ 添加步骤")
-					ui.Divider(c)
-					ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-						ui.Text(c, "最终结果").Bold()
-						diffBadge(c, a.Text, run.out)
-						ui.Spacer(c)
-						ui.Toggle(c, &s.showDiff, "显示改动")
-					})
-					ui.Column(c).Background(t.Surface).Radius(8).Border(1, t.Border).Padding(12).Children(func() {
-						if s.showDiff {
-							diffView(c, a.Text, run.out)
-						} else {
-							ui.Text(c, clip(run.out)).Selectable().Font("monospace").FontSize(13)
-						}
+					ui.Row(c).Padding(sp2, 0, sp4, 38).Children(func() { a.addStepMenu(c, &ch.Steps, "添加步骤") })
+					canvasCard(c).Children(func() {
+						ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+							ui.Icon(c, ic("circle-check")).FontSize(14).TextColor(k.green)
+							ui.Text(c, "最终结果").FontSize(13).FontWeight(600).TextColor(k.text)
+							diffBadge(c, a.scopeText(), run.out)
+							ui.Spacer(c)
+							idx := map[bool]int{false: 0, true: 1}[s.showDiff]
+							if segmented(c, "cview", &idx, "结果", "改动对照") {
+								s.showDiff = idx == 1
+							}
+						})
+						ui.Column(c).Padding(sp5, sp6).Children(func() {
+							if s.showDiff {
+								diffView(c, a.scopeText(), run.out)
+							} else {
+								ui.Text(c, clip(run.out)).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
+							}
+						})
 					})
 				})
 			})
@@ -178,79 +214,130 @@ func (a *App) stepList(c *ui.Context, steps *[]engine.Step, path string, input s
 		if trace != nil && i < len(trace) {
 			res = &trace[i]
 		}
-		a.stepCard(c, steps, i, path+fmt.Sprint("/", i), prev, res)
+		a.stepCard(c, steps, i, path+fmt.Sprint("/", i), prev, res, i == len(*steps)-1)
 		if res != nil {
 			prev = res.Output
 		}
 	}
 	if len(*steps) == 0 {
-		muted(c, "还没有步骤。")
+		hint(c, "还没有步骤。").Padding(sp2, 0, sp2, 38)
 	}
 }
 
-func (a *App) stepCard(c *ui.Context, steps *[]engine.Step, i int, path string, before string, res *engine.StepResult) {
-	t := c.Theme()
+func (a *App) stepCard(c *ui.Context, steps *[]engine.Step, i int, path string, before string, res *engine.StepResult, last bool) {
+	k := tok(c)
 	s := &(*steps)[i]
 	info := engine.ActionByKind(s.Kind)
 	pend := &a.chains.pending
 	cc := c.Key("step" + path)
-	ui.Column(cc).Gap(8).Padding(10, 12).Radius(10).Background(t.Surface).Border(1, t.Border).Opacity(map[bool]float32{true: 0.55, false: 1}[s.Disabled]).Children(func() {
-		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-			ui.Textf(c, "%d", i+1).FontSize(11).Bold().TextColor(t.AccentText).Background(t.Accent).Radius(9).Padding(1, 6)
-			ui.Column(c).Grow(1).Gap(1).MinWidth(0).Children(func() {
-				ui.Text(c, info.Title).FontSize(13).Bold()
-				ui.Text(c, s.Summary()).FontSize(11).TextColor(t.TextMuted).MaxLines(1)
+	ui.Row(cc).Gap(sp3).AlignItems(ui.Stretch).Children(func() {
+		// Timeline: number bubble and connector.
+		ui.Column(c).Width(26).AlignItems(ui.Center).Children(func() {
+			bg, fg := k.accent, k.accentText
+			if s.Disabled {
+				bg, fg = k.pill, k.faint
+			}
+			ui.Box(c).Size(24, 24).Radius(12).Background(bg).Center().Margin(sp3, 0, 0, 0).Children(func() {
+				ui.Textf(c, "%d", i+1).FontSize(11.5).FontWeight(700).TextColor(fg).FontFeatures("tnum")
 			})
-			if res != nil {
-				if res.Err != nil {
-					ui.Badge(c, "错误")
-				} else {
-					diffBadge(c, before, res.Output)
-				}
+			if !last {
+				ui.Box(c).Width(2).Grow(1).Radius(1).Background(k.hairStrong).Margin(4, 0, 0, 0)
 			}
-			on := !s.Disabled
-			if ui.Switch(c, &on).Label("启用步骤 " + path).Changed() {
-				s.Disabled = !on
-				a.save()
+		})
+		ui.Column(c).Grow(1).MinWidth(0).Padding(0, 0, sp3, 0).Children(func() {
+			card := panel(c).Gap(sp3).Padding(sp3, sp3, sp3, sp4)
+			if s.Disabled {
+				card.Opacity(0.55)
 			}
-			ui.Button(c, "⋯").Label("步骤操作 " + path).Menu(func(m *ui.Menu) {
-				if m.Item("上移").Chosen() && i > 0 {
-					*pend = func() { (*steps)[i-1], (*steps)[i] = (*steps)[i], (*steps)[i-1] }
+			card.Children(func() {
+				ui.Row(c).Gap(sp2).AlignItems(ui.Center).Children(func() {
+					ui.Icon(c, ic(stepIcon(s.Kind))).FontSize(15).TextColor(k.accent)
+					ui.Column(c).Grow(1).Gap(1).MinWidth(0).Children(func() {
+						ui.Text(c, info.Title).FontSize(13.5).FontWeight(600).TextColor(k.text).SingleLine()
+						ui.Text(c, s.Summary()).FontSize(11.5).TextColor(k.faint).SingleLine()
+					})
+					if res != nil {
+						if res.Err != nil {
+							badge(c, "错误", toneRed)
+						} else {
+							diffBadge(c, before, res.Output)
+						}
+					}
+					on := !s.Disabled
+					if ui.Switch(c, &on).Label("启用步骤 " + path).Changed() {
+						s.Disabled = !on
+						a.save()
+					}
+					moreBtn := iconButton(c, "more", "ellipsis", "步骤操作 "+path, "更多").Size(28, 28)
+					a.popMenu(c, "stepmore:"+path, moreBtn, func(m *pm) {
+						if m.Item("上移").Chosen() && i > 0 {
+							*pend = func() { (*steps)[i-1], (*steps)[i] = (*steps)[i], (*steps)[i-1] }
+						}
+						if m.Item("下移").Chosen() && i < len(*steps)-1 {
+							*pend = func() { (*steps)[i+1], (*steps)[i] = (*steps)[i], (*steps)[i+1] }
+						}
+						if m.Item("复制一份").Chosen() {
+							cp := *s
+							*pend = func() { *steps = append((*steps)[:i+1], append([]engine.Step{cp}, (*steps)[i+1:]...)...) }
+						}
+						m.Separator()
+						if m.Item("删除").Chosen() {
+							*pend = func() { *steps = append((*steps)[:i], (*steps)[i+1:]...) }
+						}
+					})
+				})
+				a.stepFields(c, s, info)
+				if info.Container {
+					ui.Column(c).Padding(sp1, 0, 0, sp3).Gap(sp2).BorderWidth(0, 0, 0, 2).BorderColor(k.accentSoft).Children(func() {
+						a.stepList(c, &s.Children, path, "", nil)
+						a.addStepMenu(c, &s.Children, "添加子步骤")
+					})
 				}
-				if m.Item("下移").Chosen() && i < len(*steps)-1 {
-					*pend = func() { (*steps)[i+1], (*steps)[i] = (*steps)[i], (*steps)[i+1] }
-				}
-				if m.Item("复制一份").Chosen() {
-					cp := *s
-					*pend = func() { *steps = append((*steps)[:i+1], append([]engine.Step{cp}, (*steps)[i+1:]...)...) }
-				}
-				m.Separator()
-				if m.Item("删除").Chosen() {
-					*pend = func() { *steps = append((*steps)[:i], (*steps)[i+1:]...) }
+				if res != nil {
+					if res.Err != nil {
+						ui.Text(c, res.Err.Error()).FontSize(12).TextColor(k.red)
+					}
+					open := a.chains.expanded[path]
+					h := ui.ButtonBase(c.Key("exp")).Justify(ui.Start).AlignItems(ui.Center).Gap(6).Label("这一步之后的文本")
+					h.Children(func() {
+						rot := h.AnimateTo("rot", map[bool]float32{true: 90, false: 0}[open], quick)
+						ui.Icon(c, ic("chevron-right")).FontSize(12).TextColor(k.faint).Rotate(rot)
+						ui.Text(c, "这一步之后的文本").FontSize(12).FontWeight(500).TextColor(map[bool]ui.Color{true: k.text, false: k.muted}[h.Hovered()])
+					})
+					if h.Clicked() {
+						open = !open
+						a.chains.expanded[path] = open
+					}
+					if open {
+						ui.Column(c).Background(k.field).Radius(rMd).Padding(sp3, sp4).Children(func() {
+							diffView(c, clip(before), clip(res.Output))
+						})
+					}
 				}
 			})
 		})
-		a.stepFields(c, s, info)
-		if info.Container {
-			ui.Column(c).Padding(0, 0, 0, 16).Gap(6).BorderWidth(0, 0, 0, 2).BorderColor(t.Border).Children(func() {
-				a.stepList(c, &s.Children, path, "", nil)
-				a.addStepMenu(c, &s.Children, "＋ 添加子步骤")
-			})
-		}
-		if res != nil {
-			if res.Err != nil {
-				ui.Text(c, "⚠ "+res.Err.Error()).FontSize(12).TextColor(t.Danger)
-			}
-			open := a.chains.expanded[path]
-			if ui.Collapsible(c, "这一步之后的文本", &open, func() {
-				ui.Column(c).Background(t.Background).Radius(6).Padding(8).Children(func() {
-					diffView(c, clip(before), clip(res.Output))
-				})
-			}).Changed() || open != a.chains.expanded[path] {
-				a.chains.expanded[path] = open
-			}
-		}
 	})
+}
+
+// stepIcon picks an icon per step kind.
+func stepIcon(kind string) string {
+	switch kind {
+	case engine.KindCleaner:
+		return "sparkles"
+	case engine.KindFind:
+		return "replace-all"
+	case engine.KindDelete:
+		return "eraser"
+	case engine.KindExtract:
+		return "scissors"
+	case engine.KindTag:
+		return "type"
+	case engine.KindRepeat:
+		return "redo-2"
+	case engine.KindIfMatch:
+		return "text-search"
+	}
+	return "wand-sparkles"
 }
 
 // stepFields shows the editor for the fields a step kind uses.
@@ -297,10 +384,10 @@ func (a *App) stepFields(c *ui.Context, s *engine.Step, info engine.ActionInfo) 
 		}
 		if has("find") {
 			ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
-				ch(ui.TextInput(c, &s.Find.Find).Font("monospace").Placeholder("查找").Label("查找").Grow(1).Basis(0))
+				ch(field(c, ui.TextInput(c, &s.Find.Find)).Font(monoFont).Placeholder("查找").Label("查找").Grow(1).Basis(0))
 				if has("replace") {
-					ui.Text(c, "→")
-					ch(ui.TextInput(c, &s.Find.Replace).Font("monospace").Placeholder("替换为（留空=删除）").Label("替换为").Grow(1).Basis(0))
+					ui.Icon(c, ic("arrow-right")).FontSize(13).TextColor(tok(c).faint)
+					ch(field(c, ui.TextInput(c, &s.Find.Replace)).Font(monoFont).Placeholder("替换为（留空=删除）").Label("替换为").Grow(1).Basis(0))
 				}
 			})
 			ui.Row(c).Gap(10).Children(func() {
@@ -336,20 +423,20 @@ func (a *App) stepFields(c *ui.Context, s *engine.Step, info engine.ActionInfo) 
 			if s.Kind == engine.KindTag {
 				ph = "前缀，如 <b>"
 			}
-			ch(ui.TextInput(c, &s.Text).Placeholder(ph).Label("文字").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text)).Placeholder(ph).Label("文字").FillWidth())
 		}
 		if has("text2") {
-			ch(ui.TextInput(c, &s.Text2).Placeholder("后缀，如 </b>").Label("后缀").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text2)).Placeholder("后缀，如 </b>").Label("后缀").FillWidth())
 		}
 		if has("prefix") {
-			ch(ui.TextInput(c, &s.Text).Placeholder("引用前缀，默认 \"> \"").Label("引用前缀").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text)).Placeholder("引用前缀，默认 \"> \"").Label("引用前缀").FillWidth())
 		}
 		if has("sep") {
-			ch(ui.TextInput(c, &s.Text).Placeholder("分隔符，默认换行").Label("分隔符").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text)).Placeholder("分隔符，默认换行").Label("分隔符").FillWidth())
 		}
 		if has("small") {
-			ch(ui.TextInput(c, &s.Text).Placeholder("额外小写词，逗号分隔").Label("小词").FillWidth())
-			ch(ui.TextInput(c, &s.Text2).Placeholder("保持原样的词，逗号分隔").Label("例外").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text)).Placeholder("额外小写词，逗号分隔").Label("小词").FillWidth())
+			ch(field(c, ui.TextInput(c, &s.Text2)).Placeholder("保持原样的词，逗号分隔").Label("例外").FillWidth())
 		}
 		if has("chain") {
 			var names []string
@@ -428,7 +515,15 @@ func toggleLetter(s string, l rune, on bool) string {
 }
 
 func (a *App) addStepMenu(c *ui.Context, steps *[]engine.Step, label string) {
-	ui.MenuButton(c, label, func(m *ui.Menu) {
+	k := tok(c)
+	b := ui.ButtonBase(c.Key("add:"+label)).Height(30).Padding(0, 12, 0, 10).Radius(rMd).Gap(6).AlignItems(ui.Center).Label(label)
+	pressable(c, b, k, ui.Transparent)
+	b.Border(strokeW, Ink).BorderStyle(ui.BorderDashed)
+	b.Children(func() {
+		ui.Icon(c, ic("plus")).FontSize(14).TextColor(Ink)
+		ui.Text(c, label).FontSize(12.5).FontWeight(700).TextColor(Ink)
+	})
+	a.popMenu(c, fmt.Sprintf("addstep:%p", steps), b, func(m *pm) {
 		for _, info := range engine.Actions() {
 			if m.Item(info.Title).Chosen() {
 				st := engine.Step{Kind: info.Kind}

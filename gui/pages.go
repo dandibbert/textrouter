@@ -19,16 +19,10 @@ type cleanersState struct {
 }
 
 func (a *App) cleanersView(c *ui.Context) {
-	t := c.Theme()
+	k := tok(c)
 	s := &a.clean
 	total, impl, meas := engine.CleanerStats()
-	header(c, "清理器库", fmt.Sprintf("共 %d 个内置清理器（兼容 TextSoap 9），已实现 %d 个，其中 %d 个与 TextSoap 实测结果逐条比对一致；其余标为「未验证」。", total, impl, meas), nil)
-	ui.Row(c).PaddingX(20).Gap(8).AlignItems(ui.Center).Children(func() {
-		ui.SearchField(c, &s.query).Placeholder("搜索清理器").Label("搜索清理器").Width(260)
-		cats := append([]string{"全部"}, engine.Categories()...)
-		ui.Select(c, &s.category, cats).Label("分类").Width(200)
-		ui.Checkbox(c, &s.onlyMeas, "只看已实测")
-	})
+	pageHeader(c, "清理器库", fmt.Sprintf("%d 个内置清理器 · 已实现 %d · 已实测 %d", total, impl, meas), nil)
 	var list []*engine.Cleaner
 	q := strings.ToLower(s.query)
 	for _, cl := range engine.Cleaners() {
@@ -44,61 +38,115 @@ func (a *App) cleanersView(c *ui.Context) {
 		list = append(list, cl)
 	}
 	sel := engine.CleanerByName(s.selected)
-	ui.Row(c).Grow(1).Padding(10, 20, 12, 20).Gap(16).MinHeight(0).Children(func() {
-		ui.List(c, nil, len(list), func(i int) {
-			cl := list[i]
-			row := ui.ButtonBase(c.Key("cl:"+cl.Token)).Justify(ui.Start).AlignItems(ui.Stretch).Padding(8, 10).Radius(6).FillWidth().Label(cl.ZhName)
-			if sel == cl {
-				row.Background(t.Selection)
-			}
-			row.Children(func() {
-				ui.Row(c).Gap(8).AlignItems(ui.Center).FillWidth().Children(func() {
-					ui.Column(c).Grow(1).Gap(1).MinWidth(0).Children(func() {
-						ui.Text(c, cl.ZhName).FontSize(13).MaxLines(1)
-						ui.Text(c, cl.Name).FontSize(11).TextColor(t.TextMuted).MaxLines(1)
-					})
-					ui.Badge(c, cleanerBadge(cl))
+	ui.Row(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp4).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
+		panel(c).Width(340).Padding(sp2).Gap(sp2).Children(func() {
+			ui.Row(c).Gap(6).Padding(sp1).AlignItems(ui.Center).Children(func() {
+				sf := ui.Row(c).Grow(1).Height(30).Padding(0, 8).Gap(6).Radius(rMd).Background(k.field).AlignItems(ui.Center)
+				sf.Children(func() {
+					ui.Icon(c, ic("search")).FontSize(13).TextColor(k.faint)
+					ui.TextInputBase(c, &s.query).Placeholder("搜索清理器").Label("搜索清理器").Grow(1).FontSize(12.5).TextColor(k.text)
 				})
+				cats := append([]string{"全部"}, engine.Categories()...)
+				ui.Select(c, &s.category, cats).Label("分类").Width(104).Height(30).FontSize(12.5)
 			})
-			if row.Clicked() {
-				s.selected = cl.Name
-			}
-		}).Width(330).FillHeight()
-		ui.Column(c).Grow(1).FillHeight().Gap(8).MinWidth(0).Children(func() {
+			ui.Row(c).Padding(0, sp2).Gap(6).AlignItems(ui.Center).Children(func() {
+				ui.Textf(c, "%d 个", len(list)).FontSize(11.5).TextColor(k.faint).Grow(1)
+				flag(c, "meas", "已实测", "只看已实测", &s.onlyMeas)
+			})
+			ui.List(c, nil, len(list), func(i int) {
+				cl := list[i]
+				row := ui.ButtonBase(c.Key("cl:"+cl.Token)).Justify(ui.Start).AlignItems(ui.Center).Height(46).Padding(0, sp2).Radius(rMd).Gap(sp2).FillWidth().Label(cl.ZhName)
+				bg := ui.Transparent
+				if sel == cl {
+					bg = k.accentSoft
+				} else if row.Hovered() {
+					bg = k.hover
+				}
+				row.Background(bg)
+				row.Children(func() {
+					ui.Icon(c, ic(actionIcon(cl.Name))).FontSize(14).TextColor(map[bool]ui.Color{true: k.accent, false: k.faint}[sel == cl])
+					ui.Column(c).Grow(1).Gap(1).MinWidth(0).Children(func() {
+						ui.Text(c, cl.ZhName).FontSize(13).FontWeight(500).TextColor(k.text).SingleLine()
+						ui.Text(c, cl.Name).FontSize(11).TextColor(k.faint).SingleLine()
+					})
+					cleanerBadgeView(c, cl)
+				})
+				if row.Clicked() {
+					s.selected = cl.Name
+				}
+			}).Grow(1)
+		})
+		ui.Column(c).Grow(1).FillHeight().Gap(sp3).MinWidth(0).Children(func() {
 			if sel == nil {
-				muted(c, "选择左侧的清理器，可预览它对剪贴板空间文本的效果。")
+				ui.Column(c).Grow(1).Center().Gap(sp2).Children(func() {
+					ui.Icon(c, ic("library-big")).FontSize(28).TextColor(k.faint)
+					hint(c, "选择左侧的清理器，预览它对当前文档的效果。")
+				})
 				return
 			}
-			ui.Text(c, sel.ZhName).FontSize(17).Bold()
-			muted(c, sel.Name+" · "+sel.Token+" · "+sel.Category)
-			if sel.Desc != "" {
-				ui.Text(c, sel.Desc).FontSize(12).Wrap()
-			}
-			switch {
-			case !sel.Implemented:
-				ui.Text(c, "此清理器作用于富文本格式或系统服务，在纯文本中不会改变内容。").FontSize(12).TextColor(t.Warning)
-			case !sel.Measured:
-				ui.Text(c, "未验证：按 TextSoap 的说明实现，未与 TextSoap 实测输出比对，细节可能不同。").FontSize(12).TextColor(t.Warning)
-			default:
-				ui.Text(c, "已实测：与 TextSoap 9 在 39 个测试输入上的输出一致。").FontSize(12).TextColor(t.Success)
-			}
 			out := sel.Fn(a.Text)
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				diffBadge(c, a.Text, out)
-				ui.Spacer(c)
-				pinned := a.isPinned(sel.Name)
-				if ui.Toggle(c, &pinned, "固定到剪贴板空间").Changed() {
-					a.togglePin(sel.Name)
+			panel(c).Gap(sp2).Children(func() {
+				ui.Row(c).Gap(sp3).AlignItems(ui.Center).Children(func() {
+					ui.Box(c).Size(36, 36).Radius(10).Background(k.accentSoft).Center().Children(func() {
+						ui.Icon(c, ic(actionIcon(sel.Name))).FontSize(18).TextColor(k.accent)
+					})
+					ui.Column(c).Grow(1).Gap(2).MinWidth(0).Children(func() {
+						ui.Text(c, sel.ZhName).FontSize(17).FontWeight(650).TextColor(k.text)
+						ui.Text(c, sel.Name+" · "+sel.Category).FontSize(12).TextColor(k.faint).SingleLine()
+					})
+					pinned := a.isPinned(sel.Name)
+					label, icon := "固定", "pin"
+					if pinned {
+						label, icon = "取消固定", "pin-off"
+					}
+					if ghost(c, "pincl", label, icon, false).Tooltip("固定到常用").Clicked() {
+						a.togglePin(sel.Name)
+					}
+					if primary(c, "applycl", "应用", "play", "", out == a.Text).Clicked() && out != a.Text {
+						a.Transform(sel.ZhName, sel.Fn)
+					}
+				})
+				if sel.Desc != "" {
+					ui.Text(c, sel.Desc).FontSize(12.5).TextColor(k.muted).LineHeight(1.5).Wrap()
 				}
-				if ui.PrimaryButton(c, "应用").Disabled(out == a.Text).Clicked() {
-					a.Transform(sel.ZhName, sel.Fn)
+				msg, tn, icon := "已实测：与 TextSoap 9 在 39 个测试输入上的输出一致。", toneGreen, "circle-check"
+				switch {
+				case !sel.Implemented:
+					msg, tn, icon = "此清理器作用于富文本格式或系统服务，在纯文本中不会改变内容。", toneAmber, "info"
+				case !sel.Measured:
+					msg, tn, icon = "未验证：按 TextSoap 的说明实现，未与 TextSoap 实测输出比对，细节可能不同。", toneAmber, "triangle-alert"
 				}
+				fg, bg := k.green, k.greenSoft
+				if tn == toneAmber {
+					fg, bg = k.amber, k.amberSoft
+				}
+				ui.Row(c).Gap(sp2).Padding(sp2, sp3).Radius(rMd).Background(bg).AlignItems(ui.Center).Children(func() {
+					ui.Icon(c, ic(icon)).FontSize(14).TextColor(fg)
+					ui.Text(c, msg).FontSize(12).FontWeight(500).TextColor(fg).Grow(1).Wrap()
+				})
 			})
-			ui.Scroll(c).Grow(1).Background(t.Surface).Radius(8).Border(1, t.Border).Padding(12).Children(func() {
-				diffView(c, clip(a.Text), clip(out))
+			canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
+				ui.Row(c).Height(44).Padding(0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+					ui.Text(c, "效果预览").FontSize(13).FontWeight(600).TextColor(k.text)
+					diffBadge(c, a.Text, out)
+				})
+				ui.Scroll(c).Grow(1).Padding(sp5, sp6).Children(func() {
+					diffView(c, clip(a.Text), clip(out))
+				})
 			})
 		})
 	})
+}
+
+func cleanerBadgeView(c *ui.Context, cl *engine.Cleaner) {
+	switch {
+	case !cl.Implemented:
+		badge(c, "富文本", toneNeutral)
+	case cl.Measured:
+		badge(c, "已实测", toneGreen)
+	default:
+		badge(c, "未验证", toneAmber)
+	}
 }
 
 func cleanerBadge(cl *engine.Cleaner) string {
@@ -144,38 +192,49 @@ func (a *App) processors() ([]string, map[string]func(string) string) {
 }
 
 func (a *App) filesView(c *ui.Context) {
-	t := c.Theme()
+	k := tok(c)
 	s := &a.files
 	names, fns := a.processors()
 	if s.proc == "" && len(names) > 0 {
 		s.proc = names[0]
 	}
-	header(c, "批量处理文件", "对多个文本文件运行动作链、批量规则或清理器。先预览会改动哪些文件，再确认写入。", nil)
-	ui.Column(c).Grow(1).Padding(4, 20, 12, 20).Gap(10).MinHeight(0).Children(func() {
-		card(c).Children(func() {
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, "1. 选择文件").Bold().Width(110)
-				if ui.Button(c, "选择文件…").Clicked() {
+	pageHeader(c, "批量处理文件", "先预览会改动哪些文件，再确认写入", nil)
+	ui.Column(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp3).MinHeight(0).Children(func() {
+		step := func(n int, title, sub string, body func()) {
+			ui.Row(c).Gap(sp3).Padding(sp3, 0).AlignItems(ui.Center).Children(func() {
+				ui.Box(c).Size(24, 24).Radius(12).Background(k.accentSoft).Center().Children(func() {
+					ui.Textf(c, "%d", n).FontSize(11.5).FontWeight(700).TextColor(k.accent)
+				})
+				ui.Column(c).Width(170).Gap(1).Children(func() {
+					ui.Text(c, title).FontSize(13).FontWeight(600).TextColor(k.text)
+					ui.Text(c, sub).FontSize(11.5).TextColor(k.faint)
+				})
+				ui.Row(c).Grow(1).Gap(sp2).AlignItems(ui.Center).Children(body)
+			})
+		}
+		panel(c).Gap(0).Padding(sp1, sp4).Children(func() {
+			step(1, "选择文件", fmt.Sprintf("已选 %d 个文件", len(s.paths)), func() {
+				if ghost(c, "pickf", "选择文件…", "file-text", false).Clicked() {
 					a.pickFiles(false)
 				}
-				if ui.Button(c, "选择文件夹…").Clicked() {
+				if ghost(c, "pickd", "选择文件夹…", "folder-open", false).Clicked() {
 					a.pickFiles(true)
 				}
-				muted(c, fmt.Sprintf("已选 %d 个文件", len(s.paths)))
 			})
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, "2. 用什么处理").Bold().Width(110)
+			ui.Box(c).Height(1).FillWidth().Background(k.hair)
+			step(2, "用什么处理", "动作链、规则集或清理器", func() {
 				if ui.Combobox(c, &s.proc, names).Label("处理方式").Width(320).Changed() {
 					s.results = nil
 				}
 			})
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, "3. 预览并写入").Bold().Width(110)
-				if ui.Button(c, "预览").Disabled(len(s.paths) == 0).Clicked() {
+			ui.Box(c).Height(1).FillWidth().Background(k.hair)
+			step(3, "预览并写入", "写入前可以备份", func() {
+				if ghost(c, "preview", "预览", "eye", len(s.paths) == 0).Clicked() && len(s.paths) > 0 {
 					s.results, s.applied = engine.ProcessFiles(s.paths, fns[s.proc], false, false), false
 				}
-				ui.Checkbox(c, &s.backup, "写入前备份为 .bak")
-				if ui.PrimaryButton(c, "写入文件").Disabled(len(s.results) == 0 || s.applied).Clicked() {
+				ui.Checkbox(c, &s.backup, "备份为 .bak")
+				ui.Spacer(c)
+				if primary(c, "write", "写入文件", "download", "", len(s.results) == 0 || s.applied).Clicked() && len(s.results) > 0 && !s.applied {
 					s.results, s.applied = engine.ProcessFiles(s.paths, fns[s.proc], true, s.backup), true
 					a.status = "已写入文件"
 				}
@@ -187,32 +246,47 @@ func (a *App) filesView(c *ui.Context) {
 				changed++
 			}
 		}
-		if s.results != nil {
-			verb := "将改动"
-			if s.applied {
-				verb = "已改动"
-			}
-			ui.Textf(c, "%s %d / %d 个文件", verb, changed, len(s.results)).Bold()
-		}
-		ui.List(c, nil, len(s.results), func(i int) {
-			r := s.results[i]
-			ui.Row(c).Gap(8).Padding(4, 8).Children(func() {
-				mark := "·"
-				if r.Changed {
-					mark = "●"
-				}
-				if r.Err != nil {
-					mark = "⚠"
-				}
-				ui.Text(c, mark).Width(16).TextColor(t.Accent)
-				ui.Text(c, filepath.Base(r.Path)).Grow(1).MaxLines(1).Tooltip(r.Path)
-				if r.Err != nil {
-					ui.Text(c, r.Err.Error()).FontSize(11).TextColor(t.Danger)
-				} else {
-					ui.Textf(c, "%d → %d 字符", r.Before, r.After).FontSize(11).TextColor(t.TextMuted)
+		canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
+			ui.Row(c).Height(44).Padding(0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+				ui.Text(c, "文件").FontSize(13).FontWeight(600).TextColor(k.text)
+				if s.results != nil {
+					verb := "将改动"
+					if s.applied {
+						verb = "已改动"
+					}
+					badge(c, fmt.Sprintf("%s %d / %d", verb, changed, len(s.results)), toneAccent)
 				}
 			})
-		}).Grow(1)
+			if len(s.results) == 0 {
+				ui.Column(c).Grow(1).Center().Gap(sp2).Children(func() {
+					ui.Box(c).Size(56, 56).Radius(16).Background(k.field).Center().Children(func() {
+						ui.Icon(c, ic("files")).FontSize(24).TextColor(k.faint)
+					})
+					ui.Text(c, "还没有预览").FontSize(13.5).FontWeight(600).TextColor(k.text)
+					hint(c, "选择文件和处理方式后点「预览」，这里会列出每个文件的改动。")
+				})
+				return
+			}
+			ui.List(c, nil, len(s.results), func(i int) {
+				r := s.results[i]
+				ui.Row(c).Height(38).Gap(sp3).Padding(0, sp5).AlignItems(ui.Center).BorderWidth(map[bool]float32{true: 0, false: 1}[i == 0], 0, 0, 0).BorderColor(k.hair).Children(func() {
+					icon, col := "file-text", k.faint
+					if r.Changed {
+						icon, col = "circle-check", k.accent
+					}
+					if r.Err != nil {
+						icon, col = "triangle-alert", k.red
+					}
+					ui.Icon(c, ic(icon)).FontSize(14).TextColor(col)
+					ui.Text(c, filepath.Base(r.Path)).FontSize(13).TextColor(k.text).Grow(1).SingleLine().Tooltip(r.Path)
+					if r.Err != nil {
+						ui.Text(c, r.Err.Error()).FontSize(11.5).TextColor(k.red)
+					} else {
+						ui.Textf(c, "%d → %d 字符", r.Before, r.After).FontSize(11.5).TextColor(k.faint).FontFeatures("tnum")
+					}
+				})
+			}).Grow(1)
+		})
 	})
 }
 
@@ -239,6 +313,7 @@ type settingsState struct {
 }
 
 func (a *App) settingsView(c *ui.Context) {
+	k := tok(c)
 	s := &a.setting
 	st := &a.Lib.Settings
 	if !s.inited {
@@ -246,23 +321,39 @@ func (a *App) settingsView(c *ui.Context) {
 		s.themeIdx = map[string]int{"system": 0, "light": 1, "dark": 2}[st.Theme]
 		s.inited = true
 	}
-	header(c, "设置", "", nil)
-	ui.Scroll(c).Grow(1).Children(func() {
-		ui.Column(c).Padding(4, 20, 20, 20).Gap(12).MaxWidth(680).Children(func() {
-			card(c).Children(func() {
-				ui.Text(c, "外观").Bold()
-				if ui.Segmented(c, &s.themeIdx, "跟随系统", "浅色", "深色").Label("外观").Changed() {
-					st.Theme = []string{"system", "light", "dark"}[s.themeIdx]
-					a.Platform.SetTheme(st.Theme)
-					a.save()
+	pageHeader(c, "设置", "", nil)
+	row := func(title, sub string, last bool, ctrl func()) {
+		r := ui.Row(c).Gap(sp4).Padding(sp3, 0).AlignItems(ui.Center)
+		if !last {
+			r.BorderWidth(0, 0, strokeW, 0).BorderColor(Ink)
+		}
+		r.Children(func() {
+			ui.Column(c).Grow(1).Gap(2).MinWidth(0).Children(func() {
+				ui.Text(c, title).FontSize(13).FontWeight(500).TextColor(k.text)
+				if sub != "" {
+					ui.Text(c, sub).FontSize(11.5).TextColor(k.faint).LineHeight(1.4).Wrap()
 				}
 			})
-			card(c).Children(func() {
-				ui.Text(c, "打开剪贴板空间的全局快捷键").Bold()
-				muted(c, "格式如 CmdOrCtrl+Shift+V、Alt+Space。按下后窗口弹出并读取当前剪贴板。")
-				ui.Row(c).Gap(8).Children(func() {
-					ui.TextInput(c, &s.hotkey).Label("全局快捷键").Width(240).Font("monospace")
-					if ui.Button(c, "应用").Clicked() {
+			ctrl()
+		})
+	}
+	group := func(title string, body func()) {
+		eyebrow(c, title).Padding(sp2, sp1, 0, sp1)
+		panel(c).Gap(0).Padding(sp1, sp4).Children(body)
+	}
+	ui.Scroll(c).Grow(1).Children(func() {
+		ui.Column(c).Padding(0, sp5, sp6, sp5).Gap(sp2).MaxWidth(720).FillWidth().Children(func() {
+			group("通用", func() {
+				row("外观", "跟随系统，或固定为浅色 / 深色", false, func() {
+					if segmented(c, "theme", &s.themeIdx, "跟随系统", "浅色", "深色") {
+						st.Theme = []string{"system", "light", "dark"}[s.themeIdx]
+						a.Platform.SetTheme(st.Theme)
+						a.save()
+					}
+				})
+				row("打开剪贴板文档的全局快捷键", "格式如 CmdOrCtrl+Shift+V、Alt+Space。按下后窗口弹出并读取当前剪贴板。", true, func() {
+					field(c, ui.TextInput(c, &s.hotkey).Label("全局快捷键").Width(200).Font(monoFont))
+					if ghost(c, "hk", "应用", "", false).Clicked() {
 						if err := a.Platform.SetHotkey(s.hotkey); err != nil {
 							a.status = "快捷键设置失败：" + err.Error()
 						} else {
@@ -273,32 +364,46 @@ func (a *App) settingsView(c *ui.Context) {
 					}
 				})
 			})
-			card(c).Children(func() {
-				ui.Text(c, "行为").Bold()
-				if ui.Checkbox(c, &st.CopyOnDone, "「复制并完成」后自动收起窗口").Changed() {
-					a.save()
-				}
-				if ui.Checkbox(c, &st.ShowUnmeasure, "在动作面板中显示未验证的清理器").Changed() {
-					a.save()
-				}
+			a.fontSettings(c, k, row, group)
+			group("行为", func() {
+				row("激活时自动读取剪贴板", "启动、点 Dock 图标、切回本应用、点菜单栏图标或按全局快捷键时，切到「剪贴板」并读入最新内容；内容没变就不动文档", false, func() {
+					on := !st.NoAutoReadClipboard
+					if ui.Switch(c, &on).Label("激活时自动读取剪贴板").Changed() {
+						st.NoAutoReadClipboard = !on
+						a.save()
+					}
+				})
+				row("「复制并完成」后自动收起窗口", "焦点回到之前的应用，直接 ⌘V 粘贴", false, func() {
+					if ui.Switch(c, &st.CopyOnDone).Label("「复制并完成」后自动收起窗口").Changed() {
+						a.save()
+					}
+				})
+				row("在动作面板中显示未验证的清理器", "未与 TextSoap 实测输出比对的清理器会带「未验证」标记", true, func() {
+					if ui.Switch(c, &st.ShowUnmeasure).Label("在动作面板中显示未验证的清理器").Changed() {
+						a.save()
+					}
+				})
 			})
-			card(c).Children(func() {
-				ui.Text(c, "数据").Bold()
-				muted(c, "动作链、规则集和设置保存在：")
-				ui.Text(c, a.Lib.Path()).Font("monospace").FontSize(12).Selectable()
-				ui.Row(c).Gap(8).Children(func() {
-					if ui.Button(c, "导入 TextSoap 清理器库…").Clicked() {
+			group("数据", func() {
+				row("资料库位置", a.Lib.Path(), false, func() {})
+				row("TextSoap 兼容", "导入 .textsoap9Lib 清理器库，或导出为 TextSoap 可读的格式", true, func() {
+					if ghost(c, "imp", "导入…", "upload", false).Clicked() {
 						a.importTextSoap()
 					}
-					if ui.Button(c, "导出为 TextSoap 格式…").Clicked() {
+					if ghost(c, "exp", "导出…", "download", false).Clicked() {
 						a.exportTextSoap()
 					}
 				})
 			})
-			card(c).Children(func() {
-				ui.Text(c, "关于").Bold()
+			group("应用图标", func() {
+				row("图标", "点一个换上；Dock 里立刻生效，下次启动也记得。Finder 里的图标是安装包自带的（Mint Minimal）。", true, func() {})
+				a.appIconPicker(c)
+			})
+			group("关于", func() {
 				total, impl, meas := engine.CleanerStats()
-				muted(c, fmt.Sprintf("TextRouter · 清理器 %d（已实现 %d，已实测 %d）· 查找替换语义按 TextSoap 9 的 51 条实测用例实现。", total, impl, meas))
+				row("TextRouter 0.2", fmt.Sprintf("清理器 %d（已实现 %d，已实测 %d）· 查找替换语义按 TextSoap 9 的 51 条实测用例实现。", total, impl, meas), true, func() {
+					ui.Image(c, appIconBmp()).Size(32, 32).Radius(8)
+				})
 			})
 		})
 	})

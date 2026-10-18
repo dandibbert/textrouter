@@ -13,6 +13,7 @@ import (
 	"image/png"
 	"log"
 	"runtime"
+	"time"
 
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/dandibbert/textrouter/gui"
@@ -25,6 +26,8 @@ type desktop struct {
 	win    *mygo.Window
 	hotkey string
 	show   func()
+	lib    *engine.Library
+	parent *desktop // the main window's, for the windows made by tearing off a tab
 }
 
 func (d *desktop) OpenFiles(title string, exts []string, multiple, dirs bool) []string {
@@ -50,6 +53,10 @@ func (d *desktop) SaveFile(title, name string) string {
 // HideWindow hides the window; on macOS the whole app hides so the
 // previous app comes back to the front, ready for ⌘V.
 func (d *desktop) HideWindow() {
+	if d.parent != nil {
+		d.win.Close()
+		return
+	}
 	if runtime.GOOS == "darwin" {
 		mygo.App.Hide()
 		return
@@ -69,6 +76,9 @@ func (d *desktop) SetTheme(theme string) {
 }
 
 func (d *desktop) SetHotkey(acc string) error {
+	if d.parent != nil {
+		return d.parent.SetHotkey(acc)
+	}
 	if d.hotkey != "" {
 		mygo.GlobalShortcut.Unregister(d.hotkey)
 	}
@@ -88,11 +98,58 @@ func (d *desktop) SetHotkey(acc string) error {
 
 func (d *desktop) Update(fn func()) { d.win.Update(fn) }
 
+// OpenWindow opens a file document in a window of its own, a little below
+// and to the right of this one.
+func (d *desktop) OpenWindow(name, path, text string) {
+	root := d
+	if d.parent != nil {
+		root = d.parent
+	}
+	child := &desktop{parent: root, lib: root.lib}
+	ca := gui.NewDetached(root.lib, child, name, path, text)
+	x, y := d.win.Position()
+	w, h := d.win.Size()
+	child.win = mygo.NewWindow(mygo.WindowOptions{
+		Title:          name,
+		Width:          w,
+		Height:         h,
+		X:              x + 36,
+		Y:              y + 36,
+		MinWidth:       820,
+		MinHeight:      520,
+		TitleBarStyle:  mygo.TitleBarHiddenInset,
+		TitleBarHeight: 42,
+		Vibrancy:       mygo.VibrancySidebar,
+		Content:        ui.View(ca.View),
+	})
+	child.win.Show()
+	child.win.Focus()
+}
+
+// SetAppIcon changes the Dock icon; the .app bundle keeps its own.
+func (d *desktop) SetAppIcon(png []byte) {
+	if err := mygo.App.Dock.SetIcon(png); err != nil {
+		log.Println("dock icon:", err)
+	}
+}
+
 func main() {
 	lib := engine.LoadLibrary(engine.LibraryPath())
-	d := &desktop{}
+	d := &desktop{lib: lib}
 	a := gui.New(lib, d)
 	quitting := false
+
+	// Files dropped on the Dock icon, "Open With" and the command line: held
+	// until the window exists, then opened as document tabs.
+	var pendingFiles []string
+	mygo.App.OnOpenFile(func(path string) {
+		if d.win == nil {
+			pendingFiles = append(pendingFiles, path)
+			return
+		}
+		d.win.Update(func() { a.OpenPath(path) })
+		d.win.Show()
+	})
 
 	mygo.App.SetName("TextRouter")
 	d.SetTheme(lib.Settings.Theme)
@@ -100,63 +157,110 @@ func main() {
 	mygo.App.WhenReady(func() {
 		d.win = mygo.NewWindow(mygo.WindowOptions{
 			Title:     "TextRouter",
-			Width:     1120,
-			Height:    720,
+			Width:     lib.Settings.View.WindowW,
+			Height:    lib.Settings.View.WindowH,
 			MinWidth:  820,
 			MinHeight: 520,
 			StateKey:  "main",
-			Content:   ui.View(a.View),
+			// Inset title bar: the traffic lights float over the sidebar,
+			// which shows the window's sidebar material (macOS).
+			TitleBarStyle:  mygo.TitleBarHiddenInset,
+			TitleBarHeight: 42,
+			Vibrancy:       mygo.VibrancySidebar,
+			Content:        ui.View(a.View),
 		})
+		for _, p := range pendingFiles {
+			p := p
+			d.win.Update(func() { a.OpenPath(p) })
+		}
+		pendingFiles = nil
+		if id := gui.SavedAppIcon(lib.Path()); id != gui.DefaultAppIcon {
+			d.SetAppIcon(gui.AppIconPNG(id))
+		}
 		// Open Clipboard Space with the current clipboard: from the Dock,
 		// the menu bar icon or the global shortcut.
+		appActive := false
 		d.show = func() {
 			text := mygo.Clipboard.ReadText()
-			d.win.Update(func() {
-				a.LoadClipboard(text)
-				a.Page = gui.PageClipboard
-			})
-			d.win.Show()
+			d.win.Update(func() { a.LoadClipboard(text) })
+			if !d.win.IsVisible() {
+				d.win.Show()
+			}
 			d.win.Focus()
-			mygo.App.Focus()
+			if !appActive {
+				mygo.App.Focus() // didBecomeActive follows; it finds nothing new
+			}
 		}
+		// Remember the window size in the settings, once resizing settles.
+		var resizeTimer *time.Timer
+		d.win.OnResize(func() {
+			w, h := d.win.Size()
+			if resizeTimer != nil {
+				resizeTimer.Stop()
+			}
+			resizeTimer = time.AfterFunc(400*time.Millisecond, func() {
+				d.win.Update(func() { a.SetWindowSize(w, h) })
+			})
+		})
 		d.win.OnClose(func(e *mygo.CloseEvent) {
 			if !quitting {
 				e.PreventDefault()
 				d.win.Hide()
 			}
 		})
-		mygo.App.OnActivate(func(hasVisible bool) {
-			if !hasVisible {
-				d.show()
-			}
-		})
+		// Every activation reads the clipboard into the 剪贴板 document:
+		//  - Dock icon click: applicationShouldHandleReopen:hasVisibleWindows:
+		//    → OnActivate, whether or not the window is visible (before, a
+		//    visible window ignored the click);
+		//  - switching back to the app (Dock click while inactive, ⌘Tab,
+		//    clicking its window): applicationDidBecomeActive: →
+		//    OnDidBecomeActive;
+		//  - menu bar icon, global shortcut and launch call d.show directly.
+		// A Dock click on an inactive app fires both; the second finds the
+		// clipboard unchanged and leaves the document alone.
+		mygo.App.OnActivate(func(bool) { d.show() })
+		mygo.App.OnDidBecomeActive(func() { appActive = true; d.show() })
+		mygo.App.OnDidResignActive(func() { appActive = false })
 		goPage := func(p string) func(*mygo.MenuItem, *mygo.Window) {
 			return func(*mygo.MenuItem, *mygo.Window) {
 				d.show()
 				d.win.Update(func() { a.Page = p })
 			}
 		}
+		run := func(fn func()) func(*mygo.MenuItem, *mygo.Window) {
+			return func(*mygo.MenuItem, *mygo.Window) { d.win.Update(fn) }
+		}
 		mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
 			{Role: mygo.RoleAppMenu},
 			{Role: mygo.RoleEditMenu},
-			{Label: "前往", Submenu: []*mygo.MenuItem{
-				{Label: "剪贴板空间", Accelerator: "CmdOrCtrl+1", Click: goPage(gui.PageClipboard)},
-				{Label: "查找替换", Accelerator: "CmdOrCtrl+2", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Accelerator: "CmdOrCtrl+3", Click: goPage(gui.PageBatch)},
-				{Label: "动作链", Accelerator: "CmdOrCtrl+4", Click: goPage(gui.PageChains)},
-				{Label: "清理器库", Accelerator: "CmdOrCtrl+5", Click: goPage(gui.PageCleaners)},
-				{Label: "设置", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
+			{Label: "文件", Submenu: []*mygo.MenuItem{
+				{Label: "剪贴板", Accelerator: "CmdOrCtrl+1", Click: run(a.ShowClipboard)},
+				{Label: "打开…", Accelerator: "CmdOrCtrl+O", Click: run(a.OpenFileDialog)},
+				{Label: "存储为…", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
+				mygo.Separator(),
+				{Role: mygo.RoleClose, Label: "关闭窗口"},
+			}},
+			{Label: "查找", Submenu: []*mygo.MenuItem{
+				{Label: "查找替换", Accelerator: "CmdOrCtrl+F", Click: run(a.ShowFind)},
+			}},
+			{Label: "工具", Submenu: []*mygo.MenuItem{
+				{Label: "批量替换…", Accelerator: "CmdOrCtrl+Shift+R", Click: goPage(gui.PageBatch)},
+				{Label: "我的清理器（动作链）…", Accelerator: "CmdOrCtrl+Shift+L", Click: goPage(gui.PageChains)},
+				{Label: "清理器库…", Click: goPage(gui.PageCleaners)},
+				{Label: "批量处理文件…", Click: goPage(gui.PageFiles)},
+				mygo.Separator(),
+				{Label: "全部动作…", Accelerator: "CmdOrCtrl+K", Click: run(a.OpenPalette)},
+				{Label: "设置…", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
 			}},
 			{Role: mygo.RoleWindowMenu},
 		}))
-		tray, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: "TextRouter — 打开剪贴板空间"})
+		tray, err := mygo.NewTray(mygo.TrayOptions{Icon: trayIcon(), IconIsTemplate: true, ToolTip: "TextRouter — 打开剪贴板"})
 		if err != nil {
 			log.Println("tray:", err)
 		} else {
 			menu := mygo.NewMenu([]*mygo.MenuItem{
-				{Label: "打开剪贴板空间", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
-				{Label: "查找替换", Click: goPage(gui.PageFind)},
-				{Label: "批量替换", Click: goPage(gui.PageBatch)},
+				{Label: "打开剪贴板", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
+				{Label: "批量替换…", Click: goPage(gui.PageBatch)},
 				mygo.Separator(),
 				{Role: mygo.RoleQuit},
 			})
