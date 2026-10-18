@@ -2,6 +2,8 @@ package gui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -478,3 +480,59 @@ type iconRecorder struct {
 }
 
 func (r iconRecorder) SetAppIcon(png []byte) { *r.got = png }
+
+func TestToolsMenuIsDrawnInTheApp(t *testing.T) {
+	a, tt := newApp(t, "x")
+	settle(tt, 2)
+	if err := tt.Click("工具"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 3)
+	if !tt.HasText("批量替换…") || !tt.HasText("粘贴覆盖（用剪贴板替换全部文本）") {
+		t.Fatalf("menu rows: %q", tt.Texts())
+	}
+	if err := tt.Click("批量替换…"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	if a.Page != PageBatch {
+		t.Fatalf("page %q", a.Page)
+	}
+	if *a.menuFlag("tools") {
+		t.Fatal("menu stayed open after choosing")
+	}
+}
+
+func TestNewCleanerButtonOpensChainEditor(t *testing.T) {
+	a, tt := newApp(t, "x")
+	settle(tt, 2)
+	n := len(a.Lib.Chains)
+	if err := tt.Click("新建清理器"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	if a.Page != PageChains || len(a.Lib.Chains) != n+1 || a.chains.selID != a.Lib.Chains[n].ID || len(a.Lib.Chains[n].Steps) != 0 {
+		t.Fatalf("page %q chains %d", a.Page, len(a.Lib.Chains))
+	}
+}
+
+func TestFileOpenedBySystemStaysOpenThroughActivation(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	settle(tt, 2)
+	p := filepath.Join(t.TempDir(), "dropped.txt")
+	if err := os.WriteFile(p, []byte("from the dock"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.OpenPath(p)
+	// The activation that follows a Dock drop reads the clipboard: it must
+	// not pull the window back to the clipboard tab.
+	a.LoadClipboard("new clipboard text")
+	if a.cur != 1 || a.Text != "from the dock" {
+		t.Fatalf("cur=%d text=%q", a.cur, a.Text)
+	}
+	a.openedAt = time.Now().Add(-time.Minute)
+	a.LoadClipboard("new clipboard text")
+	if a.cur != 0 {
+		t.Fatalf("a later activation should show the clipboard again, cur=%d", a.cur)
+	}
+}

@@ -240,6 +240,11 @@ func (a *App) cleanTab(c *ui.Context, k tokens) {
 		// Off the list, or on a heading: the text is put back.
 		w.frameHov = ""
 	}
+	nb := ghost(c, "newcleaner", "新建清理器", "plus", false).FillWidth().Margin(8, 0, 10, 0).
+		Tooltip("把已有的清理器、查找替换按顺序组合成自己的清理器")
+	if nb.Clicked() {
+		a.newChain()
+	}
 	_, impl, _ := engine.CleanerStats()
 	ui.Row(c.Key("cleanfoot")).FillWidth().Padding(10, 6, 0, 6).AlignItems(ui.Center).BorderWidth(strokeW, 0, 0, 0).BorderColor(Ink).Children(func() {
 		l := ui.ButtonBase(c.Key("alllib")).Label("全部清理器").Tooltip("打开清理器库")
@@ -253,6 +258,15 @@ func (a *App) cleanTab(c *ui.Context, k tokens) {
 		ui.Spacer(c)
 		ui.Text(c, "悬停后点 ☆ 加入常用").FontSize(sizeButton).TextColor(Muted).SingleLine()
 	})
+}
+
+// newChain makes an empty action chain (a custom cleaner) and opens the chain
+// editor on it, where cleaners and other steps are added one by one.
+func (a *App) newChain() {
+	a.Lib.Chains = append(a.Lib.Chains, engine.Chain{ID: engine.NewID(), Name: fmt.Sprintf("动作链 %d", len(a.Lib.Chains)+1)})
+	a.chains.selID = a.Lib.Chains[len(a.Lib.Chains)-1].ID
+	a.save()
+	a.OpenTool(PageChains)
 }
 
 // searchToFind turns a search that matched nothing into a plain find.

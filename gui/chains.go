@@ -54,7 +54,8 @@ func (a *App) chainsView(c *ui.Context) {
 	pageHeader(c, "动作链", "把多个动作串起来，一键完成", func() {
 		a.scopePill(c, k)
 		ui.Box(c).Width(sp2)
-		ui.MenuButton(c, "导入 / 导出", func(m *ui.Menu) {
+		ioBtn := ghost(c, "chainio", "导入 / 导出", "chevron-down", false)
+		a.popMenu(c, "chainio", ioBtn, func(m *pm) {
 			if m.Item("导入 TextSoap 清理器库（.textsoap9Lib / plist）…").Chosen() {
 				a.importTextSoap()
 			}
@@ -68,7 +69,7 @@ func (a *App) chainsView(c *ui.Context) {
 			if m.Item("导出全部为 TextSoap 格式（fileVersion 6）…").Chosen() {
 				a.exportTextSoap()
 			}
-		}).Height(30).Radius(rMd).Background(k.field).Border(1, ui.Transparent).FontSize(12.5)
+		})
 		if ch != nil {
 			run := a.runChain(ch)
 			if primary(c, "applychain", "应用到文档", "play", "", run.out == a.scopeText()).Clicked() && run.out != a.scopeText() {
@@ -267,7 +268,8 @@ func (a *App) stepCard(c *ui.Context, steps *[]engine.Step, i int, path string, 
 						s.Disabled = !on
 						a.save()
 					}
-					iconButton(c, "more", "ellipsis", "步骤操作 "+path, "更多").Size(28, 28).Menu(func(m *ui.Menu) {
+					moreBtn := iconButton(c, "more", "ellipsis", "步骤操作 "+path, "更多").Size(28, 28)
+					a.popMenu(c, "stepmore:"+path, moreBtn, func(m *pm) {
 						if m.Item("上移").Chosen() && i > 0 {
 							*pend = func() { (*steps)[i-1], (*steps)[i] = (*steps)[i], (*steps)[i-1] }
 						}
@@ -516,12 +518,12 @@ func (a *App) addStepMenu(c *ui.Context, steps *[]engine.Step, label string) {
 	k := tok(c)
 	b := ui.ButtonBase(c.Key("add:"+label)).Height(30).Padding(0, 12, 0, 10).Radius(rMd).Gap(6).AlignItems(ui.Center).Label(label)
 	pressable(c, b, k, ui.Transparent)
-	b.Border(1, k.hairStrong).BorderStyle(ui.BorderDashed)
+	b.Border(strokeW, Ink).BorderStyle(ui.BorderDashed)
 	b.Children(func() {
-		ui.Icon(c, ic("plus")).FontSize(14).TextColor(k.accent)
-		ui.Text(c, label).FontSize(12.5).FontWeight(600).TextColor(k.accent)
+		ui.Icon(c, ic("plus")).FontSize(14).TextColor(Ink)
+		ui.Text(c, label).FontSize(12.5).FontWeight(700).TextColor(Ink)
 	})
-	b.Menu(func(m *ui.Menu) {
+	a.popMenu(c, fmt.Sprintf("addstep:%p", steps), b, func(m *pm) {
 		for _, info := range engine.Actions() {
 			if m.Item(info.Title).Chosen() {
 				st := engine.Step{Kind: info.Kind}

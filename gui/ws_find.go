@@ -929,7 +929,7 @@ func (a *App) findButtons(c *ui.Context, k tokens, fi *findInfo, o engine.FindOp
 		boxed(more)
 		lift(more, shadowSm)
 		more.Children(func() { ui.Text(c, "⋯").FontSize(15).FontWeight(700).TextColor(Ink) })
-		more.Menu(func(m *ui.Menu) {
+		a.popMenu(c, "findmore", more, func(m *pm) {
 			if m.Item("加入批量规则").Chosen() {
 				a.addRuleFromFind(o)
 			}

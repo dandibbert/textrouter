@@ -66,9 +66,6 @@ func (a *App) View(c *ui.Context) {
 	if a.Page != PageClipboard && a.Page != "" {
 		a.sheetView(c, k)
 	}
-	if a.fakeMenu != nil {
-		a.fakeMenuView(c, k)
-	}
 	a.paletteView(c)
 	a.toastView(c)
 }

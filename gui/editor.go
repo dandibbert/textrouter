@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/dandibbert/textrouter/engine"
@@ -218,6 +219,15 @@ func (a *App) loadFile(path string) {
 	a.docs = append(a.docs, &document{name: filepath.Base(path), path: path, text: string(data)})
 	a.switchDoc(len(a.docs) - 1)
 	a.status = "已打开 " + filepath.Base(path)
+}
+
+// OpenPath opens a file the system handed over (dropped on the Dock icon,
+// "Open With", or the command line) as a document tab. The activation that
+// comes with it then leaves the tab alone instead of going back to the
+// clipboard.
+func (a *App) OpenPath(path string) {
+	a.loadFile(path)
+	a.openedAt = time.Now()
 }
 
 func (a *App) openFile() {

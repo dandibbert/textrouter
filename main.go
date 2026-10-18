@@ -102,6 +102,18 @@ func main() {
 	a := gui.New(lib, d)
 	quitting := false
 
+	// Files dropped on the Dock icon, "Open With" and the command line: held
+	// until the window exists, then opened as document tabs.
+	var pendingFiles []string
+	mygo.App.OnOpenFile(func(path string) {
+		if d.win == nil {
+			pendingFiles = append(pendingFiles, path)
+			return
+		}
+		d.win.Update(func() { a.OpenPath(path) })
+		d.win.Show()
+	})
+
 	mygo.App.SetName("TextRouter")
 	d.SetTheme(lib.Settings.Theme)
 	mygo.App.OnBeforeQuit(func(*mygo.QuitEvent) { quitting = true })
@@ -120,6 +132,11 @@ func main() {
 			Vibrancy:       mygo.VibrancySidebar,
 			Content:        ui.View(a.View),
 		})
+		for _, p := range pendingFiles {
+			p := p
+			d.win.Update(func() { a.OpenPath(p) })
+		}
+		pendingFiles = nil
 		if id := gui.SavedAppIcon(lib.Path()); id != gui.DefaultAppIcon {
 			d.SetAppIcon(gui.AppIconPNG(id))
 		}

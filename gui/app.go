@@ -72,8 +72,9 @@ type App struct {
 	ws            workspace
 	clipAt        time.Time
 	appIcon       string
+	openedAt      time.Time
+	menus         map[string]*bool
 	sheetFresh    string
-	fakeMenu      []string
 	changes       []changeSpan
 	changesVer    uint64
 	changesAt     time.Time
@@ -151,6 +152,9 @@ func New(lib *engine.Library, p Platform) *App {
 //
 // It reports whether the document was replaced.
 func (a *App) LoadClipboard(s string) bool {
+	if a.cur != 0 && time.Since(a.openedAt) < 2*time.Second {
+		return false // activated by opening a file: stay on it
+	}
 	a.ShowClipboard()
 	if a.Lib.Settings.NoAutoReadClipboard {
 		return false

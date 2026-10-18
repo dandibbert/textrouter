@@ -97,7 +97,8 @@ func (a *App) batchView(c *ui.Context) {
 			ui.Icon(c, ic("triangle-alert")).FontSize(13).TextColor(k.red)
 			ui.Text(c, res.err.Error()).FontSize(11.5).TextColor(k.red).MaxLines(1).MaxWidth(320)
 		}
-		ui.MenuButton(c, "导入 / 导出", func(m *ui.Menu) {
+		ioBtn := ghost(c, "batchio", "导入 / 导出", "chevron-down", false)
+		a.popMenu(c, "batchio", ioBtn, func(m *pm) {
 			if m.Item("从 CSV/TSV 文件导入…").Chosen() {
 				a.importRules(rs)
 			}
@@ -121,7 +122,7 @@ func (a *App) batchView(c *ui.Context) {
 			if m.Item("删除此规则集").Chosen() {
 				a.deleteRuleSet(rs.ID)
 			}
-		}).Height(30).Radius(rMd).Background(k.field).Border(1, ui.Transparent).FontSize(12.5)
+		})
 	})
 	if rs == nil {
 		ui.Column(c).Grow(1).Center().Children(func() { hint(c, "还没有规则集，点「＋」新建。") })

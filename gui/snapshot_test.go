@@ -47,10 +47,9 @@ func TestSnapshots(t *testing.T) {
 			if err := tt.Click("工具"); err != nil {
 				t.Fatal(err)
 			}
-			// The real menu is native (NSMenu); paint its items in-app.
-			a.fakeMenu = tt.Menu()
-			if len(a.fakeMenu) == 0 {
-				t.Fatal("tools menu did not open")
+			settle(tt, 3)
+			if !tt.HasText("批量替换…") {
+				t.Fatalf("tools menu did not open: %q", tt.Texts())
 			}
 		}},
 		{"batch-sheet", func(a *App, tt *ui.Tester) {

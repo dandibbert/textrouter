@@ -132,10 +132,10 @@ func (a *App) toolsMenu(c *ui.Context, k tokens) {
 		ui.Text(c, "工具").FontSize(sizeButton).FontWeight(500).TextColor(Ink)
 		ui.Icon(c, ic("chevron-down")).FontSize(12).TextColor(Ink)
 	})
-	b.Menu(func(m *ui.Menu) { a.toolsMenuItems(c, m) })
+	a.popMenu(c, "tools", b, func(m *pm) { a.toolsMenuItems(c, m) })
 }
 
-func (a *App) toolsMenuItems(c *ui.Context, m *ui.Menu) {
+func (a *App) toolsMenuItems(c *ui.Context, m *pm) {
 	for _, t := range tools[:4] {
 		if m.Item(t.label + "…").Chosen() {
 			a.OpenTool(t.id)
@@ -233,30 +233,6 @@ func (a *App) OpenFileDialog() { a.openFile() }
 func (a *App) SaveFileDialog() { a.saveFile() }
 func (a *App) ShowFind()       { a.showFind() }
 func (a *App) OpenPalette()    { a.openPalette() }
-
-// fakeMenuView paints a stand-in for the native popup menu under the Tools
-// button. The real menu is an NSMenu that headless rendering cannot capture;
-// this is used only by the snapshot test.
-func (a *App) fakeMenuView(c *ui.Context, k tokens) {
-	ui.Overlay(c, func() {
-		m := ui.Column(c.Key("fakemenu")).Absolute().Top(44).Right(150).Width(260).Padding(5).Radius(radiusCtl).Background(Paper)
-		boxed(m)
-		hard(m, shadowLg)
-		m.Children(func() {
-			for i, l := range a.fakeMenu {
-				if l == "-" {
-					ui.Box(c.Key(fmt.Sprint("fm-sep", i))).Height(strokeW).FillWidth().Margin(5, 6, 5, 6).Background(Ink)
-					continue
-				}
-				r := ui.Row(c.Key(fmt.Sprint("fm", i))).FillWidth().Height(26).Padding(0, 10, 0, 10).Radius(radiusKey).AlignItems(ui.Center)
-				if i == 0 {
-					r.Background(Accent)
-				}
-				r.Children(func() { ui.Text(c, l).FontSize(sizeButton).TextColor(Ink) })
-			}
-		})
-	})
-}
 
 // pendingClipPill offers a newer clipboard that was not loaded because the
 // 剪贴板 document has edits. Subtle and non-blocking; loads on click.
