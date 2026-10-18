@@ -244,7 +244,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 		row.Opacity(0.5)
 	}
 	row.Children(func() {
-		ui.Icon(c, ic("grip-vertical")).FontSize(14).TextColor(map[bool]ui.Color{true: k.muted, false: k.faint.Alpha(0.5)}[hov]).Cursor(ui.CursorGrab)
+		ui.Icon(c, ic("grip-vertical")).FontSize(14).TextColor(map[bool]ui.Color{true: Ink, false: Faint}[hov]).Cursor(ui.CursorGrab)
 		enabled := !r.Disabled
 		if ui.Checkbox(c, &enabled, "").Label(fmt.Sprintf("启用第 %d 条", i+1)).Width(22).Changed() {
 			r.Disabled = !enabled
@@ -301,13 +301,14 @@ func ruleField(c *ui.Context, e ui.Element, bad bool) ui.Element {
 	e.Grow(1).Basis(0).Font(monoFont).FontSize(13).TextColor(k.text).Padding(6, 8).Radius(rSm).MinWidth(0)
 	switch {
 	case e.Focused():
-		e.Background(k.canvas).Border(1, k.accent.Alpha(0.7)).Shadow(0, 0, 0, 3, k.accent.Alpha(0.15))
+		e.Background(Paper).Border(strokeW, Ink)
+		focusRing(e)
 	case bad:
-		e.Background(k.redSoft).Border(1, k.red.Alpha(0.5))
+		e.Background(Del).Border(strokeW, Ink)
 	case e.Hovered():
-		e.Background(k.fieldHover).Border(1, ui.Transparent)
+		e.Background(AccentWash).Border(strokeW, Ink)
 	default:
-		e.Background(k.field).Border(1, ui.Transparent)
+		e.Background(Paper).Border(strokeW, Ink)
 	}
 	return e
 }

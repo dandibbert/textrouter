@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/dandibbert/textrouter/engine"
-	"github.com/egoist/mygo/plugins/glass"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -203,20 +202,15 @@ func (a *App) paletteView(c *ui.Context) {
 	}
 	ui.Overlay(c, func() {
 		// Scrim: click to dismiss.
-		ui.Box(c.Key("pal-blur")).Absolute().Top(0).Left(0).Right(0).Bottom(0).PassThrough().Material(glass.Blur{Radius: 6})
-		scrim := ui.Box(c.Key("pal-scrim")).Absolute().Top(0).Left(0).Right(0).Bottom(0).Background(ui.RGBA(0, 0, 0, map[bool]float32{true: 0.40, false: 0.14}[k.dark]))
+		scrim := ui.Box(c.Key("pal-scrim")).Absolute().Top(0).Left(0).Right(0).Bottom(0).Background(Ink.Alpha(0.25))
 		scrim.OnShortcut(0, ui.KeyEscape, func() { a.paletteOpen = false })
 		if scrim.Clicked() {
 			a.paletteOpen = false
 		}
 		ui.Column(c).Absolute().Top(0).Left(0).Right(0).Bottom(0).AlignItems(ui.Center).PassThrough().Padding(96, 0, 0, 0).Children(func() {
-			pn := ui.Column(c.Key("pal")).Width(600).Radius(16).Clip()
-			if k.dark {
-				pn.Background(ui.Hex("#232327").Alpha(0.96)).Border(1, k.hairStrong)
-			} else {
-				pn.Background(ui.RGBA(252, 252, 253, 0.97)).Border(1, k.hair)
-			}
-			pn.Shadow(0, 24, 64, -12, ui.RGBA(0, 0, 0, map[bool]float32{true: 0.6, false: 0.28}[k.dark])).Shadow(0, 2, 6, 0, ui.RGBA(0, 0, 0, 0.08))
+			pn := ui.Column(c.Key("pal")).Width(600).Radius(radiusSeg).Clip().Background(Paper)
+			boxed(pn)
+			hard(pn, shadowLg)
 			target := float32(1)
 			if a.paletteFresh {
 				target, a.paletteFresh = 0, false
@@ -224,7 +218,7 @@ func (a *App) paletteView(c *ui.Context) {
 			}
 			sc := pn.AnimateTo("in", target, ui.Snappy)
 			pn.Children(func() {
-				ui.Row(c).Height(56).Padding(0, sp5).Gap(sp3).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+				ui.Row(c).Height(56).Padding(0, sp5).Gap(sp3).AlignItems(ui.Center).BorderWidth(0, 0, strokeW, 0).BorderColor(Ink).Children(func() {
 					ui.Icon(c, ic("search")).FontSize(18).TextColor(k.faint)
 					f := ui.TextInputBase(c, &a.paletteQuery).Grow(1).FontSize(16).Placeholder("搜索清理器、动作链、规则…").AutoFocus().Label("搜索动作").TextColor(k.text)
 					if f.Changed() {
@@ -247,10 +241,10 @@ func (a *App) paletteView(c *ui.Context) {
 								break
 							}
 							sel := i == a.paletteSel
-							row := ui.ButtonBase(c.Key("pal:"+it.id)).Justify(ui.Start).AlignItems(ui.Center).Height(44).Padding(0, sp3).Radius(10).Gap(sp3).FillWidth().Label(it.title)
+							row := ui.ButtonBase(c.Key("pal:"+it.id)).Justify(ui.Start).AlignItems(ui.Center).Height(44).Padding(0, sp3).Radius(radiusCtl).Gap(sp3).FillWidth().Label(it.title)
 							bg := ui.Transparent
 							if sel {
-								bg = k.accentSoft
+								bg = Accent
 							} else if row.Hovered() {
 								bg = k.hover
 							}
@@ -259,11 +253,11 @@ func (a *App) paletteView(c *ui.Context) {
 								a.paletteSel = i
 							}
 							row.Children(func() {
-								icol, ibg := k.muted, k.field
+								icol, ibg := Ink, Paper
 								if sel {
-									icol, ibg = k.accentText, k.accent
+									icol, ibg = Ink, Paper
 								}
-								ui.Box(c).Size(28, 28).Radius(7).Background(ibg).Center().Children(func() {
+								ui.Box(c).Size(28, 28).Radius(radiusThumb).Background(ibg).Border(strokeW, Ink).Center().Children(func() {
 									ui.Icon(c, ic(actionIcon(it.id))).FontSize(15).TextColor(icol)
 								})
 								ui.Column(c).Grow(1).Gap(1).MinWidth(0).Children(func() {
@@ -289,7 +283,7 @@ func (a *App) paletteView(c *ui.Context) {
 						}
 					})
 				})
-				ui.Row(c).Height(36).Padding(0, sp5).Gap(sp4).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Background(k.field).Children(func() {
+				ui.Row(c).Height(36).Padding(0, sp5).Gap(sp4).AlignItems(ui.Center).BorderWidth(strokeW, 0, 0, 0).BorderColor(Ink).Background(Ground).Children(func() {
 					for _, p := range [][2]string{{"↑↓", "选择"}, {"↩", "应用到文本"}, {"esc", "关闭"}} {
 						ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
 							kbd(c, p[0])

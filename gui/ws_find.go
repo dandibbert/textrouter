@@ -982,7 +982,7 @@ func (a *App) patternMenu(c *ui.Context, k tokens) {
 				p.closing, p.openAt = true, time.Now()
 			}
 		})
-		ui.Scroll(c.Key("patscroll")).FillWidth().MaxHeight(440).Children(func() {
+		ui.Scroll(c.Key("patscroll")).FillWidth().MaxHeight(440).Padding(0, 14, 0, 0).Children(func() {
 			idx := 0
 			section := func(title string, items []patItem) {
 				ui.Text(c, strings.ToUpper(title)).FontSize(sizeSmall).FontWeight(700).TextColor(Ink).LetterSpacing(0.88).Padding(10, 8, 4, 8)

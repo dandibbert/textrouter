@@ -12,7 +12,7 @@ import (
 )
 
 // blinkInterval is how long the caret shows and hides, as Zed's.
-const blinkInterval = 500 * time.Millisecond
+const blinkInterval = 530 * time.Millisecond
 
 // frame is what painting a frame of an editor works out once: the
 // lines in view and what highlights them.

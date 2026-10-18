@@ -274,27 +274,12 @@ func card(c *ui.Context) ui.Element { return panel(c) }
 
 func muted(c *ui.Context, s string) ui.Element { return hint(c, s) }
 
-// colors used for highlights, adapted to light/dark.
-func hlAdd(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(74, 222, 128, 0.20)
-	}
-	return ui.RGBA(34, 197, 94, 0.20)
-}
+// colours used for highlights in the pages' diffs.
+func hlAdd(t *ui.Theme) ui.Color { return Ins }
 
-func hlDel(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(248, 113, 113, 0.20)
-	}
-	return ui.RGBA(239, 68, 68, 0.14)
-}
+func hlDel(t *ui.Theme) ui.Color { return Del }
 
-func hlMatch(t *ui.Theme) ui.Color {
-	if t.Dark {
-		return ui.RGBA(250, 204, 21, 0.26)
-	}
-	return ui.RGBA(250, 204, 21, 0.38)
-}
+func hlMatch(t *ui.Theme) ui.Color { return Hit }
 
 // visible makes whitespace visible inside highlighted snippets.
 func visible(s string) string {
@@ -321,7 +306,7 @@ func diffView(c *ui.Context, before, after string) {
 		case '+':
 			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlAdd(t)})
 		case '-':
-			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: tok(c).red.Alpha(0.85), DecorationColor: tok(c).red.Alpha(0.6)})
+			spans = append(spans, ui.Span{Text: visible(s.Text), Background: hlDel(t), Strikethrough: true, Color: Ink, DecorationColor: Ink, DecorationThickness: strokeW})
 		}
 	}
 	if len(spans) == 0 {

@@ -342,5 +342,8 @@ func Presets() []Preset {
 		{"snake_case 转 camelCase", `_([a-z])`, "$u$1", "下划线后的字母转大写并去掉下划线"},
 		{"每行首字母大写", `^(\w)`, "$U$1", "需开启多行"},
 		{"括号里的内容", `[(（]([^)）]*)[)）]`, "", "中英文括号都可以；$1 是括号内文字"},
+		// Added for the clipboard workspace's pattern menu; keep these last.
+		{"数字", `\d+`, "", "连续的数字"},
+		{"价格", `(\d+)元`, "¥$1", "5元 → ¥5；$1 是数字"},
 	}
 }

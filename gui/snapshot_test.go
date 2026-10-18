@@ -96,10 +96,47 @@ func TestSnapshots(t *testing.T) {
 			a.fontUI.open = "editor"
 			a.fontUI.query = "serif"
 		}},
+		{"clean-hover-preview", func(a *App, tt *ui.Tester) {
+			a.Text += "\n\n\nmore   text  here"
+			settle(tt, 3)
+			moveTo(t, tt, "删除多余空格")
+		}},
+		{"clean-no-result", func(a *App, tt *ui.Tester) { a.ws.query = "没有这个动作" }},
+		{"find-error-explain", func(a *App, tt *ui.Tester) {
+			a.setTab(1)
+			a.find.modeIdx = 1
+			a.find.opts.Find = `(\d+元`
+			a.ws.find.explain = true
+		}},
+		{"find-explain-skipped", func(a *App, tt *ui.Tester) {
+			a.setTab(1)
+			a.find.modeIdx = 1
+			a.find.opts.Find = `(\d+)元`
+			a.find.opts.Replace = "¥$1"
+			a.ws.find.explain = true
+			settle(tt, 2)
+			a.ws.find.skip = map[int]bool{1: true}
+			a.jumpTo(1)
+		}},
+		{"find-pattern-menu", func(a *App, tt *ui.Tester) {
+			a.setTab(1)
+			a.togglePatternMenu()
+			settle(tt, 4)
+			moveTo(t, tt, "价格")
+		}},
+		{"find-pattern-applied", func(a *App, tt *ui.Tester) {
+			a.setTab(1)
+			p, _ := a.patternNamed("价格")
+			a.applyPattern(p)
+		}},
+		{"toast-copied", func(a *App, tt *ui.Tester) {
+			a.Lib.Settings.CopyOnDone = false
+			a.done()
+		}},
 		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
 		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},
 	}
-	for _, dark := range []bool{false, true} {
+	for _, dark := range []bool{false} {
 		for _, sc := range scenes {
 			a, tt := newApp(t, snapSample)
 			tt.SetScale(2)

@@ -403,7 +403,7 @@ func segmented(c *ui.Context, key string, sel *int, labels ...string) bool {
 // flag is a capsule toggle (Aa, .*, ^$): white at rest, soft yellow on hover,
 // Ink with yellow type when on.
 func flag(c *ui.Context, key, text, tip string, on *bool) bool {
-	b := ui.ButtonBase(c.Key(key)).Height(28).MinWidth(32).Padding(0, 10).Radius(radiusPill).Center().Label(tip).Tooltip(tip).Selected(*on)
+	b := ui.ButtonBase(c.Key(key)).Height(28).MinWidth(30).Padding(0, 8).Radius(radiusPill).Center().Label(tip).Tooltip(tip).Selected(*on)
 	bg, col := Paper, Ink
 	switch {
 	case *on:
