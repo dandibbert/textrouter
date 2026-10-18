@@ -133,6 +133,12 @@ func TestSnapshots(t *testing.T) {
 			a.Lib.Settings.CopyOnDone = false
 			a.done()
 		}},
+		{"settings-icons", func(a *App, tt *ui.Tester) {
+			a.OpenTool(PageSettings)
+			settle(tt, 3)
+			tt.Scroll(500, 400, 0, -3000)
+			settle(tt, 3)
+		}},
 		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
 		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},
 	}

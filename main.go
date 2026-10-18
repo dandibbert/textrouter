@@ -89,6 +89,13 @@ func (d *desktop) SetHotkey(acc string) error {
 
 func (d *desktop) Update(fn func()) { d.win.Update(fn) }
 
+// SetAppIcon changes the Dock icon; the .app bundle keeps its own.
+func (d *desktop) SetAppIcon(png []byte) {
+	if err := mygo.App.Dock.SetIcon(png); err != nil {
+		log.Println("dock icon:", err)
+	}
+}
+
 func main() {
 	lib := engine.LoadLibrary(engine.LibraryPath())
 	d := &desktop{}
@@ -113,6 +120,9 @@ func main() {
 			Vibrancy:       mygo.VibrancySidebar,
 			Content:        ui.View(a.View),
 		})
+		if id := gui.SavedAppIcon(lib.Path()); id != gui.DefaultAppIcon {
+			d.SetAppIcon(gui.AppIconPNG(id))
+		}
 		// Open Clipboard Space with the current clipboard: from the Dock,
 		// the menu bar icon or the global shortcut.
 		appActive := false
@@ -173,6 +183,8 @@ func main() {
 				{Label: "剪贴板", Accelerator: "CmdOrCtrl+1", Click: run(a.ShowClipboard)},
 				{Label: "打开…", Accelerator: "CmdOrCtrl+O", Click: run(a.OpenFileDialog)},
 				{Label: "存储为…", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
+				mygo.Separator(),
+				{Role: mygo.RoleClose, Label: "关闭窗口"},
 			}},
 			{Label: "查找", Submenu: []*mygo.MenuItem{
 				{Label: "查找替换", Accelerator: "CmdOrCtrl+F", Click: run(a.ShowFind)},

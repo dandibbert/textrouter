@@ -190,6 +190,7 @@ func (a *App) cleanTab(c *ui.Context, k tokens) {
 		total += len(s.rows)
 	}
 	listHov := false
+	w.rowHov, w.headHov = "", false
 	scroll := ui.Scroll(c.Key("cleanlist")).Grow(1).MinHeight(0).Margin(6, -4, 0, -4).Padding(0, 4, 8, 4)
 	scroll.Children(func() {
 		idx := 0
@@ -197,11 +198,15 @@ func (a *App) cleanTab(c *ui.Context, k tokens) {
 			if len(sec.rows) == 0 && sec.title != "常用" {
 				continue
 			}
-			ui.Row(c.Key("sec"+sec.title)).FillWidth().Padding(14, 8, 6, 8).AlignItems(ui.End).Children(func() {
+			hdr := ui.Row(c.Key("sec"+sec.title)).FillWidth().Padding(14, 8, 6, 8).AlignItems(ui.End)
+			hdr.Children(func() {
 				eyebrow(c, sec.title)
 				ui.Spacer(c)
 				ui.Text(c, sec.sub).FontSize(sizeSmall).TextColor(Muted).SingleLine()
 			})
+			if hdr.Hovered() {
+				w.headHov = true
+			}
 			if len(sec.rows) == 0 {
 				hint(c, "悬停清理器后点 ☆，加入常用").Padding(0, 8)
 			}
@@ -224,8 +229,15 @@ func (a *App) cleanTab(c *ui.Context, k tokens) {
 	if scroll.Hovered() {
 		listHov = true
 	}
-	if !listHov {
-		// Leaving the whole list puts the text back.
+	switch {
+	case w.rowHov != "":
+		// The row under the pointer is the hot one, wherever the last one was.
+		w.frameHov = w.rowHov
+	case listHov && !w.headHov:
+		// In the gap between two rows: keep what was showing.
+		w.frameHov = w.hov
+	default:
+		// Off the list, or on a heading: the text is put back.
 		w.frameHov = ""
 	}
 	_, impl, _ := engine.CleanerStats()
@@ -270,10 +282,8 @@ func (a *App) cleanRow(c *ui.Context, k tokens, r cleanRow, idx int) {
 	row.Background(row.AnimateColor("bg", bg, ui.Animation{Duration: 100e6})).Border(strokeW, row.AnimateColor("bd", bd, ui.Animation{Duration: 100e6}))
 	row.Translate(t, t+6*(1-in)).Opacity(in)
 	hard(row, max(0, -t*1.5))
-	if row.Hovered() && w.hov != r.id {
-		w.frameHov = r.id
-	} else if hot {
-		w.frameHov = r.id
+	if row.Hovered() {
+		w.rowHov = r.id
 	}
 	row.Children(func() {
 		main := ui.ButtonBase(c.Key("apply:"+r.id)).Grow(1).MinWidth(0).FillHeight().Padding(0, 6, 0, 8).Gap(10).AlignItems(ui.Center).Justify(ui.Start).Label(r.name)

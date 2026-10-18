@@ -420,3 +420,61 @@ func TestSavedPatternPersists(t *testing.T) {
 		t.Fatalf("mine: %+v", mine)
 	}
 }
+
+func TestHotRowFollowsThePointerUpAndOff(t *testing.T) {
+	a, tt := newApp(t, "a   b\n\nc")
+	settle(tt, 2)
+	last := a.cleanSections()[1].rows
+	lastRow := last[len(last)-1]
+	first := a.cleanSections()[0].rows[0]
+	moveTo(t, tt, lastRow.name)
+	if a.ws.hov != lastRow.id {
+		t.Fatalf("hover = %q, want the last row", a.ws.hov)
+	}
+	// Moving up to a row above must take the highlight with it.
+	moveTo(t, tt, first.name)
+	if a.ws.hov != first.id {
+		t.Fatalf("hover stayed at %q after moving up to %q", a.ws.hov, first.id)
+	}
+	// A section heading is not a row: the text is put back.
+	moveTo(t, tt, "动作链")
+	if a.ws.hov != "" {
+		t.Fatalf("hover = %q on a heading", a.ws.hov)
+	}
+}
+
+func TestAppIconChoicePersistsAndDefaultsToTheSecond(t *testing.T) {
+	a, tt := newApp(t, "x")
+	if got := a.currentAppIcon(); got != "mint-minimal" || AppIcons[1].ID != got {
+		t.Fatalf("default icon %q", got)
+	}
+	var set []byte
+	a.Platform = iconRecorder{NopPlatform{}, &set}
+	a.OpenTool(PageSettings)
+	settle(tt, 2)
+	if !tt.HasText("Cosmic Flow") {
+		t.Fatalf("icon tiles missing: %q", tt.Texts())
+	}
+	a.chooseAppIcon("cosmic-flow") // what clicking the tile does
+	if len(set) == 0 || string(set) != string(AppIconPNG("cosmic-flow")) {
+		t.Fatal("the Dock icon was not changed")
+	}
+	if SavedAppIcon(a.Lib.Path()) != "cosmic-flow" {
+		t.Fatalf("not remembered: %q", SavedAppIcon(a.Lib.Path()))
+	}
+	if SavedAppIcon("/nonexistent/library.json") != DefaultAppIcon {
+		t.Fatal("unsaved choice should be the default")
+	}
+	for _, ic := range AppIcons {
+		if len(AppIconPNG(ic.ID)) < 1000 {
+			t.Errorf("icon %s missing", ic.ID)
+		}
+	}
+}
+
+type iconRecorder struct {
+	NopPlatform
+	got *[]byte
+}
+
+func (r iconRecorder) SetAppIcon(png []byte) { *r.got = png }

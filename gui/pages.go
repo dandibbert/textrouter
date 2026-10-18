@@ -325,7 +325,7 @@ func (a *App) settingsView(c *ui.Context) {
 	row := func(title, sub string, last bool, ctrl func()) {
 		r := ui.Row(c).Gap(sp4).Padding(sp3, 0).AlignItems(ui.Center)
 		if !last {
-			r.BorderWidth(0, 0, 1, 0).BorderColor(k.hair)
+			r.BorderWidth(0, 0, strokeW, 0).BorderColor(Ink)
 		}
 		r.Children(func() {
 			ui.Column(c).Grow(1).Gap(2).MinWidth(0).Children(func() {
@@ -394,6 +394,10 @@ func (a *App) settingsView(c *ui.Context) {
 						a.exportTextSoap()
 					}
 				})
+			})
+			group("应用图标", func() {
+				row("图标", "点一个换上；Dock 里立刻生效，下次启动也记得。Finder 里的图标是安装包自带的（Mint Minimal）。", true, func() {})
+				a.appIconPicker(c)
 			})
 			group("关于", func() {
 				total, impl, meas := engine.CleanerStats()

@@ -36,7 +36,6 @@ func (a *App) fontSettings(c *ui.Context, k tokens, row func(title, sub string, 
 		})
 		a.fontRow(c, k, row, "editor", "正文字体", "编辑器显示文本用的字体", &v.EditorFont, "Space Mono（默认）", fams, ready, func(f fontlist.Family) bool { return true })
 		a.fontRow(c, k, row, "cjk", "中文后备字体", "正文字体里没有的汉字用这个字体显示", &v.CJKFont, "苹方（系统默认）", fams, ready, func(f fontlist.Family) bool { return f.CJK })
-		a.fontRow(c, k, row, "mono", "等宽字体", "底部「等宽」开关打开时使用", &v.MonoFont, "SF Mono（默认）", fams, ready, func(f fontlist.Family) bool { return f.Mono })
 		row("字号", "100% 缩放时的大小；⌘+ / ⌘- 只调缩放", false, func() {
 			if iconButton(c, "fs-", "minus", "减小字号", "").Clicked() {
 				v.FontSize = max(v.FontSize-1, 9)

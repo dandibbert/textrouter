@@ -235,5 +235,7 @@ type workspace struct {
 	find findUI
 
 	frameHov string // the action hovered in this frame's build
+	rowHov   string // the row the pointer is on
+	headHov  bool   // the pointer is on a section heading
 	focusFnd bool   // ⌘F: put the caret in the find box
 }

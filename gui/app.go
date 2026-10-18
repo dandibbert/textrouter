@@ -21,6 +21,8 @@ type Platform interface {
 	HideWindow()
 	SetTheme(theme string)
 	SetHotkey(acc string) error
+	// SetAppIcon changes the Dock icon to the PNG.
+	SetAppIcon(png []byte)
 	// Update runs fn on the UI thread and redraws (used after dialogs,
 	// which block and so run on goroutines).
 	Update(fn func())
@@ -34,6 +36,7 @@ func (NopPlatform) SaveFile(string, string) string                  { return "" 
 func (NopPlatform) HideWindow()                                     {}
 func (NopPlatform) SetTheme(string)                                 {}
 func (NopPlatform) SetHotkey(string) error                          { return nil }
+func (NopPlatform) SetAppIcon([]byte)                               {}
 func (NopPlatform) Update(fn func())                                { fn() }
 
 // Page ids of the sidebar.
@@ -68,6 +71,7 @@ type App struct {
 	tr            *trail
 	ws            workspace
 	clipAt        time.Time
+	appIcon       string
 	sheetFresh    string
 	fakeMenu      []string
 	changes       []changeSpan
