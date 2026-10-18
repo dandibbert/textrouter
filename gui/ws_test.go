@@ -636,3 +636,28 @@ func TestShortDragOfATabIsNoTearOff(t *testing.T) {
 		t.Fatal("a short drag tore the tab off")
 	}
 }
+
+func TestEditMenuUndoWorksWhateverHasTheFocus(t *testing.T) {
+	a, tt := newApp(t, "a   b")
+	settle(tt, 2)
+	// Click a cleaner row: the focus is now on a button, not the text.
+	id := rowID(t, a, "删除多余空格")
+	_ = id
+	if err := tt.Click("删除多余空格"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 3)
+	if a.Text != "a b" {
+		t.Fatalf("applied: %q", a.Text)
+	}
+	tt.Command("undo") // what ⌘Z sends from the Edit menu on macOS
+	settle(tt, 2)
+	if a.Text != "a   b" {
+		t.Fatalf("⌘Z from the menu did nothing: %q", a.Text)
+	}
+	tt.Command("redo")
+	settle(tt, 2)
+	if a.Text != "a b" {
+		t.Fatalf("redo from the menu: %q", a.Text)
+	}
+}

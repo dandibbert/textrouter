@@ -64,6 +64,8 @@ type host interface {
 // the view function, lays them out, paints them and routes input to the
 // elements of the last frame. Main thread only, except where noted.
 type engine struct {
+	// editHooks are the app's answers to the Edit menu's commands (OnEditCommand).
+	editHooks map[string]func()
 	// byPosition holds the keys whose press stood for its physical key
 	// (keyDownPhysical), until their release does the same.
 	byPosition      map[Key]bool

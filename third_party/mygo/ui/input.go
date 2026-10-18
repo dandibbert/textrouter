@@ -786,6 +786,15 @@ func (rt *engine) shortcut(id uint64, mods Modifiers, key Key) bool {
 }
 
 func (rt *engine) editEvent(ev editEvent) {
+	if fn := rt.editHooks[ev.text]; ev.kind == editCommand && fn != nil {
+		// Built-in text inputs keep their own undo; anything else (the code
+		// editor, a button) leaves it to the app.
+		if s := rt.states[rt.focused]; s == nil || s.editor == nil {
+			fn()
+			rt.requestFrame()
+			return
+		}
+	}
 	if s := rt.states[rt.focused]; s != nil && s.textClient != nil && rt.windowFocus() && s.flags&flagDisabled == 0 && (s.editor == nil || !s.editor.readOnly) {
 		if ev.kind == editInsert || ev.kind == editCompose {
 			var r *TextInputRange

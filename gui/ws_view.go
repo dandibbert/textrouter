@@ -42,6 +42,8 @@ func (a *App) View(c *ui.Context) {
 			a.replaceCurrent()
 		}
 	})
+	c.OnEditCommand("undo", a.Undo) // the Edit menu takes ⌘Z, whatever has the focus
+	c.OnEditCommand("redo", a.Redo)
 	c.OnShortcut(ui.Cmd, ui.KeyZ, a.Undo)
 	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyZ, a.Redo)
 	c.OnShortcut(ui.Cmd, ui.KeyComma, func() { a.Page = PageSettings })

@@ -57,6 +57,19 @@ func (c *Context) OnShortcut(mods Modifiers, key Key, fn func()) {
 		raw.rt.actions = append(raw.rt.actions, action{window: c, kind: actionWindowShortcut, mods: mods, key: key, fn: fn})
 	}
 }
+// OnEditCommand declares what the Edit menu's "undo" and "redo" do in the
+// window, while no text input has the focus: the menu takes ⌘Z before any
+// shortcut sees it, and goes to the focused element, which may be a button
+// (TextRouter fork).
+func (c *Context) OnEditCommand(name string, fn func()) {
+	if raw := c.build(); raw != nil && fn != nil {
+		if raw.rt.editHooks == nil {
+			raw.rt.editHooks = map[string]func(){}
+		}
+		raw.rt.editHooks[name] = fn
+	}
+}
+
 func (rt *engine) actionNode(a action) *node {
 	if a.handle != nil {
 		b := a.handle.binding(rt, false)
