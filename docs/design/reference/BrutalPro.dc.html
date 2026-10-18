@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>新粗野 · 精修</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.nb,.nb *{box-sizing:border-box}
+.nb ::selection{background:#FFD23F;color:#000}
+.nb input::placeholder{color:#7A7A7A}
+.nb input{caret-color:#000}
+.nb button{font:inherit;color:inherit;cursor:pointer}
+.nb button:focus-visible,.nb input:focus-visible{outline:3px solid #3A5BFF;outline-offset:2px}
+
+.nb-btn{border:2px solid #000;border-radius:6px;background:#fff;box-shadow:3px 3px 0 #000;transition:transform .14s cubic-bezier(.34,1.56,.64,1),box-shadow .14s cubic-bezier(.34,1.56,.64,1),background-color .12s}
+.nb-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000}
+.nb-btn:active{transform:translate(3px,3px);box-shadow:0 0 0 #000;transition-duration:.06s}
+.nb-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:1px 1px 0 #000}
+.nb-primary{background:#FFD23F;font-weight:700}
+.nb-primary:hover{background:#FFDB5E}
+.nb-icon{width:34px;height:34px;display:grid;place-items:center;border:2px solid transparent;border-radius:6px;background:transparent;transition:background-color .12s,border-color .12s,transform .1s}
+.nb-icon:hover{background:#fff;border-color:#000}
+.nb-icon:active{transform:scale(.9)}
+.nb-icon:disabled{opacity:.3;cursor:not-allowed;background:transparent;border-color:transparent}
+.nb-chip{height:28px;padding:0 10px;border:2px solid #000;border-radius:999px;background:#fff;font-size:12px;transition:background-color .14s,color .14s,transform .16s cubic-bezier(.34,1.56,.64,1)}
+.nb-chip:hover{background:#FFF1B8}
+.nb-chip:active{transform:scale(.93)}
+.nb-chip.on{background:#000;color:#FFD23F}
+.nb-field{background:#fff;border:2px solid #000;border-radius:6px;box-shadow:3px 3px 0 #000;transition:box-shadow .16s,transform .16s cubic-bezier(.34,1.56,.64,1)}
+.nb-field:focus-within{box-shadow:5px 5px 0 #000;transform:translate(-2px,-2px)}
+.nb-field.locked{box-shadow:5px 5px 0 #FFD23F,5px 5px 0 2px #000;transform:translate(-2px,-2px)}
+.nb-kbd{display:inline-block;font-family:'Space Mono',monospace;font-size:10px;line-height:15px;padding:0 5px;border:1.5px solid #000;border-bottom-width:3px;border-radius:4px;background:#fff;color:#000}
+
+.nb-row{border:2px solid transparent;border-radius:6px;transition:transform .16s cubic-bezier(.34,1.56,.64,1),box-shadow .16s,background-color .1s,border-color .1s;animation:rowIn .34s cubic-bezier(.22,1,.36,1) backwards}
+.nb-row.hot{background:#FFD23F;border-color:#000;transform:translate(-2px,-2px);box-shadow:3px 3px 0 #000}
+.nb-pill{transition:background-color .14s,color .14s,box-shadow .14s}
+.nb-star{opacity:0;transform:scale(.5) rotate(-30deg);transition:opacity .14s,transform .24s cubic-bezier(.34,1.56,.64,1)}
+.nb-row.hot .nb-star{opacity:1;transform:none}
+.nb-star svg{transition:transform .12s}
+.nb-star:active svg{transform:scale(.6)}
+
+.nb-scroll::-webkit-scrollbar{width:16px;height:16px}
+.nb-scroll::-webkit-scrollbar-track{background:linear-gradient(90deg,transparent 7px,#000 7px,#000 9px,transparent 9px)}
+.nb-scroll::-webkit-scrollbar-thumb{background-color:#FFD23F;background-clip:padding-box;border:3px solid transparent;border-radius:8px;box-shadow:inset 0 0 0 2px #000;min-height:44px}
+.nb-scroll::-webkit-scrollbar-thumb:hover{background-color:#FFB800}
+.nb-scroll::-webkit-scrollbar-thumb:active{background-color:#000}
+.nb-scroll::-webkit-scrollbar-corner{background:transparent}
+.nb-scroll::-webkit-scrollbar-button{display:none;height:0}
+@supports (-moz-appearance:none){.nb-scroll{scrollbar-color:#FFD23F transparent}}
+
+.nb-marks{position:absolute;top:12px;bottom:12px;right:18px;width:8px;pointer-events:none}
+.nb-mark{position:absolute;left:1px;width:6px;height:3px;background:#000;border-radius:1px;animation:markIn .3s cubic-bezier(.22,1,.36,1) backwards}
+.nb-mark.chg{background:#FF6B4A;height:4px}
+.nb-mark.cur{left:-2px;width:12px;height:7px;background:#FFD23F;box-shadow:0 0 0 2px #000;border-radius:2px;transition:top .3s cubic-bezier(.22,1,.36,1)}
+@keyframes markIn{from{opacity:0;transform:scaleX(0)}}
+
+.s-ws{color:#A8A8A8}
+.s-ins{background-image:linear-gradient(#A6F0BF,#A6F0BF);background-repeat:no-repeat;background-size:0% 100%;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.s-ins.v0{animation:insA .32s cubic-bezier(.22,1,.36,1) forwards}
+.s-ins.v1{animation:insB .32s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes insA{to{background-size:100% 100%}}
+@keyframes insB{to{background-size:100% 100%}}
+.s-del{background-color:#FFB4A3;border-radius:3px;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#000;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.s-del.v0{animation:delA .3s cubic-bezier(.22,1,.36,1) backwards}
+.s-del.v1{animation:delB .3s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes delA{from{background-color:rgba(255,180,163,0);text-decoration-color:transparent}}
+@keyframes delB{from{background-color:rgba(255,180,163,0);text-decoration-color:transparent}}
+.s-hit{background-color:#FFE47A;border-radius:3px;box-shadow:inset 0 -2px 0 #000}
+.s-hit.v0{animation:hitA .28s ease-out backwards}
+.s-hit.v1{animation:hitB .28s ease-out backwards}
+@keyframes hitA{from{background-color:rgba(255,228,122,0);box-shadow:inset 0 0 0 #000}}
+@keyframes hitB{from{background-color:rgba(255,228,122,0);box-shadow:inset 0 0 0 #000}}
+.s-skip{color:#7A7A7A;box-shadow:inset 0 -2px 0 #C4C4C4}
+.s-cur{outline:2px solid #000;outline-offset:1px;border-radius:3px}
+.s-cur.s-ins{background-size:100% 100%}
+.s-cur.p0{animation:pulseA .55s cubic-bezier(.22,1,.36,1)}
+.s-cur.p1{animation:pulseB .55s cubic-bezier(.22,1,.36,1)}
+@keyframes pulseA{from{box-shadow:0 0 0 0 rgba(58,91,255,.7)}to{box-shadow:0 0 0 12px rgba(58,91,255,0)}}
+@keyframes pulseB{from{box-shadow:0 0 0 0 rgba(58,91,255,.7)}to{box-shadow:0 0 0 12px rgba(58,91,255,0)}}
+.s-new{border-radius:3px}
+.s-new.f0{animation:newA 1.3s ease-out both}
+.s-new.f1{animation:newB 1.3s ease-out both}
+@keyframes newA{0%{background-color:#A6F0BF;box-shadow:0 0 0 2px #000}35%{background-color:#A6F0BF;box-shadow:0 0 0 0 #000}100%{background-color:rgba(166,240,191,0)}}
+@keyframes newB{0%{background-color:#A6F0BF;box-shadow:0 0 0 2px #000}35%{background-color:#A6F0BF;box-shadow:0 0 0 0 #000}100%{background-color:rgba(166,240,191,0)}}
+.s-gone{background:#FFB4A3;text-decoration:line-through;text-decoration-thickness:2px}
+.s-gone.f0{animation:goneA .5s cubic-bezier(.4,0,.2,1) both}
+.s-gone.f1{animation:goneB .5s cubic-bezier(.4,0,.2,1) both}
+@keyframes goneA{0%{opacity:1}50%{opacity:.5}100%{opacity:0;font-size:0}}
+@keyframes goneB{0%{opacity:1}50%{opacity:.5}100%{opacity:0;font-size:0}}
+.nb-caret{display:inline-block;width:2px;height:1.2em;background:#000;vertical-align:-.25em;margin-left:1px;animation:blink 1.06s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.nb-seg{position:relative;display:flex;background:#fff;border:2px solid #000;border-radius:8px;padding:3px;box-shadow:3px 3px 0 #000}
+.nb-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);background:#FFD23F;border:2px solid #000;border-radius:5px;transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
+.nb-seg-ind.right{transform:translateX(100%)}
+.nb-seg button{position:relative;z-index:1;flex:1;height:30px;border:0;background:transparent;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px}
+
+.nb-enterA{animation:enterA .3s cubic-bezier(.22,1,.36,1) backwards}
+.nb-enterB{animation:enterB .3s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes enterA{from{opacity:0;transform:translateX(-10px)}}
+@keyframes enterB{from{opacity:0;transform:translateX(10px)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(6px)}}
+.nb-fade{animation:fade .22s ease-out backwards}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}}
+.nb-flipA{display:inline-block;animation:flipA .22s cubic-bezier(.22,1,.36,1) backwards}
+.nb-flipB{display:inline-block;animation:flipB .22s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes flipA{from{opacity:0;transform:translateY(60%)}}
+@keyframes flipB{from{opacity:0;transform:translateY(60%)}}
+.nb-pop{animation:pop .28s cubic-bezier(.34,1.56,.64,1) backwards}
+@keyframes pop{from{opacity:0;transform:scale(.6)}}
+.nb-expand{overflow:hidden;animation:expand .28s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes expand{from{max-height:0;opacity:0;padding-top:0;padding-bottom:0}}
+.nb-shake{animation:shake .38s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+
+.nb-menu{transform-origin:top right;animation:menuIn .24s cubic-bezier(.34,1.56,.64,1) backwards}
+.nb-menu.out{animation:menuOut .14s cubic-bezier(.4,0,1,1) forwards}
+@keyframes menuIn{from{opacity:0;transform:translateY(-8px) scale(.95)}}
+@keyframes menuOut{to{opacity:0;transform:translateY(-6px) scale(.97)}}
+.nb-mitem{border:2px solid transparent;border-radius:6px;transition:background-color .1s,border-color .1s;animation:rowIn .28s cubic-bezier(.22,1,.36,1) backwards}
+.nb-mitem.hot{background:#FFD23F;border-color:#000}
+.nb-mitem.active{background:#FFF1B8}
+
+.nb-mrow{border:2px solid transparent;border-radius:6px;transition:background-color .16s,border-color .16s}
+.nb-mrow:hover{background:#FFF7D6}
+.nb-mrow.cur{background:#FFD23F;border-color:#000}
+.nb-mrow .lt{transition:opacity .2s,background-color .2s}
+.nb-mrow.skip .lt{opacity:.45;text-decoration:line-through;background:transparent}
+.nb-mrow.skip .lh{background:transparent;color:#7A7A7A}
+
+.nb-check{appearance:none;-webkit-appearance:none;margin:0;width:18px;height:18px;flex-shrink:0;border:2px solid #000;border-radius:4px;background:#fff;display:grid;place-content:center;cursor:pointer;transition:background-color .14s,transform .12s}
+.nb-check::before{content:"";width:10px;height:10px;background:#000;clip-path:polygon(14% 52%,0 66%,38% 100%,100% 22%,86% 8%,38% 72%);transform:scale(0);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.nb-check:checked{background:#FFD23F}
+.nb-check:checked::before{transform:scale(1)}
+.nb-check:active{transform:scale(.88)}
+
+.nb-tip{position:relative}
+.nb-tip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translate(-50%,-4px);white-space:nowrap;padding:4px 8px;background:#000;color:#fff;font-size:11.5px;font-weight:500;border-radius:5px;opacity:0;pointer-events:none;transition:opacity .12s,transform .12s;z-index:30}
+.nb-tip:hover::after{opacity:1;transform:translate(-50%,0);transition-delay:.45s}
+.nb-tip.up::after{top:auto;bottom:calc(100% + 8px);transform:translate(-50%,4px)}
+.nb-tip.up:hover::after{transform:translate(-50%,0)}
+
+.nb-toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;animation:toastIn .34s cubic-bezier(.34,1.56,.64,1) backwards}
+.nb-toast.out{animation:toastOut .22s cubic-bezier(.4,0,1,1) forwards}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,28px)}}
+@keyframes toastOut{to{opacity:0;transform:translate(-50%,18px)}}
+.nb-draw path{stroke-dasharray:26;stroke-dashoffset:26;animation:draw .34s .06s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.ln-wrap{min-height:100%;padding:20px 34px 48px 0;transition:padding .25s cubic-bezier(.22,1,.36,1)}
+.ln-wrap.off{background:none!important;padding-left:30px}
+.ln-row{display:flex;min-height:25px;transition:background-color .2s}
+.ln-no{position:relative;flex-shrink:0;padding:0 7px 0 0;margin-right:14px;border:0;background:transparent;text-align:right;font-family:'Space Mono',monospace;font-size:11px;line-height:25px;color:#9A9A9A;cursor:pointer;user-select:none;-webkit-user-select:none;transition:color .15s,background-color .2s}
+.ln-no:hover{color:#000}
+.ln-wrap.off .ln-no{display:none}
+.ln-tx{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word;line-height:25px}
+.ln-row.sel{background:#FFF1B8}
+.ln-row.cur{background:#FFF7D6}
+.ln-row.cur .ln-no{color:#000;font-weight:700;background:#FFD23F;box-shadow:inset -2px 0 0 #000}
+.ln-row.chg .ln-no::before{content:"";position:absolute;left:3px;top:5px;bottom:5px;width:3px;border-radius:2px;background:#FF6B4A;animation:lnIn .3s cubic-bezier(.22,1,.36,1) backwards}
+.ln-row.chg.add .ln-no::before{background:#2FBF71}
+.ln-row.chg.hit .ln-no::before{background:#000}
+@keyframes lnIn{from{transform:scaleY(0)}}
+
+@media (prefers-reduced-motion: reduce){.nb *,.nb *::before,.nb *::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+</style>
+</helmet>
+<div class="nb" style="width: 1200px; height: 760px; position: relative; overflow: hidden; background: #F3EFE4; color: #000000; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+
+  <!-- Title bar -->
+  <div style="height: 54px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 18px; border-bottom: 2px solid #000000">
+    <div style="display: flex; gap: 8px" aria-hidden="true">
+      <span style="width: 13px; height: 13px; border-radius: 50%; background: #FF5F57; box-shadow: inset 0 0 0 1.5px #000000"></span>
+      <span style="width: 13px; height: 13px; border-radius: 50%; background: #FEBC2E; box-shadow: inset 0 0 0 1.5px #000000"></span>
+      <span style="width: 13px; height: 13px; border-radius: 50%; background: #28C840; box-shadow: inset 0 0 0 1.5px #000000"></span>
+    </div>
+    <span style="margin-left: 10px; font-size: 16px; font-weight: 700; letter-spacing: -0.02em">剪贴板</span>
+    <span style="font-size: 12px; color: #3F3F3F">Safari · 刚刚</span>
+    <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 2px; min-width: 0; font-size: 12px">
+      <sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3">
+        <sc-if value="{{c.sep}}" hint-placeholder-val="{{ true }}"><span style="color: #7A7A7A; padding: 0 2px" aria-hidden="true">→</span></sc-if>
+        <button onClick="{{c.go}}" class="nb-pop" style="height: 26px; padding: 0 9px; border-radius: 6px; font-size: 12px; transition: background-color .15s, box-shadow .15s; {{c.style}}">{{c.label}}</button>
+      </sc-for>
+      <sc-if value="{{canSave}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{save}}" class="nb-btn nb-pop" style="margin-left: 10px; height: 28px; padding: 0 10px; font-size: 12px; box-shadow: 2px 2px 0 #000000">存为动作链</button>
+      </sc-if>
+    </div>
+    <button onClick="{{undo}}" disabled="{{noUndo}}" class="nb-icon nb-tip" data-tip="撤销  ⌘Z" aria-label="撤销">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg>
+    </button>
+    <button onClick="{{redo}}" disabled="{{noRedo}}" class="nb-icon nb-tip" data-tip="重做  ⇧⌘Z" aria-label="重做">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"></path></svg>
+    </button>
+    <button onClick="{{copy}}" class="nb-btn nb-primary" style="height: 36px; min-width: 140px; margin-left: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; font-size: 13px">
+      <sc-if value="{{copied}}" hint-placeholder-val="{{ false }}">
+        <svg class="nb-draw" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <span class="nb-fade">已复制</span>
+      </sc-if>
+      <sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">
+        复制并完成 <span class="nb-kbd">⌘↩</span>
+      </sc-if>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div style="flex: 1; display: flex; gap: 18px; min-height: 0; padding: 16px 20px 20px 16px">
+
+    <!-- Paper -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; background: #FFFFFF; border: 2px solid #000000; border-radius: 6px; box-shadow: 5px 5px 0 #000000">
+      <div style="flex: 1; position: relative; min-height: 0">
+        <div id="{{edId}}" class="nb-scroll" style="position: absolute; inset: 0; overflow-y: scroll; font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 13px; line-height: 25px">
+          <div class="{{gutterCls}}" style="{{gutterBg}}">
+            <sc-for list="{{edLines}}" as="l" hint-placeholder-count="12">
+              <div class="{{l.cls}}"><button class="ln-no" style="width: {{gw}}" onClick="{{l.pick}}" tabindex="-1" aria-label="选中第 {{l.no}} 行">{{l.no}}</button><span class="ln-tx"><sc-for list="{{l.p}}" as="g" hint-placeholder-count="1"><span id="{{g.id}}" class="{{g.cls}}">{{g.text}}</span></sc-for><sc-if value="{{l.caret}}" hint-placeholder-val="{{ false }}"><span class="nb-caret"></span></sc-if></span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div class="nb-marks" aria-hidden="true">
+          <sc-for list="{{marks}}" as="k" hint-placeholder-count="0"><span class="{{k.cls}}" style="{{k.style}}"></span></sc-for>
+        </div>
+      </div>
+
+      <div style="height: 46px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 18px; border-top: 2px solid #000000; font-size: 12.5px; background: #FFFFFF">
+        <sc-if value="{{previewOn}}" hint-placeholder-val="{{ true }}">
+          <div class="nb-fade" style="flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0">
+            <span style="font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #000000; color: #FFD23F">预览</span>
+            <span class="{{flipCls}}" style="font-weight: 700">{{previewName}}</span>
+            <span style="font-family: 'Space Mono', monospace; font-size: 11.5px">{{previewDelta}}</span>
+            <span style="display: inline-flex; align-items: center; gap: 10px; margin-left: 6px; color: #3F3F3F">
+              <span style="display: inline-flex; align-items: center; gap: 4px"><span style="width: 11px; height: 11px; border-radius: 3px; background: #FFB4A3; box-shadow: inset 0 0 0 1.5px #000000"></span>删</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px"><span style="width: 11px; height: 11px; border-radius: 3px; background: #A6F0BF; box-shadow: inset 0 0 0 1.5px #000000"></span>增</span>
+            </span>
+            <div style="flex: 1"></div>
+            <span style="color: #3F3F3F">{{previewHint}}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{findStatusOn}}" hint-placeholder-val="{{ false }}">
+          <div class="nb-fade" style="flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0">
+            <span style="font-family: 'Space Mono', monospace; font-size: 11.5px">{{findStatus}}</span>
+            <div style="flex: 1"></div>
+            <span style="color: #3F3F3F; display: inline-flex; gap: 6px; align-items: center"><span class="nb-kbd">⌘G</span>下一处 <span class="nb-kbd">⇧⌘G</span>上一处</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{idleOn}}" hint-placeholder-val="{{ false }}">
+          <div class="nb-fade" style="flex: 1; color: #3F3F3F">悬停右侧动作先看改动，点击才应用</div>
+        </sc-if>
+        <button onClick="{{toggleGutter}}" aria-pressed="{{gutterPressed}}" aria-label="显示行号" class="nb-icon nb-tip up" data-tip="显示行号" style="width: 30px; height: 30px; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; {{gutterStyle}}">#</button>
+        <button onClick="{{toggleInv}}" aria-pressed="{{invPressed}}" aria-label="显示不可见字符" class="nb-icon nb-tip up" data-tip="显示空格、制表符和换行" style="width: 30px; height: 30px; font-size: 14px; font-weight: 700; {{invStyle}}">¶</button>
+        <span style="font-family: 'Space Mono', monospace; font-size: 11px; color: #3F3F3F">{{chars}} 字 · {{lines}} 行</span>
+      </div>
+    </div>
+
+    <!-- Rail -->
+    <div style="width: 348px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; position: relative">
+      <div class="nb-seg" style="margin-bottom: 16px">
+        <span class="{{indCls}}" aria-hidden="true"></span>
+        <button onClick="{{goClean}}" aria-pressed="{{cleanPressed}}">清理 <span class="nb-kbd">⌘1</span></button>
+        <button onClick="{{goFind}}" aria-pressed="{{findPressed}}">查找替换 <span class="nb-kbd">⌘F</span></button>
+      </div>
+
+      <!-- CLEAN -->
+      <sc-if value="{{isClean}}" hint-placeholder-val="{{ true }}">
+        <div class="nb-enterA" style="flex: 1; display: flex; flex-direction: column; min-height: 0">
+          <label class="nb-field" style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; font-size: 13px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input aria-label="搜索动作" value="{{q}}" onChange="{{onQ}}" placeholder="搜索清理器、动作链…" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: #000000">
+            <span class="nb-kbd">⌘K</span>
+          </label>
+          <div onMouseLeave="{{clearHover}}" class="nb-scroll" style="flex: 1; min-height: 0; overflow-y: auto; margin: 6px -4px 0 -4px; padding: 0 4px 8px 4px">
+            <sc-for list="{{sections}}" as="sec" hint-placeholder-count="2">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 8px 6px">
+                <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">{{sec.title}}</span>
+                <span style="font-size: 11px; color: #3F3F3F">{{sec.sub}}</span>
+              </div>
+              <sc-for list="{{sec.rows}}" as="it" hint-placeholder-count="5">
+                <div onMouseEnter="{{it.enter}}" class="{{it.cls}}" style="display: flex; align-items: center; gap: 2px; padding-right: 4px; margin-bottom: 2px; animation-delay: {{it.delay}}">
+                  <button onClick="{{it.apply}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 6px 0 8px; border: 0; background: transparent; text-align: left; font-size: 13px">
+                    <span style="width: 26px; height: 26px; flex-shrink: 0; display: grid; place-items: center; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; border: 2px solid #000000; border-radius: 5px; background: {{it.tile}}">
+                      <sc-if value="{{it.chain}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"></path><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg></sc-if>
+                      <sc-if value="{{it.notChain}}" hint-placeholder-val="{{ true }}">{{it.glyph}}</sc-if>
+                    </span>
+                    <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; {{it.nameStyle}}">{{it.name}}</span>
+                    <span class="nb-pill" style="flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 11px; padding: 1px 8px; border-radius: 999px; {{it.deltaStyle}}">{{it.delta}}</span>
+                  </button>
+                  <button onClick="{{it.togglePin}}" aria-label="{{it.pinLabel}}" class="nb-star nb-tip" data-tip="{{it.pinLabel}}" style="width: 26px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border: 0; border-radius: 5px; background: transparent">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="{{it.starFill}}" stroke="#000000" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg>
+                  </button>
+                </div>
+              </sc-for>
+            </sc-for>
+            <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+              <div class="nb-fade" style="margin: 18px 4px; padding: 16px; border: 2px dashed #000000; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start">
+                <span style="font-size: 13px; font-weight: 700">没有叫「{{q}}」的动作</span>
+                <span style="font-size: 12px; color: #3F3F3F">可以直接把它当成要查找的文字。</span>
+                <button onClick="{{searchToFind}}" class="nb-btn" style="height: 30px; padding: 0 10px; font-size: 12px">用「{{q}}」新建查找替换 →</button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 6px 0; font-size: 12px; border-top: 2px solid #000000">
+            <a href="#" style="color: #000000; font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px">全部 189 个清理器 →</a>
+            <span style="color: #3F3F3F">悬停后点 ☆ 加入常用</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- FIND -->
+      <sc-if value="{{isFind}}" hint-placeholder-val="{{ false }}">
+        <div class="nb-enterB" style="flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; position: relative">
+          <div class="{{findFieldCls}}" style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 4px 6px 4px 12px; border-bottom: 2px solid #000000">
+              <span style="font-size: 11px; font-weight: 700; width: 28px; flex-shrink: 0">查找</span>
+              <sc-if value="{{hasPreset}}" hint-placeholder-val="{{ false }}">
+                <span class="nb-pop" style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 2px 0 8px; font-size: 11.5px; font-weight: 700; border-radius: 999px; background: #000000; color: #FFD23F">{{presetName}}<button onClick="{{clearPreset}}" aria-label="取消这个模式，恢复原来的规则" style="width: 18px; height: 18px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 13px; line-height: 1">×</button></span>
+              </sc-if>
+              <input aria-label="查找" value="{{find}}" onChange="{{onFind}}" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 13px; color: #000000">
+              <button onClick="{{toggleMenu}}" aria-label="常用模式" aria-expanded="{{menuExpanded}}" class="{{menuBtnCls}}" style="flex-shrink: 0; height: 26px; display: flex; align-items: center; gap: 4px; padding: 0 8px">
+                模式
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition: transform .24s cubic-bezier(.34,1.56,.64,1); transform: {{chevron}}"><path d="m6 9 6 6 6-6"></path></svg>
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 4px 12px">
+              <span style="font-size: 11px; font-weight: 700; width: 28px; flex-shrink: 0">替换</span>
+              <input aria-label="替换为" value="{{rep}}" onChange="{{onRep}}" placeholder="留空 = 删除匹配" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 13px; color: #000000">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px; align-items: center">
+            <button onClick="{{toggleRegex}}" aria-pressed="{{regexPressed}}" class="{{regexCls}}"><span style="font-family: 'Space Mono', monospace; font-weight: 700">.*</span> 正则</button>
+            <button onClick="{{toggleCs}}" aria-pressed="{{csPressed}}" class="{{csCls}} nb-tip" data-tip="区分大小写"><span style="font-family: 'Space Mono', monospace; font-weight: 700">Aa</span></button>
+            <button onClick="{{toggleExplain}}" aria-pressed="{{explainPressed}}" class="{{explainCls}} nb-tip" data-tip="用中文解释这条规则">解释</button>
+            <div style="flex: 1"></div>
+            <button onClick="{{prev}}" disabled="{{noMatchNav}}" aria-label="上一处" class="nb-icon" style="width: 28px; height: 28px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"></path></svg>
+            </button>
+            <span style="min-width: 54px; height: 20px; overflow: hidden; text-align: center; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700"><span class="{{counterCls}}">{{counter}}</span></span>
+            <button onClick="{{next}}" disabled="{{noMatchNav}}" aria-label="下一处" class="nb-icon" style="width: 28px; height: 28px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+          </div>
+
+          <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}">
+            <div class="nb-shake" style="display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 2px solid #000000; border-radius: 6px; background: #FFB4A3; font-size: 12px">
+              <span style="font-weight: 700">!</span><span>{{err}}</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{showGroups}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+              <span style="font-size: 11.5px; color: #3F3F3F">第 {{curNo}} 处的组</span>
+              <sc-for list="{{groups}}" as="gr" hint-placeholder-count="2">
+                <button onClick="{{gr.insert}}" class="nb-chip nb-tip" data-tip="点击插入到替换框" style="max-width: 100%; height: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; font-family: 'Space Mono', monospace; font-size: 11px">
+                  <span style="font-weight: 700">{{gr.key}}</span>
+                  <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{gr.val}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{explainOn}}" hint-placeholder-val="{{ false }}">
+            <div class="nb-scroll nb-expand" style="max-height: 132px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border: 2px dashed #000000; border-radius: 6px; background: #FFFFFF">
+              <sc-for list="{{explainRows}}" as="r" hint-placeholder-count="4">
+                <div class="nb-fade" style="display: flex; align-items: baseline; gap: 10px; font-size: 12px; animation-delay: {{r.delay}}">
+                  <span style="flex-shrink: 0; min-width: 30px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-family: 'Space Mono', monospace; font-size: 11px; padding: 0 5px; border: 1.5px solid #000000; border-radius: 4px; background: {{r.bg}}">{{r.tok}}</span>
+                  <span>{{r.txt}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 2px 2px 0">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">匹配</span>
+            <span style="font-size: 11px; color: #3F3F3F">勾掉的不替换</span>
+          </div>
+          <div id="{{mlId}}" class="nb-scroll" style="flex: 1; min-height: 0; overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 2px; margin: 0 -4px; padding: 0 2px">
+            <sc-for list="{{list}}" as="m" hint-placeholder-count="6">
+              <div id="{{m.id}}" class="{{m.cls}}" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; height: 32px; padding: 0 6px">
+                <input type="checkbox" class="nb-check" checked="{{m.include}}" onChange="{{m.toggle}}" aria-label="替换这一处">
+                <button onClick="{{m.pick}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 30px; border: 0; padding: 0; background: transparent; text-align: left; font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 11px">
+                  <span style="flex-shrink: 0; width: 28px; color: #3F3F3F">{{m.line}}</span>
+                  <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="color: #3F3F3F">{{m.before}}</span><span class="lh" style="background: #FFB4A3; border-radius: 3px; padding: 0 2px">{{m.hit}}</span><span style="color: #3F3F3F">{{m.after}}</span></span>
+                  <span class="lt" style="flex-shrink: 0; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #A6F0BF; border-radius: 3px; padding: 0 4px">{{m.to}}</span>
+                </button>
+              </div>
+            </sc-for>
+            <sc-if value="{{noMatches}}" hint-placeholder-val="{{ false }}">
+              <div class="nb-fade" style="margin: 8px 4px; padding: 14px; border: 2px dashed #000000; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start">
+                <span style="font-size: 13px; font-weight: 700">没有匹配</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                  <sc-if value="{{suggestCs}}" hint-placeholder-val="{{ false }}"><button onClick="{{toggleCs}}" class="nb-chip">关掉区分大小写</button></sc-if>
+                  <sc-if value="{{suggestRegex}}" hint-placeholder-val="{{ false }}"><button onClick="{{toggleRegex}}" class="nb-chip">改用正则</button></sc-if>
+                  <button onClick="{{toggleMenu}}" class="nb-chip">从「模式」里挑一个</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display: flex; gap: 8px; padding: 0 4px 4px 0">
+            <button onClick="{{replaceOne}}" disabled="{{noCur}}" class="nb-btn nb-tip up" data-tip="⌥⌘↩  替换后跳到下一处" style="height: 38px; padding: 0 12px; font-size: 12.5px">替换这一处</button>
+            <button onClick="{{replaceAll}}" disabled="{{noIncluded}}" class="nb-btn nb-primary" style="flex: 1; height: 38px; font-size: 13px">全部替换 · <span class="{{counterCls}}">{{includedLabel}}</span></button>
+            <button aria-label="更多：加入批量规则、存为动作链步骤" class="nb-btn nb-tip up" data-tip="加入批量规则 · 存为动作链步骤" style="width: 38px; height: 38px; font-size: 15px; font-weight: 700">⋯</button>
+          </div>
+
+          <!-- Pattern menu -->
+          <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+            <div onMouseLeave="{{menuLeave}}" class="{{menuCls}}" style="position: absolute; top: 48px; left: 0; right: 4px; z-index: 5; display: flex; flex-direction: column; padding: 6px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 6px 6px 0 #000000">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 6px 8px">
+                <span style="font-size: 11.5px; color: #3F3F3F">悬停预览 · 点击使用 · 再点取消</span>
+                <button onClick="{{toggleMenu}}" aria-label="关闭" class="nb-icon" style="width: 26px; height: 26px; font-size: 15px">×</button>
+              </div>
+              <div class="nb-scroll" style="max-height: 440px; overflow-y: auto">
+                <sc-for list="{{menuRows}}" as="p" hint-placeholder-count="8">
+                  <sc-if value="{{p.head}}" hint-placeholder-val="{{ false }}"><div style="padding: 10px 8px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">{{p.name}}</div></sc-if>
+                  <sc-if value="{{p.item}}" hint-placeholder-val="{{ true }}">
+                    <button onMouseEnter="{{p.enter}}" onClick="{{p.pick}}" class="{{p.cls}}" style="display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 3px 8px; margin-bottom: 2px; text-align: left; background: transparent; animation-delay: {{p.delay}}">
+                      <span style="width: 14px; flex-shrink: 0; font-size: 13px; font-weight: 700">{{p.check}}</span>
+                      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+                        <span style="font-size: 13px; font-weight: 500">{{p.name}} <span style="font-size: 11px; color: #3F3F3F; font-weight: 400">{{p.desc}}</span></span>
+                        <span style="font-family: 'Space Mono', monospace; font-size: 10.5px; color: #3F3F3F; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{p.re}}</span>
+                      </span>
+                      <span style="flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 11px; padding: 0 6px; border-radius: 999px; {{p.countStyle}}">{{p.count}}</span>
+                    </button>
+                  </sc-if>
+                </sc-for>
+              </div>
+              <div style="height: 2px; background: #000000; margin: 6px 2px"></div>
+              <button class="nb-mitem" style="height: 34px; text-align: left; padding: 0 10px; background: transparent; font-size: 12.5px; font-weight: 700">＋ 把当前规则存为我的模式</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}">
+    <div class="{{toastCls}}" role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 12px; background: #000000; color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #FFD23F; font-size: 13px; white-space: nowrap">
+      <span style="width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #FFD23F; color: #000000">
+        <svg class="nb-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+      </span>
+      <span style="font-weight: 700">{{toastText}}</span>
+      <span style="color: #BDBDBD; font-size: 12px">{{toastSub}}</span>
+    </div>
+  </sc-if>
+</div>
+<div style="position: absolute; inset: 0; border: 2px solid #000000; border-radius: 8px; pointer-events: none"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["clean","find"],"default":"clean"},"$preview":{"width":1200,"height":760}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.uid = 'nb' + Math.random().toString(36).slice(2, 8);
+    this._cache = { text: null, map: {} };
+    this._timers = [];
+    const ops = this.ops();
+    const t0 = this.sample(), t1 = ops.dedupe(t0), t2 = ops.email(t1);
+    this.state = {
+      snaps: [{ label: '原文', text: t0 }, { label: '删除重复行', text: t1 }, { label: '整理邮件引用', text: t2 }],
+      idx: 2, tab: null, hovered: 'scrub', seq: 0, q: '',
+      pinned: ['scrub', 'spaces', 'para', 'quotes', 'trim', 'dedupe'],
+      find: '(\\d+)元', rep: '¥$1', regex: true, cs: false, cur: 2, skip: {},
+      preset: null, prev: null, menu: false, menuOut: false, menuHover: null, explain: false,
+      inv: false, copied: false, flash: null, flashN: 0, toast: null,
+      gutter: true, selLine: null
+    };
+  }
+
+  componentDidMount() { this.scrollCur(false); }
+  componentDidUpdate(pp, ps) {
+    const s = this.state;
+    if (ps.cur !== s.cur || ps.find !== s.find || ps.tab !== s.tab || ps.idx !== s.idx) this.scrollCur(true);
+  }
+  componentWillUnmount() { this._timers.forEach(clearTimeout); }
+  later(fn, ms) { this._timers.push(setTimeout(fn, ms)); }
+
+  scrollCur(smooth) {
+    const go = () => {
+      const ed = document.getElementById(this.uid + '-ed'), el = document.getElementById(this.uid + '-cur');
+      if (ed && el) ed.scrollTo({ top: Math.max(0, el.offsetTop - ed.clientHeight / 2), behavior: smooth ? 'smooth' : 'auto' });
+      const ml = document.getElementById(this.uid + '-ml'), row = document.getElementById(this.uid + '-r' + this.state.cur);
+      if (ml && row) ml.scrollTo({ top: Math.max(0, row.offsetTop - ml.clientHeight / 2 + row.offsetHeight / 2), behavior: smooth ? 'smooth' : 'auto' });
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(go); else setTimeout(go, 0);
+  }
+
+  sample() {
+    const items = [
+      ['Mechanical keyboard', 399, ''], ['USB-C 扩展坞', 268, '13800138000'], ['显示器支架', 159, ''],
+      ['Noise cancelling headphones', 1299, ''], ['人体工学椅', 1880, '13912345678'], ['桌垫  XL', 59, ''],
+      ['Webcam 4K', 699, ''], ['线材收纳盒', 35, ''], ['Desk lamp', 249, '13800138000'],
+      ['机械键盘 键帽', 129, ''], ['Monitor 27"', 2199, ''], ['移动硬盘 2TB', 489, '']
+    ];
+    const rows = items.map((it, i) => '#' + (1024 + i) + '  ' + it[0] + '\t' + it[1] + '元  2026-10-' + String(6 + i).padStart(2, '0') + (it[2] ? '  联系 ' + it[2] : '') + (i % 3 === 1 ? '   ' : ''));
+    return 'Hello  world, this is   a “sample” text.\n> quoted line from email\n> 请在  周五前 确认以下订单\n\n订单明细（后台导出）：\n' + rows.join('\n') + '\n\n中文English混排 test@example.com\n中文English混排 test@example.com\n\nnew paragraph https://example.com/orders?id=1024';
+  }
+
+  ops() {
+    const spaces = (s) => s.replace(/ {2,}/g, ' ');
+    const quotes = (s) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+    const trim = (s) => s.split('\n').map((l) => l.trim()).join('\n');
+    return {
+      scrub: (s) => trim(spaces(quotes(s.replace(/\t/g, ' ')))).replace(/\n{3,}/g, '\n\n'),
+      spaces: spaces, quotes: quotes, trim: trim,
+      para: (s) => s.split(/\n{2,}/).map((p) => p.split('\n').map((l) => l.trim()).filter(Boolean).join(' ')).join('\n\n'),
+      dedupe: (s) => { const seen = {}; return s.split('\n').filter((l) => { if (!l.trim()) return true; if (seen[l]) return false; seen[l] = 1; return true; }).join('\n'); },
+      email: (s) => s.replace(/^> ?/gm, ''),
+      cjk: (s) => s.replace(/([一-鿿])([A-Za-z0-9])/g, '$1 $2').replace(/([A-Za-z0-9])([一-鿿])/g, '$1 $2'),
+      blank: (s) => s.split('\n').filter((l) => l.trim() !== '').join('\n'),
+      tabs: (s) => s.replace(/\t/g, '    '),
+      upper: (s) => s.toUpperCase(),
+      lower: (s) => s.toLowerCase(),
+      sortl: (s) => s.split('\n').slice().sort((a, b) => a.localeCompare(b)).join('\n')
+    };
+  }
+
+  catalog() {
+    return [
+      { id: 'scrub', name: '一键清理 Scrub', cat: 'line', glyph: 'S' },
+      { id: 'spaces', name: '删除多余空格', cat: 'space', glyph: '␣' },
+      { id: 'para', name: '合并成段落', cat: 'line', glyph: '¶' },
+      { id: 'quotes', name: '弯引号转直引号', cat: 'quote', glyph: '"' },
+      { id: 'trim', name: '去掉行首尾空白', cat: 'space', glyph: '⇤' },
+      { id: 'dedupe', name: '删除重复行', cat: 'line', glyph: '≡' },
+      { id: 'blank', name: '删除空行', cat: 'line', glyph: '↧' },
+      { id: 'tabs', name: '制表符换成空格', cat: 'space', glyph: '⇥' },
+      { id: 'upper', name: '全部大写', cat: 'case', glyph: 'A' },
+      { id: 'lower', name: '全部小写', cat: 'case', glyph: 'a' },
+      { id: 'sortl', name: '按行排序', cat: 'line', glyph: '↕' },
+      { id: 'email', name: '整理邮件引用', cat: 'chain', glyph: '', chain: true },
+      { id: 'cjk', name: '中英文之间加空格', cat: 'chain', glyph: '', chain: true }
+    ];
+  }
+
+  presets() {
+    return [
+      { id: 'num', name: '数字', re: '\\d+', rep: '', desc: '' },
+      { id: 'price', name: '价格', re: '(\\d+)元', rep: '¥$1', desc: '$1 = 数字' },
+      { id: 'date', name: '日期', re: '(\\d{4})-(\\d{2})-(\\d{2})', rep: '$1年$2月$3日', desc: '年 / 月 / 日' },
+      { id: 'phone', name: '手机号', re: '1[3-9]\\d{9}', rep: '', desc: '11 位' },
+      { id: 'email', name: '邮箱', re: '[\\w.+-]+@[\\w-]+\\.[\\w.]+', rep: '', desc: '' },
+      { id: 'url', name: '网址', re: 'https?://\\S+', rep: '', desc: '' },
+      { id: 'spaces', name: '连续空格', re: ' {2,}', rep: ' ', desc: '' },
+      { id: 'cjk', name: '中英文相邻', re: '([\\u4e00-\\u9fff])([A-Za-z])', rep: '$1 $2', desc: '插入空格' }
+    ];
+  }
+  mine() { return [{ id: 'order', name: '订单号', re: '#(\\d{4})', rep: 'No.$1', desc: '' }]; }
+
+  charDiff(a, b, push) {
+    let p = 0;
+    while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    let ea = a.length, eb = b.length;
+    while (ea > p && eb > p && a[ea - 1] === b[eb - 1]) { ea--; eb--; }
+    push('same', a.slice(0, p));
+    const A = a.slice(p, ea), B = b.slice(p, eb);
+    if (!A.length || !B.length || A.length * B.length > 250000) { push('del', A); push('ins', B); }
+    else {
+      const n = A.length, m = B.length, dp = [];
+      for (let i = 0; i <= n; i++) dp.push(new Uint16Array(m + 1));
+      for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      let i = 0, j = 0;
+      while (i < n && j < m) {
+        if (A[i] === B[j]) { push('same', A[i]); i++; j++; }
+        else if (dp[i + 1][j] >= dp[i][j + 1]) { push('del', A[i]); i++; }
+        else { push('ins', B[j]); j++; }
+      }
+      if (i < n) push('del', A.slice(i));
+      if (j < m) push('ins', B.slice(j));
+    }
+    push('same', a.slice(ea));
+  }
+
+  diff(a, b) {
+    const out = [];
+    const push = (k, t) => { if (!t) return; const l = out[out.length - 1]; if (l && l.k === k) l.t += t; else out.push({ k: k, t: t }); };
+    const tok = (s) => { const L = s.split('\n'); return L.map((x, i) => (i < L.length - 1 ? x + '\n' : x)); };
+    const A = tok(a), B = tok(b), n = A.length, m = B.length;
+    if (n * m > 1000000) { this.charDiff(a, b, push); return out; }
+    const dp = [];
+    for (let i = 0; i <= n; i++) dp.push(new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    let i = 0, j = 0, da = '', db = '';
+    const flush = () => { if (da || db) { this.charDiff(da, db, push); da = ''; db = ''; } };
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { flush(); push('same', A[i]); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) da += A[i++];
+      else db += B[j++];
+    }
+    while (i < n) da += A[i++];
+    while (j < m) db += B[j++];
+    flush();
+    return out;
+  }
+
+  result(id, text) {
+    if (this._cache.text !== text) this._cache = { text: text, map: {} };
+    let r = this._cache.map[id];
+    if (!r) {
+      const after = this.ops()[id](text);
+      const d = after === text ? null : this.diff(text, after);
+      let delta = '';
+      if (d) {
+        const lb = text.split('\n').length, la = after.split('\n').length;
+        if (la < lb) delta = '−' + (lb - la) + ' 行';
+        else { let n = 0, prev = 'same'; d.forEach((g) => { if (g.k !== 'same' && prev === 'same') n++; prev = g.k; }); delta = n + ' 处'; }
+      }
+      r = { after: after, d: d, delta: delta };
+      this._cache.map[id] = r;
+    }
+    return r;
+  }
+
+  runFind(text, o) {
+    const out = { segs: [], list: [], err: '', count: 0, all: text };
+    if (!o.find) { out.segs.push({ k: 'same', t: text }); return out; }
+    let re;
+    try {
+      re = new RegExp(o.regex ? o.find : o.find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gm' + (o.cs ? '' : 'i'));
+    } catch (e) {
+      out.err = '正则写法有误：' + e.message.replace(/^Invalid regular expression: /, '');
+      out.segs.push({ k: 'same', t: text });
+      return out;
+    }
+    const one = new RegExp(re.source, 'm' + (o.cs ? '' : 'i'));
+    let last = 0, m, all = '', line = 1, at = 0;
+    while ((m = re.exec(text)) !== null) {
+      if (m[0] === '') { re.lastIndex++; continue; }
+      const i = out.list.length;
+      for (let p = at; p < m.index; p++) if (text[p] === '\n') line++;
+      at = m.index;
+      const r = o.rep === null ? null : (o.regex ? m[0].replace(one, o.rep) : o.rep);
+      const skip = !!(o.skip && o.skip[i]);
+      const cur = i === o.cur;
+      out.segs.push({ k: 'same', t: text.slice(last, m.index) });
+      if (r === null || skip) out.segs.push({ k: skip ? 'skip' : 'hit', t: m[0], cur: cur });
+      else { out.segs.push({ k: 'del', t: m[0], cur: cur }); if (r) out.segs.push({ k: 'ins', t: r, cur: cur }); }
+      all += text.slice(last, m.index) + (r === null || skip ? m[0] : r);
+      out.list.push({ index: m.index, len: m[0].length, line: line, m: Array.from(m), r: r });
+      last = m.index + m[0].length;
+      if (out.list.length >= 2000) break;
+    }
+    out.segs.push({ k: 'same', t: text.slice(last) });
+    out.all = all + text.slice(last);
+    out.count = out.list.length;
+    return out;
+  }
+
+  pieces(segs, mode, inv, v, p, f) {
+    const out = [];
+    let curDone = false;
+    segs.forEach((g) => {
+      if (!g.t) return;
+      let cls = '';
+      if (mode === 'flash') {
+        if (g.k === 'del') { out.push({ id: '', cls: 's-gone f' + f, text: g.t.replace(/\n/g, '⏎') }); return; }
+        if (g.k === 'ins') cls = 's-new f' + f;
+      } else {
+        if (g.k === 'del') cls = 's-del v' + v;
+        else if (g.k === 'ins') cls = 's-ins v' + v;
+        else if (g.k === 'hit') cls = 's-hit v' + v;
+        else if (g.k === 'skip') cls = 's-skip';
+      }
+      let id = '';
+      if (g.cur) { cls += ' s-cur p' + p; if (!curDone) { id = this.uid + '-cur'; curDone = true; } }
+      if (g.k === 'del') { out.push({ id: id, cls: cls, text: g.t.replace(/\n/g, '⏎').replace(/ /g, '·').replace(/\t/g, '→') }); return; }
+      if (!inv) { out.push({ id: id, cls: cls, text: g.t }); return; }
+      let first = true;
+      g.t.split(/( |\t|\n)/).forEach((x) => {
+        if (!x) return;
+        const ws = x === ' ' || x === '\t' || x === '\n';
+        out.push({ id: first ? id : '', cls: ws ? cls + ' s-ws' : cls, text: x === ' ' ? '·' : x === '\t' ? '→   ' : x === '\n' ? '¬\n' : x });
+        first = false;
+      });
+    });
+    return out;
+  }
+
+  toLines(pcs, showCaret, selLine) {
+    const lines = [{ p: [] }];
+    const curId = this.uid + '-cur';
+    let pendingId = '';
+    pcs.forEach((x) => {
+      const parts = x.text.split('\n');
+      if (x.id) pendingId = x.id;
+      parts.forEach((t, k) => {
+        if (k > 0) lines.push({ p: [] });
+        if (!t) return;
+        lines[lines.length - 1].p.push({ id: pendingId, cls: x.cls, text: t });
+        pendingId = '';
+      });
+    });
+    return lines.map((l, i) => {
+      let kind = '';
+      let cur = false;
+      l.p.forEach((g) => {
+        if (g.id === curId || / s-cur/.test(' ' + g.cls)) cur = true;
+        if (/s-(del|gone)/.test(g.cls)) kind = 'chg';
+        else if (/s-(ins|new)/.test(g.cls) && kind !== 'chg') kind = 'chg add';
+        else if (/s-hit/.test(g.cls) && !kind) kind = 'chg hit';
+      });
+      return {
+        no: i + 1, p: l.p,
+        caret: showCaret && i === lines.length - 1,
+        cls: 'ln-row' + (kind ? ' ' + kind : '') + (cur ? ' cur' : '') + (selLine === i ? ' sel' : ''),
+        pick: () => this.setState({ selLine: this.state.selLine === i ? null : i })
+      };
+    });
+  }
+
+  marksFor(segs, total, curIdx) {
+    const out = [], seen = {};
+    let line = 0;
+    segs.forEach((g) => {
+      if (g.k !== 'same' && g.k !== 'ins' && !seen[line]) {
+        seen[line] = 1;
+        out.push({ cls: g.cur ? 'nb-mark cur' : (g.k === 'hit' || g.k === 'skip' ? 'nb-mark' : (curIdx === undefined ? 'nb-mark chg' : 'nb-mark')), style: 'top: ' + (total > 1 ? (line / (total - 1)) * 100 : 0).toFixed(2) + '%; animation-delay: ' + Math.min(out.length * 15, 300) + 'ms' });
+      } else if (g.cur && seen[line]) {
+        out.push({ cls: 'nb-mark cur', style: 'top: ' + (total > 1 ? (line / (total - 1)) * 100 : 0).toFixed(2) + '%' });
+      }
+      if (g.k !== 'ins') line += (g.t.match(/\n/g) || []).length;
+    });
+    return out.slice(0, 400);
+  }
+
+  explain(src, regex) {
+    if (!src) return [];
+    if (!regex) return [{ tok: src, txt: '按文字原样查找（. 和 * 只代表自己）', kind: 'find' }];
+    const rows = [];
+    let i = 0, grp = 0, lit = '';
+    const add = (tok, txt) => rows.push({ tok: tok, txt: txt, kind: 'find' });
+    const flush = () => { if (lit) { add(lit, '文字“' + lit + '”本身'); lit = ''; } };
+    const map = { d: '任意一个数字', w: '字母、数字或下划线', s: '空白（空格、换行…）', b: '单词边界', D: '任意非数字', S: '任意非空白', W: '任意非字母数字' };
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '\\' && i + 1 < src.length) { const nx = src[i + 1]; if (map[nx]) { flush(); add('\\' + nx, map[nx]); } else lit += nx; i += 2; continue; }
+      if (c === '(') { flush(); grp++; add('(', '第 ' + grp + ' 组开始，替换里写 $' + grp); i++; continue; }
+      if (c === ')') { flush(); add(')', '组结束'); i++; continue; }
+      if (c === '[') { flush(); const j = src.indexOf(']', i); const body = j > 0 ? src.slice(i, j + 1) : src.slice(i); add(body, '方括号里的任意一个字符'); i += body.length; continue; }
+      if (c === '{') { flush(); const j = src.indexOf('}', i); const body = j > 0 ? src.slice(i, j + 1) : c; const inner = body.slice(1, -1); add(body, '前一项重复 ' + (inner.indexOf(',') >= 0 ? inner.replace(',', '') + ' 次及以上' : inner + ' 次')); i += body.length; continue; }
+      if (c === '+') { flush(); add('+', '前一项 1 次或更多'); i++; continue; }
+      if (c === '*') { flush(); add('*', '前一项 0 次或更多'); i++; continue; }
+      if (c === '?') { flush(); add('?', '前一项可有可无'); i++; continue; }
+      if (c === '.') { flush(); add('.', '任意一个字符'); i++; continue; }
+      if (c === '^') { flush(); add('^', '行首'); i++; continue; }
+      if (c === '$') { flush(); add('$', '行尾'); i++; continue; }
+      if (c === '|') { flush(); add('|', '或者'); i++; continue; }
+      lit += c; i++;
+    }
+    flush();
+    return rows;
+  }
+
+  explainRep(rep, regex) {
+    if (!rep) return [{ tok: '∅', txt: '替换为空：删除匹配内容', kind: 'rep' }];
+    if (!regex) return [{ tok: rep, txt: '原样插入', kind: 'rep' }];
+    const rows = [];
+    const re = /\$(\d)|([^$]+)|\$/g;
+    let m;
+    while ((m = re.exec(rep)) !== null) {
+      if (m[1] !== undefined) rows.push({ tok: '$' + m[1], txt: m[1] === '0' ? '填入整个匹配' : '填入第 ' + m[1] + ' 组', kind: 'rep' });
+      else if (m[2]) rows.push({ tok: m[2], txt: '原样插入', kind: 'rep' });
+      else rows.push({ tok: '$', txt: '无效记号，会被丢掉', kind: 'bad' });
+    }
+    return rows;
+  }
+
+  push(label, text, extra, flashSegs) {
+    const s = this.state;
+    const n = s.flashN + 1;
+    this.setState(Object.assign({ snaps: s.snaps.slice(0, s.idx + 1).concat([{ label: label, text: text }]), idx: s.idx + 1, flash: flashSegs || null, flashN: n, selLine: null }, extra || {}));
+    if (flashSegs) this.later(() => { if (this.state.flashN === n) this.setState({ flash: null }); }, 1350);
+  }
+
+  toast(text, sub) {
+    const n = (this.state.toast ? this.state.toast.n : 0) + 1;
+    this.setState({ toast: { text: text, sub: sub, n: n, out: false } });
+    this.later(() => { if (this.state.toast && this.state.toast.n === n) this.setState({ toast: Object.assign({}, this.state.toast, { out: true }) }); }, 2000);
+    this.later(() => { if (this.state.toast && this.state.toast.n === n) this.setState({ toast: null }); }, 2240);
+  }
+
+  closeMenu(extra) {
+    this.setState(Object.assign({ menuOut: true }, extra || {}));
+    this.later(() => this.setState({ menu: false, menuOut: false, menuHover: null }), 140);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const tab = s.tab || (this.props.tab === 'find' ? 'find' : 'clean');
+    const text = s.snaps[s.idx].text;
+    const total = text.split('\n').length;
+    const cat = this.catalog();
+    const byId = {};
+    cat.forEach((a) => { byId[a.id] = a; });
+    const tileBg = { space: '#8FB6FF', quote: '#FF9F6B', line: '#7EE0B5', case: '#F7A6E0', chain: '#FFD23F' };
+
+    // clean
+    let rowIndex = 0;
+    const mkRow = (a) => {
+      const r = this.result(a.id, text);
+      const hov = tab === 'clean' && s.hovered === a.id;
+      const pinned = s.pinned.indexOf(a.id) >= 0;
+      const delay = (rowIndex++ * 24) + 'ms';
+      return {
+        name: a.name, glyph: a.glyph, chain: !!a.chain, notChain: !a.chain, delay: delay,
+        cls: hov ? 'nb-row hot' : 'nb-row',
+        delta: r.delta || '无变化',
+        enter: () => { if (this.state.hovered !== a.id) this.setState({ hovered: a.id, seq: this.state.seq + 1 }); },
+        apply: () => {
+          if (r.after === text) return;
+          this.push(a.name, r.after, { hovered: null }, r.d);
+        },
+        togglePin: () => this.setState({ pinned: pinned ? this.state.pinned.filter((x) => x !== a.id) : this.state.pinned.concat([a.id]) }),
+        pinLabel: pinned ? '从常用移除' : '加入常用',
+        starFill: pinned ? '#FFD23F' : 'none',
+        tile: tileBg[a.cat],
+        nameStyle: r.delta ? 'color: #000000' : 'color: #6B6B6B',
+        deltaStyle: r.delta ? (hov ? 'background: #FFFFFF; color: #000000; box-shadow: inset 0 0 0 2px #000000' : 'background: #000000; color: #FFFFFF') : 'color: #6B6B6B'
+      };
+    };
+    const q = s.q.trim().toLowerCase();
+    let sections;
+    if (q) {
+      const rows = cat.filter((a) => a.name.toLowerCase().indexOf(q) >= 0).map(mkRow);
+      sections = rows.length ? [{ title: '搜索结果', sub: rows.length + ' 个', rows: rows }] : [];
+    } else {
+      sections = [
+        { title: '常用', sub: '数字 = 对当前文本的改动', rows: s.pinned.map((id) => byId[id]).filter((a) => a && !a.chain).map(mkRow) },
+        { title: '动作链', sub: '多步组合', rows: cat.filter((a) => a.chain).map(mkRow) }
+      ];
+    }
+    const hvA = tab === 'clean' && s.hovered ? byId[s.hovered] : null;
+    const hvR = hvA ? this.result(hvA.id, text) : null;
+    const hvOn = !!(hvR && hvR.d);
+
+    // find
+    const presets = this.presets(), mine = this.mine(), allP = presets.concat(mine);
+    let fr = null, mp = null;
+    if (tab === 'find') {
+      fr = this.runFind(text, { find: s.find, rep: s.rep, regex: s.regex, cs: s.cs, cur: s.cur, skip: s.skip });
+      if (s.menu && s.menuHover) {
+        const p = allP.find((x) => x.id === s.menuHover);
+        if (p) mp = { p: p, r: this.runFind(text, { find: p.re, rep: null, regex: true, cs: false, cur: -1 }) };
+      }
+    }
+
+    const v = s.seq % 2, pp = s.cur % 2, f = s.flashN % 2;
+    let segs, marks = [];
+    if (s.flash) segs = this.pieces(s.flash, 'flash', s.inv, v, pp, f);
+    else if (mp) { segs = this.pieces(mp.r.segs, 'preview', s.inv, v, pp, f); marks = this.marksFor(mp.r.segs, total, -1); }
+    else if (fr) { segs = this.pieces(fr.segs, 'preview', s.inv, v, pp, f); marks = this.marksFor(fr.segs, total, s.cur); }
+    else if (hvOn) { segs = this.pieces(hvR.d, 'preview', s.inv, v, pp, f); marks = this.marksFor(hvR.d, total); }
+    else segs = this.pieces([{ k: 'same', t: text }], 'plain', s.inv, v, pp, f);
+
+    const count = fr ? fr.count : 0;
+    const curItem = fr ? fr.list[s.cur] : null;
+    const skipped = Object.keys(s.skip).filter((k) => +k < count).length;
+    const included = count - skipped;
+
+    const list = fr ? fr.list.slice(0, 300).map((it, i) => {
+      const ls = text.lastIndexOf('\n', it.index - 1) + 1;
+      let before = text.slice(Math.max(ls, it.index - 12), it.index);
+      if (it.index - 12 > ls) before = '…' + before;
+      const le = text.indexOf('\n', it.index + it.len);
+      const after = text.slice(it.index + it.len, Math.min(le < 0 ? text.length : le, it.index + it.len + 40));
+      let hit = it.m[0].replace(/\n/g, '⏎').replace(/\t/g, '→');
+      if (hit.length > 26) hit = hit.slice(0, 26) + '…';
+      const sk = !!s.skip[i];
+      return {
+        id: this.uid + '-r' + i, line: 'L' + it.line, before: before.replace(/\t/g, ' '), hit: hit, after: after.replace(/\t/g, ' '),
+        to: it.r === '' ? '删除' : '→ ' + it.r.replace(/\n/g, '⏎'),
+        include: !sk,
+        cls: 'nb-mrow' + (i === s.cur ? ' cur' : '') + (sk ? ' skip' : ''),
+        pick: () => this.setState({ cur: i }),
+        toggle: () => { const k = Object.assign({}, this.state.skip); if (k[i]) delete k[i]; else k[i] = true; this.setState({ skip: k }); }
+      };
+    }) : [];
+
+    const groups = curItem && s.regex ? curItem.m.slice(0, 5).map((val, k) => ({
+      key: '$' + k,
+      val: val === undefined ? '（未匹配）' : (val.length > 18 ? val.slice(0, 18) + '…' : val).replace(/\n/g, '⏎').replace(/\t/g, '→'),
+      insert: () => this.setState({ rep: this.state.rep + '$' + k, seq: this.state.seq + 1 })
+    })) : [];
+
+    const tokBg = { find: '#FFF1B8', rep: '#A6F0BF', bad: '#FFB4A3' };
+    const explainRows = tab === 'find' && s.explain ? this.explain(s.find, s.regex).concat(this.explainRep(s.rep, s.regex)).map((r, i) => Object.assign({}, r, { bg: tokBg[r.kind], delay: (i * 30) + 'ms' })) : [];
+
+    const restore = () => {
+      const p = this.state.prev;
+      this.setState({ find: p ? p.find : '', rep: p ? p.rep : '', regex: p ? p.regex : true, preset: null, prev: null, cur: 0, skip: {}, seq: this.state.seq + 1 });
+      if (this.state.menu) this.closeMenu();
+    };
+    let mi = 0;
+    const mkP = (p) => {
+      const active = s.preset === p.id;
+      const hov = s.menuHover === p.id;
+      const c = this.runFind(text, { find: p.re, rep: null, regex: true, cs: false, cur: -1 }).count;
+      return {
+        item: true, head: false, name: p.name, desc: p.desc, re: p.re,
+        check: active ? '✓' : '', count: c ? c + ' 处' : '0',
+        countStyle: c ? 'background: #000000; color: #FFFFFF' : 'color: #6B6B6B',
+        cls: 'nb-mitem' + (hov ? ' hot' : (active ? ' active' : '')),
+        delay: (mi++ * 22) + 'ms',
+        enter: () => { if (this.state.menuHover !== p.id) this.setState({ menuHover: p.id, seq: this.state.seq + 1 }); },
+        pick: () => {
+          if (this.state.preset === p.id) { restore(); return; }
+          const st = this.state;
+          this.setState({ prev: st.preset ? st.prev : { find: st.find, rep: st.rep, regex: st.regex }, preset: p.id, find: p.re, rep: p.rep, regex: true, cur: 0, skip: {}, seq: st.seq + 1 });
+          this.closeMenu();
+        }
+      };
+    };
+    const menuRows = [{ head: true, item: false, name: '内置' }].concat(presets.map(mkP), [{ head: true, item: false, name: '我的模式' }], mine.map(mkP));
+    const activeP = s.preset ? allP.find((x) => x.id === s.preset) : null;
+
+    const chip = (on) => on ? 'nb-chip on' : 'nb-chip';
+    const crumbs = s.snaps.map((sn, i) => ({
+      label: sn.label, sep: i > 0,
+      style: i === s.idx ? 'background: #FFD23F; box-shadow: inset 0 0 0 2px #000000; font-weight: 700' : (i > s.idx ? 'background: transparent; border: 0; color: #7A7A7A; text-decoration: line-through' : 'background: transparent; border: 0; color: #3F3F3F'),
+      go: () => this.setState({ idx: i, flash: null })
+    }));
+
+    const previewOn = !s.flash && (hvOn || !!mp);
+    const gwPx = Math.max(2, String(segs.reduce((n, g) => n + (g.text.match(/\n/g) || []).length, 1)).length) * 7 + 18;
+    const nextFn = () => { if (count) this.setState({ cur: (this.state.cur + 1) % count }); };
+
+    return {
+      edId: this.uid + '-ed', mlId: this.uid + '-ml',
+      marks: marks,
+      edLines: this.toLines(segs, tab === 'clean' && !previewOn, s.selLine),
+      gutterCls: s.gutter ? 'ln-wrap' : 'ln-wrap off',
+      gw: gwPx + 'px',
+      gutterBg: 'background: linear-gradient(90deg, #FBF7EC 0, #FBF7EC ' + (gwPx - 2) + 'px, #000000 ' + (gwPx - 2) + 'px, #000000 ' + gwPx + 'px, transparent ' + gwPx + 'px)',
+      toggleGutter: () => this.setState({ gutter: !this.state.gutter }),
+      gutterPressed: s.gutter ? 'true' : 'false',
+      gutterStyle: s.gutter ? 'background: #FFD23F; border-color: #000000' : '',
+      crumbs: crumbs,
+      canSave: s.idx >= 2,
+      save: () => this.toast('已存为动作链「新动作链 1」', '共 ' + this.state.idx + ' 步 · 可在动作链页修改'),
+      noUndo: s.idx === 0, noRedo: s.idx >= s.snaps.length - 1,
+      undo: () => { if (this.state.idx > 0) this.setState({ idx: this.state.idx - 1, flash: null }); },
+      redo: () => { if (this.state.idx < this.state.snaps.length - 1) this.setState({ idx: this.state.idx + 1, flash: null }); },
+      copied: s.copied, notCopied: !s.copied,
+      copy: () => {
+        this.setState({ copied: true });
+        this.toast('已复制到剪贴板', '窗口即将收起，回到 Safari 直接 ⌘V');
+        this.later(() => this.setState({ copied: false }), 1800);
+      },
+
+      isClean: tab === 'clean', isFind: tab === 'find',
+      indCls: tab === 'find' ? 'nb-seg-ind right' : 'nb-seg-ind',
+      cleanPressed: tab === 'clean' ? 'true' : 'false', findPressed: tab === 'find' ? 'true' : 'false',
+      goClean: () => { if (tab !== 'clean') this.setState({ tab: 'clean', menu: false, menuHover: null, flash: null }); },
+      goFind: () => { if (tab !== 'find') this.setState({ tab: 'find', hovered: null, flash: null, seq: s.seq + 1 }); },
+
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value }),
+      sections: sections, noResults: !!q && sections.length === 0,
+      searchToFind: () => this.setState({ tab: 'find', find: s.q, regex: false, rep: '', q: '', preset: null, cur: 0, skip: {}, seq: s.seq + 1 }),
+      clearHover: () => { if (this.state.hovered) this.setState({ hovered: null }); },
+
+      previewOn: previewOn,
+      flipCls: v ? 'nb-flipA' : 'nb-flipB',
+      previewName: mp ? '模式「' + mp.p.name + '」' : (hvA ? hvA.name : ''),
+      previewDelta: mp ? mp.r.count + ' 处匹配' : (hvR ? hvR.delta : ''),
+      previewHint: mp ? '点击使用 · 移开即恢复' : '点击应用 · 移开即恢复',
+      findStatusOn: !previewOn && tab === 'find',
+      findStatus: fr && fr.err ? '规则有误' : (count ? '第 ' + (s.cur + 1) + ' / ' + count + ' 处 · 第 ' + (curItem ? curItem.line : 0) + ' 行' + (skipped ? ' · 跳过 ' + skipped : '') : '没有匹配'),
+      idleOn: !previewOn && tab === 'clean',
+      toggleInv: () => this.setState({ inv: !this.state.inv }),
+      invPressed: s.inv ? 'true' : 'false',
+      invStyle: s.inv ? 'background: #FFD23F; border-color: #000000' : '',
+      chars: text.length, lines: total,
+
+      find: s.find, rep: s.rep,
+      onFind: (e) => this.setState({ find: e.target.value, preset: null, prev: null, cur: 0, skip: {}, seq: this.state.seq + 1 }),
+      onRep: (e) => this.setState({ rep: e.target.value, seq: this.state.seq + 1 }),
+      hasPreset: !!activeP, presetName: activeP ? activeP.name : '',
+      clearPreset: restore,
+      findFieldCls: activeP ? 'nb-field locked' : 'nb-field',
+      toggleMenu: () => { if (this.state.menu) this.closeMenu(); else this.setState({ menu: true, menuOut: false, menuHover: null }); },
+      menuOpen: s.menu, menuCls: s.menuOut ? 'nb-menu out' : 'nb-menu',
+      menuExpanded: s.menu ? 'true' : 'false',
+      menuBtnCls: chip(s.menu || !!activeP),
+      chevron: s.menu ? 'rotate(180deg)' : 'none',
+      menuLeave: () => { if (this.state.menuHover) this.setState({ menuHover: null }); },
+      menuRows: menuRows,
+      toggleRegex: () => this.setState({ regex: !this.state.regex, preset: null, cur: 0, seq: this.state.seq + 1 }),
+      toggleCs: () => this.setState({ cs: !this.state.cs, cur: 0, seq: this.state.seq + 1 }),
+      toggleExplain: () => this.setState({ explain: !this.state.explain }),
+      regexCls: chip(s.regex), regexPressed: s.regex ? 'true' : 'false',
+      csCls: chip(s.cs), csPressed: s.cs ? 'true' : 'false',
+      explainCls: chip(s.explain), explainPressed: s.explain ? 'true' : 'false',
+      explainOn: s.explain && tab === 'find', explainRows: explainRows,
+      counter: count ? (Math.min(s.cur, count - 1) + 1) + ' / ' + count : '0 / 0',
+      counterCls: pp ? 'nb-flipA' : 'nb-flipB',
+      noMatchNav: count === 0,
+      prev: () => { if (count) this.setState({ cur: (this.state.cur - 1 + count) % count }); },
+      next: nextFn,
+      hasErr: !!(fr && fr.err), err: fr ? fr.err : '',
+      showGroups: groups.length > 0, groups: groups, curNo: s.cur + 1,
+      list: list, noMatches: tab === 'find' && count === 0 && !(fr && fr.err),
+      suggestCs: s.cs, suggestRegex: !s.regex,
+      includedLabel: included + ' 处',
+      noCur: !curItem || !!s.skip[s.cur],
+      noIncluded: included === 0,
+      replaceOne: () => {
+        if (!curItem || s.skip[s.cur] || curItem.r === null) return;
+        const before = text.slice(0, curItem.index), rest = text.slice(curItem.index + curItem.len);
+        this.push('替换 1 处', before + curItem.r + rest, { skip: {} }, [{ k: 'same', t: before }, { k: 'del', t: curItem.m[0] }, { k: 'ins', t: curItem.r }, { k: 'same', t: rest }]);
+      },
+      replaceAll: () => {
+        if (!included) return;
+        this.push('替换 ' + included + ' 处', fr.all, { skip: {}, cur: 0 }, fr.segs.map((g) => (g.k === 'skip' || g.k === 'hit' ? { k: 'same', t: g.t } : { k: g.k, t: g.t })));
+      },
+
+      toastOn: !!s.toast,
+      toastCls: s.toast && s.toast.out ? 'nb-toast out' : 'nb-toast',
+      toastText: s.toast ? s.toast.text : '', toastSub: s.toast ? s.toast.sub : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

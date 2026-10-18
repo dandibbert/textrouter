@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>新粗野 · 组件状态</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1200px; height: 1280px; box-sizing: border-box; padding: 36px 40px; background: #F3EFE4; color: #000000; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; align-items: baseline; justify-content: space-between">
+    <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.03em">组件状态与细节</h1>
+    <span style="font-size: 13px; color: #3F3F3F">每个可交互元素都要有：默认 · 悬停 · 按下 · 禁用 · 键盘聚焦</span>
+  </div>
+
+  <div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)) 248px; gap: 20px">
+
+    <!-- 1 Primary button -->
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">主按钮</span>
+      <div style="display: flex; gap: 12px; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><button style="height: 34px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; background: #FFD23F; border: 2px solid #000000; border-radius: 6px; box-shadow: 3px 3px 0 #000000">复制</button><span style="font-size: 10.5px; color: #3F3F3F">默认</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><button style="height: 34px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; background: #FFDB5E; border: 2px solid #000000; border-radius: 6px; box-shadow: 4px 4px 0 #000000; transform: translate(-1px, -1px)">复制</button><span style="font-size: 10.5px; color: #3F3F3F">悬停 抬起</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><button style="height: 34px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; background: #FFD23F; border: 2px solid #000000; border-radius: 6px; box-shadow: 0 0 0 #000000; transform: translate(3px, 3px)">复制</button><span style="font-size: 10.5px; color: #3F3F3F">按下 沉底</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><button disabled style="height: 34px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; background: #FFD23F; border: 2px solid #000000; border-radius: 6px; box-shadow: 1px 1px 0 #000000; opacity: 0.4">复制</button><span style="font-size: 10.5px; color: #3F3F3F">禁用</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><button style="height: 34px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; background: #FFD23F; border: 2px solid #000000; border-radius: 6px; box-shadow: 3px 3px 0 #000000; outline: 3px solid #3A5BFF; outline-offset: 2px">复制</button><span style="font-size: 10.5px; color: #3F3F3F">Tab 聚焦</span></div>
+      </div>
+      <span style="font-size: 11.5px; color: #3F3F3F">聚焦环统一用蓝色 #3A5BFF，和黄色强调区分开</span>
+    </section>
+
+    <!-- 2 Chips -->
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">开关胶囊 · 图标按钮</span>
+      <div style="display: flex; gap: 10px; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 999px; font-size: 12px">.* 正则</span><span style="font-size: 10.5px; color: #3F3F3F">关</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 999px; font-size: 12px; background: #FFF1B8">.* 正则</span><span style="font-size: 10.5px; color: #3F3F3F">悬停</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 999px; font-size: 12px; background: #000000; color: #FFD23F">.* 正则</span><span style="font-size: 10.5px; color: #3F3F3F">开</span></div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid transparent; border-radius: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></span><span style="font-size: 10.5px; color: #3F3F3F">默认</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 6px; background: #FFFFFF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></span><span style="font-size: 10.5px; color: #3F3F3F">悬停 出框</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid transparent; border-radius: 6px; opacity: 0.3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></span><span style="font-size: 10.5px; color: #3F3F3F">无可撤销</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; position: relative"><span style="width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 6px; background: #FFFFFF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></span><span style="font-size: 10.5px; padding: 3px 7px; border-radius: 5px; background: #000000; color: #FFFFFF; white-space: nowrap">撤销 ⌘Z</span></div>
+      </div>
+    </section>
+
+    <!-- 3 Inputs -->
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">输入框</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 34px; display: flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 6px; box-shadow: 3px 3px 0 #000000; font-size: 12px; color: #7A7A7A">搜索…</span><span style="font-size: 10.5px; color: #3F3F3F">默认</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 34px; display: flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 6px; box-shadow: 5px 5px 0 #000000; transform: translate(-2px, -2px); font-family: 'Space Mono', monospace; font-size: 12px">行<span style="display: inline-block; width: 2px; height: 15px; background: #000000; margin-left: 1px"></span></span><span style="font-size: 10.5px; color: #3F3F3F">聚焦 浮起</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 2px solid #000000; border-radius: 6px; box-shadow: 5px 5px 0 #FFD23F, 5px 5px 0 2px #000000; transform: translate(-2px, -2px); font-family: 'Space Mono', monospace; font-size: 11px"><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-weight: 700; padding: 0 7px; border-radius: 999px; background: #000000; color: #FFD23F">价格 ×</span>(\d+)元</span><span style="font-size: 10.5px; color: #3F3F3F">套用了模式</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 34px; display: flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 6px; box-shadow: 3px 3px 0 #000000; background: #FFB4A3; font-family: 'Space Mono', monospace; font-size: 12px">(\d+元</span><span style="font-size: 10.5px; color: #3F3F3F">规则写错 · 抖一下</span></div>
+      </div>
+    </section>
+
+    <!-- 4 List rows -->
+    <section style="display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">清理器行</span>
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; border: 2px solid transparent; border-radius: 6px; font-size: 13px"><span style="width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 5px; background: #8FB6FF; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700">␣</span><span style="flex: 1">删除多余空格</span><span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 0 8px; border-radius: 999px; background: #000000; color: #FFFFFF">9 处</span><span style="width: 18px"></span></div>
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; border: 2px solid #000000; border-radius: 6px; background: #FFD23F; box-shadow: 3px 3px 0 #000000; transform: translate(-2px, -2px); font-size: 13px"><span style="width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 5px; background: #FF9F6B; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700">"</span><span style="flex: 1; font-weight: 500">弯引号转直引号</span><span style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 0 8px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 2px #000000">2 处</span><svg width="15" height="15" viewBox="0 0 24 24" fill="#FFD23F" stroke="#000" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg></div>
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; border: 2px solid transparent; border-radius: 6px; font-size: 13px; color: #6B6B6B"><span style="width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 5px; background: #7EE0B5; color: #000000; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700">≡</span><span style="flex: 1">删除重复行</span><span style="font-family: 'Space Mono', monospace; font-size: 11px">无变化</span><span style="width: 18px"></span></div>
+      <span style="font-size: 11.5px; color: #3F3F3F">悬停 = 抬起 2px + 黄底；星标只在悬停时出现</span>
+    </section>
+
+    <!-- 5 Checkbox + segmented -->
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">复选框 · 分段控件</span>
+      <div style="display: flex; gap: 18px; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 18px; height: 18px; border: 2px solid #000000; border-radius: 4px; background: #FFFFFF"></span><span style="font-size: 10.5px; color: #3F3F3F">跳过</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 18px; height: 18px; border: 2px solid #000000; border-radius: 4px; background: #FFD23F; display: grid; place-items: center"><span style="width: 10px; height: 10px; background: #000000; clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%)"></span></span><span style="font-size: 10.5px; color: #3F3F3F">替换</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 18px; height: 18px; border: 2px solid #000000; border-radius: 4px; background: #FFD23F; display: grid; place-items: center; transform: scale(0.88)"><span style="width: 10px; height: 10px; background: #000000; clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%)"></span></span><span style="font-size: 10.5px; color: #3F3F3F">按下</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><span style="width: 18px; height: 18px; border: 2px solid #000000; border-radius: 4px; background: #FFFFFF; outline: 3px solid #3A5BFF; outline-offset: 2px"></span><span style="font-size: 10.5px; color: #3F3F3F">聚焦</span></div>
+      </div>
+      <div style="position: relative; display: flex; padding: 3px; border: 2px solid #000000; border-radius: 8px; box-shadow: 3px 3px 0 #000000">
+        <span style="position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); background: #FFD23F; border: 2px solid #000000; border-radius: 5px; transform: translateX(100%)"></span>
+        <span style="position: relative; flex: 1; height: 28px; display: grid; place-items: center; font-size: 12.5px; font-weight: 700">清理</span>
+        <span style="position: relative; flex: 1; height: 28px; display: grid; place-items: center; font-size: 12.5px; font-weight: 700">查找替换</span>
+      </div>
+      <span style="font-size: 11.5px; color: #3F3F3F">黄色滑块在两项之间弹性滑动，而不是直接跳</span>
+    </section>
+
+    <!-- 6 Scrollbar -->
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">滚动条 · 匹配刻度</span>
+      <div style="flex: 1; display: flex; gap: 22px; align-items: stretch">
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><div style="flex: 1; width: 16px; position: relative; background: linear-gradient(90deg, transparent 7px, #000 7px, #000 9px, transparent 9px)"><span style="position: absolute; left: 3px; right: 3px; top: 14%; height: 34%; border-radius: 6px; background: #FFD23F; box-shadow: inset 0 0 0 2px #000000"></span></div><span style="font-size: 10.5px; color: #3F3F3F">静止</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><div style="flex: 1; width: 16px; position: relative; background: linear-gradient(90deg, transparent 7px, #000 7px, #000 9px, transparent 9px)"><span style="position: absolute; left: 3px; right: 3px; top: 30%; height: 34%; border-radius: 6px; background: #FFB800; box-shadow: inset 0 0 0 2px #000000"></span></div><span style="font-size: 10.5px; color: #3F3F3F">悬停</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><div style="flex: 1; width: 16px; position: relative; background: linear-gradient(90deg, transparent 7px, #000 7px, #000 9px, transparent 9px)"><span style="position: absolute; left: 3px; right: 3px; top: 50%; height: 34%; border-radius: 6px; background: #000000; box-shadow: inset 0 0 0 2px #000000"></span></div><span style="font-size: 10.5px; color: #3F3F3F">拖动</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><div style="flex: 1; width: 30px; position: relative; background: linear-gradient(90deg, transparent 21px, #000 21px, #000 23px, transparent 23px)">
+          <span style="position: absolute; left: 3px; width: 6px; height: 3px; top: 18%; background: #000000"></span>
+          <span style="position: absolute; left: 3px; width: 6px; height: 3px; top: 26%; background: #000000"></span>
+          <span style="position: absolute; left: 0; width: 12px; height: 7px; top: 34%; background: #FFD23F; box-shadow: 0 0 0 2px #000000; border-radius: 2px"></span>
+          <span style="position: absolute; left: 3px; width: 6px; height: 3px; top: 48%; background: #000000"></span>
+          <span style="position: absolute; left: 3px; width: 6px; height: 4px; top: 62%; background: #FF6B4A"></span>
+          <span style="position: absolute; left: 3px; width: 6px; height: 3px; top: 80%; background: #000000"></span>
+          <span style="position: absolute; left: 17px; width: 10px; top: 24%; height: 30%; border-radius: 6px; background: #FFD23F; box-shadow: inset 0 0 0 2px #000000"></span>
+        </div><span style="font-size: 10.5px; color: #3F3F3F">带刻度</span></div>
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; font-size: 11.5px; color: #3F3F3F">
+          <span>细黑轨道 + 黄色药丸滑块，宽 16px</span>
+          <span><b style="color: #000000">黑刻度</b> 每处匹配</span>
+          <span><b style="color: #000000">黄块</b> 当前这处，跳转时滑过去</span>
+          <span><b style="color: #000000">橙刻度</b> 预览时被改动的行</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 Text marks -->
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">正文标记</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 12px">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span><span style="background: #FFB4A3; text-decoration: line-through; text-decoration-thickness: 2px; border-radius: 3px">12元</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">将删除</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span><span style="background: #A6F0BF; border-radius: 3px">¥12</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">将新增</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span><span style="background: #FFE47A; box-shadow: inset 0 -2px 0 #000000; border-radius: 3px">13800138000</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">只是匹配</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span><span style="background: #FFB4A3; text-decoration: line-through; text-decoration-thickness: 2px; border-radius: 3px; outline: 2px solid #000000; outline-offset: 1px">159元</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">当前这处</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span><span style="color: #7A7A7A; box-shadow: inset 0 -2px 0 #C4C4C4">35元</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">勾掉 · 跳过</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span>桌垫<span style="color: #A8A8A8">··</span>XL<span style="color: #A8A8A8">→</span>59<span style="background: #FFD23F">元 2026</span></span><span style="font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 10.5px; color: #3F3F3F">不可见字符 · 选中文字</span></div>
+      </div>
+    </section>
+
+    <!-- 8 Tooltip & toast -->
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">提示 · 结果反馈</span>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 12px; background: #000000; color: #FFFFFF; border-radius: 8px; box-shadow: 4px 4px 0 #FFD23F; font-size: 12.5px; align-self: flex-start">
+        <span style="width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: #FFD23F; color: #000000"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        <b>已复制到剪贴板</b><span style="color: #BDBDBD; font-size: 11.5px">回到 Safari 直接 ⌘V</span>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: center">
+        <span style="font-size: 11.5px; padding: 4px 8px; border-radius: 5px; background: #000000; color: #FFFFFF">区分大小写</span>
+        <span style="display: inline-flex; gap: 4px; align-items: center; font-size: 11.5px"><span style="font-family: 'Space Mono', monospace; font-size: 10px; line-height: 15px; padding: 0 5px; border: 1.5px solid #000000; border-bottom-width: 3px; border-radius: 4px">⌘G</span>下一处</span>
+        <span style="display: inline-flex; gap: 4px; align-items: center; font-size: 11.5px"><span style="font-family: 'Space Mono', monospace; font-size: 10px; line-height: 15px; padding: 0 5px; border: 1.5px solid #000000; border-bottom-width: 3px; border-radius: 4px">⌘↩</span>复制</span>
+      </div>
+      <span style="font-size: 11.5px; color: #3F3F3F">悬停 0.45 秒才出提示，避免扫过时闪烁；快捷键做成带厚底边的键帽</span>
+    </section>
+
+    <!-- 9 Empty states -->
+    <section style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">空状态 · 给出下一步</span>
+      <div style="padding: 12px; border: 2px dashed #000000; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+        <span style="font-size: 12.5px; font-weight: 700">没有叫「去水印」的动作</span>
+        <span style="height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border: 2px solid #000000; border-radius: 6px; box-shadow: 3px 3px 0 #000000; font-size: 11.5px">用「去水印」新建查找替换 →</span>
+      </div>
+      <div style="padding: 12px; border: 2px dashed #000000; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+        <span style="font-size: 12.5px; font-weight: 700">没有匹配</span>
+        <div style="display: flex; gap: 6px"><span style="height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border: 2px solid #000000; border-radius: 999px; font-size: 11px">关掉区分大小写</span><span style="height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border: 2px solid #000000; border-radius: 999px; font-size: 11px">从「模式」里挑一个</span></div>
+      </div>
+    </section>
+
+    <!-- 10 Breadcrumb -->
+    <section style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">步骤记录（标题栏）</span>
+      <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; flex-wrap: wrap">
+        <span style="padding: 3px 8px; color: #3F3F3F">原文</span><span style="color: #7A7A7A">→</span>
+        <span style="padding: 3px 8px; color: #3F3F3F">删除重复行</span><span style="color: #7A7A7A">→</span>
+        <span style="padding: 3px 8px; border-radius: 6px; background: #FFD23F; box-shadow: inset 0 0 0 2px #000000; font-weight: 700">整理邮件引用</span><span style="color: #7A7A7A">→</span>
+        <span style="padding: 3px 8px; color: #7A7A7A; text-decoration: line-through">替换 12 处</span>
+      </div>
+      <div style="display: flex; gap: 16px; font-size: 11.5px; color: #3F3F3F">
+        <span>灰字 = 已经过的步骤</span><span>黄块 = 现在</span><span>删除线 = 已撤销，仍可重做</span>
+      </div>
+    </section>
+
+    <!-- 11 Window chrome -->
+    <section style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">窗口与色板</span>
+      <div style="display: flex; gap: 8px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="height: 34px; border: 2px solid #000000; border-radius: 5px; background: #FFD23F"></span><span style="font-family: 'Space Mono', monospace; font-size: 10px">强调 FFD23F</span></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="height: 34px; border: 2px solid #000000; border-radius: 5px; background: #F3EFE4"></span><span style="font-family: 'Space Mono', monospace; font-size: 10px">底色 F3EFE4</span></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="height: 34px; border: 2px solid #000000; border-radius: 5px; background: #FFB4A3"></span><span style="font-family: 'Space Mono', monospace; font-size: 10px">删 FFB4A3</span></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="height: 34px; border: 2px solid #000000; border-radius: 5px; background: #A6F0BF"></span><span style="font-family: 'Space Mono', monospace; font-size: 10px">增 A6F0BF</span></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="height: 34px; border: 2px solid #000000; border-radius: 5px; background: #3A5BFF"></span><span style="font-family: 'Space Mono', monospace; font-size: 10px">聚焦 3A5BFF</span></div>
+      </div>
+      <span style="font-size: 11.5px; color: #3F3F3F">描边一律 2px 黑；投影一律硬边、右下偏移：小件 3px，卡片 5px，浮层 6px</span>
+    </section>
+
+    <!-- 12 Accessibility -->
+    <section style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #000000; color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #FFD23F">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">还补了这些</span>
+      <span style="font-size: 12px; line-height: 1.7">选中文字用黄底 · 光标是 2px 黑竖线并闪烁 · 占位文字灰度过对比 · 所有图标按钮带文字说明 · 系统开启「减少动态效果」时动画全部降为瞬时 · 规则出错或没有可替换项时，替换按钮自动禁用</span>
+    </section>
+
+    <!-- 13 Line-number gutter -->
+    <section style="grid-column: 1 / -1; display: flex; gap: 28px; padding: 16px; background: #FFFFFF; border: 2px solid #000000; border-radius: 8px; box-shadow: 4px 4px 0 #000000">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">行号栏</span>
+        <div style="flex: 1; overflow: hidden; border: 2px solid #000000; border-radius: 6px; padding: 6px 0; background: linear-gradient(90deg, #FBF7EC 0, #FBF7EC 30px, #000000 30px, #000000 32px, transparent 32px); font-family: 'Space Mono', 'Noto Sans SC', monospace; font-size: 12px; line-height: 24px">
+          <div style="display: flex"><span style="width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; color: #9A9A9A">1</span><span style="flex: 1">Hello world, this is a "sample" text.</span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">默认 · 灰色行号</span></div>
+          <div style="display: flex"><span style="position: relative; width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; color: #9A9A9A"><span style="position: absolute; left: 3px; top: 5px; bottom: 5px; width: 3px; border-radius: 2px; background: #FF6B4A"></span>2</span><span style="flex: 1">请在<span style="background: #FFB4A3; text-decoration: line-through; text-decoration-thickness: 2px; border-radius: 3px">·</span> 周五前确认</span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">红条 · 这行有删除</span></div>
+          <div style="display: flex"><span style="position: relative; width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; color: #9A9A9A"><span style="position: absolute; left: 3px; top: 5px; bottom: 5px; width: 3px; border-radius: 2px; background: #2FBF71"></span>3</span><span style="flex: 1">中文<span style="background: #A6F0BF; border-radius: 3px"> </span>English</span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">绿条 · 只有新增</span></div>
+          <div style="display: flex; background: #FFF7D6"><span style="position: relative; width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; font-weight: 700; color: #000000; background: #FFD23F; box-shadow: inset -2px 0 0 #000000"><span style="position: absolute; left: 3px; top: 5px; bottom: 5px; width: 3px; border-radius: 2px; background: #000000"></span>8</span><span style="flex: 1">#1026 <span style="background: #FFB4A3; text-decoration: line-through; text-decoration-thickness: 2px; border-radius: 3px; outline: 2px solid #000000; outline-offset: 1px">159元</span><span style="background: #A6F0BF; border-radius: 3px">¥159</span></span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">当前匹配 · 黄底粗体</span></div>
+          <div style="display: flex; background: #FFF1B8"><span style="width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; color: #9A9A9A">9</span><span style="flex: 1">#1027 Noise cancelling headphones</span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">点行号 · 选中整行</span></div>
+          <div style="display: flex"><span style="width: 32px; padding-right: 7px; margin-right: 14px; text-align: right; font-size: 10.5px; color: #000000">10</span><span style="flex: 1">#1028 人体工学椅 1880元</span><span style="padding-right: 14px; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; font-size: 11px; color: #3F3F3F">悬停 · 行号变黑</span></div>
+        </div>
+      </div>
+      <div style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding-top: 24px">
+        <div style="display: flex; gap: 10px; align-items: flex-end">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <div style="width: 74px; height: 50px; border: 2px solid #000000; border-radius: 5px; background: linear-gradient(90deg, #FBF7EC 0, #FBF7EC 30px, #000000 30px, #000000 32px, transparent 32px); font-family: 'Space Mono', monospace; font-size: 9.5px; line-height: 15px; padding-top: 3px; color: #9A9A9A"><div style="width: 30px; text-align: right; padding-right: 6px">9</div><div style="width: 30px; text-align: right; padding-right: 6px">10</div><div style="width: 30px; text-align: right; padding-right: 6px">11</div></div>
+            <span style="font-size: 10.5px; color: #3F3F3F">两位数 32px</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <div style="width: 82px; height: 50px; border: 2px solid #000000; border-radius: 5px; background: linear-gradient(90deg, #FBF7EC 0, #FBF7EC 37px, #000000 37px, #000000 39px, transparent 39px); font-family: 'Space Mono', monospace; font-size: 9.5px; line-height: 15px; padding-top: 3px; color: #9A9A9A"><div style="width: 37px; text-align: right; padding-right: 6px">998</div><div style="width: 37px; text-align: right; padding-right: 6px">999</div><div style="width: 37px; text-align: right; padding-right: 6px">1000</div></div>
+            <span style="font-size: 10.5px; color: #3F3F3F">按位数加宽</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <span style="width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid #000000; border-radius: 6px; background: #FFD23F; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700">#</span>
+            <span style="font-size: 10.5px; color: #3F3F3F">开关 · 开</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <span style="width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid transparent; border-radius: 6px; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700">#</span>
+            <span style="font-size: 10.5px; color: #3F3F3F">关</span>
+          </div>
+        </div>
+        <span style="font-size: 11.5px; line-height: 1.6; color: #3F3F3F">宽度随最大行号的位数变化，两位数时只有 32px。折行只在第一截标行号。改动竖条贴着最左边，只有 3px 宽，不额外占空间。</span>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
