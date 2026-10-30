@@ -240,7 +240,27 @@ func (a *App) openFile() {
 	}()
 }
 
+// saveFile is ⌘S: a file document is written back to its own file at once;
+// only a document with no file yet (the clipboard) asks where to save.
 func (a *App) saveFile() {
+	a.syncEditor()
+	d := a.doc()
+	if d.path == "" {
+		a.saveFileAs()
+		return
+	}
+	if err := os.WriteFile(d.path, []byte(a.Text), 0o644); err != nil {
+		a.status = "存储失败：" + err.Error()
+		return
+	}
+	a.status = "已存储 " + d.path
+	a.showToast("已存储", d.name)
+}
+
+// saveFileAs is 存储为…（⇧⌘S）: it always asks where to save, and a file
+// document then belongs to the new file.
+func (a *App) saveFileAs() {
+	a.syncEditor()
 	text := a.Text
 	name := "文本.txt"
 	if d := a.doc(); d.path != "" {

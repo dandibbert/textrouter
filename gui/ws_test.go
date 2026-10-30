@@ -661,3 +661,41 @@ func TestEditMenuUndoWorksWhateverHasTheFocus(t *testing.T) {
 		t.Fatalf("redo from the menu: %q", a.Text)
 	}
 }
+
+type dialogCounter struct {
+	NopPlatform
+	saves *int
+}
+
+func (d dialogCounter) SaveFile(string, string) string { *d.saves++; return "" }
+
+func TestCmdSWritesTheFileWithoutAsking(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	var dialogs int
+	a.Platform = dialogCounter{NopPlatform{}, &dialogs}
+	p := filepath.Join(t.TempDir(), "doc.txt")
+	if err := os.WriteFile(p, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 3, End: 3, Text: " and new"})
+	tt.Key(ui.Cmd, ui.KeyS)
+	settle(tt, 2)
+	got, _ := os.ReadFile(p)
+	if string(got) != "old and new" || dialogs != 0 {
+		t.Fatalf("file %q, dialogs %d", got, dialogs)
+	}
+	// 存储为… and a document without a file still ask.
+	tt.Key(ui.Cmd|ui.Shift, ui.KeyS)
+	time.Sleep(50 * time.Millisecond)
+	if dialogs != 1 {
+		t.Fatalf("save as did not ask: %d", dialogs)
+	}
+	a.switchDoc(0)
+	tt.Key(ui.Cmd, ui.KeyS)
+	time.Sleep(50 * time.Millisecond)
+	if dialogs != 2 {
+		t.Fatalf("the clipboard has no file and must ask: %d", dialogs)
+	}
+}

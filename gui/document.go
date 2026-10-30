@@ -212,8 +212,11 @@ func (a *App) toolsMenuItems(c *ui.Context, m *pm) {
 	if m.Item("打开文件…").Chosen() {
 		a.openFile()
 	}
-	if m.Item("存储为…").Chosen() {
+	if m.Item("存储").Chosen() {
 		a.saveFile()
+	}
+	if m.Item("存储为…").Chosen() {
+		a.saveFileAs()
 	}
 	m.Separator()
 	if m.Item("设置…").Chosen() {
@@ -284,10 +287,11 @@ func (a *App) sheetView(c *ui.Context, k tokens) {
 func (a *App) findText() string { t, _ := a.findBase(); return t }
 
 // Exported entry points for the app menu bar.
-func (a *App) OpenFileDialog() { a.openFile() }
-func (a *App) SaveFileDialog() { a.saveFile() }
-func (a *App) ShowFind()       { a.showFind() }
-func (a *App) OpenPalette()    { a.openPalette() }
+func (a *App) OpenFileDialog()   { a.openFile() }
+func (a *App) SaveFileDialog()   { a.saveFile() }
+func (a *App) SaveFileAsDialog() { a.saveFileAs() }
+func (a *App) ShowFind()         { a.showFind() }
+func (a *App) OpenPalette()      { a.openPalette() }
 
 // pendingClipPill offers a newer clipboard that was not loaded because the
 // 剪贴板 document has edits. Subtle and non-blocking; loads on click.

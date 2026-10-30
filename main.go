@@ -236,7 +236,8 @@ func main() {
 			{Label: "文件", Submenu: []*mygo.MenuItem{
 				{Label: "剪贴板", Accelerator: "CmdOrCtrl+1", Click: run(a.ShowClipboard)},
 				{Label: "打开…", Accelerator: "CmdOrCtrl+O", Click: run(a.OpenFileDialog)},
-				{Label: "存储为…", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
+				{Label: "存储", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
+				{Label: "存储为…", Accelerator: "CmdOrCtrl+Shift+S", Click: run(a.SaveFileAsDialog)},
 				mygo.Separator(),
 				{Role: mygo.RoleClose, Label: "关闭窗口"},
 			}},

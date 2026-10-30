@@ -86,6 +86,7 @@ func (a *App) configureState(c *ui.Context, k tokens, st *editor.State, preview 
 			{Mods: ui.Cmd, Key: ui.Key0, Command: editor.NoCommand},
 			{Mods: ui.Cmd, Key: ui.KeyO, Command: editor.NoCommand},
 			{Mods: ui.Cmd, Key: ui.KeyS, Command: editor.NoCommand},
+			{Mods: ui.Cmd | ui.Shift, Key: ui.KeyS, Command: editor.NoCommand},
 			{Mods: ui.Cmd, Key: ui.KeyL, Command: editor.GoToLine},
 		}
 		st.RenderFindBar = nil
@@ -183,6 +184,7 @@ func (a *App) bodyCard(c *ui.Context, k tokens) {
 	c.OnShortcut(ui.Cmd, ui.Key0, func() { a.view.zoom = 1 })
 	c.OnShortcut(ui.Cmd, ui.KeyO, a.openFile)
 	c.OnShortcut(ui.Cmd, ui.KeyS, a.saveFile)
+	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyS, a.saveFileAs)
 	c.OnShortcut(ui.Cmd|ui.Alt, ui.KeyI, func() { a.view.invisibles = !a.view.invisibles })
 
 	pv, _ := a.shownPreview()
