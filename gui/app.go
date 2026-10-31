@@ -187,6 +187,18 @@ func (a *App) LoadClipboard(s string) bool {
 	return true
 }
 
+// ActivateClipboard is the same for what merely brings the window forward (a
+// Dock click, switching back to the app): when the clipboard has not changed
+// it leaves the document you are on alone, instead of jumping to the
+// clipboard tab. The menu bar icon and the global shortcut ask for the
+// clipboard on purpose, and use LoadClipboard.
+func (a *App) ActivateClipboard(s string) bool {
+	if a.cur != 0 && a.clipSeen && s == a.clipLoaded {
+		return false
+	}
+	return a.LoadClipboard(s)
+}
+
 // applyClipboard loads s into the 剪贴板 document as one undoable edit.
 func (a *App) applyClipboard(s string) {
 	a.clipHasPending, a.clipPending = false, ""

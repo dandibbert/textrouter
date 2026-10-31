@@ -250,6 +250,7 @@ func (a *App) jumpTo(i int) {
 	if n == 0 {
 		return
 	}
+	a.ws.editing = false // jumping shows the matches in the preview again
 	i = (i%n + n) % n
 	f.cur = i
 	f.jumpAt = time.Now()
@@ -283,6 +284,7 @@ func (a *App) setTab(i int) {
 		w.tabDir = -1
 	}
 	w.tab, w.tabAt = i, time.Now()
+	w.editing = false
 	if i == 1 {
 		a.captureScope()
 	}
@@ -529,6 +531,10 @@ func (a *App) findBoxes(c *ui.Context, k tokens, locked bool) {
 			}
 			if in.Changed() {
 				f.reset()
+				w.editing = false
+			}
+			if in.Focused() {
+				w.editing = false
 			}
 			if in.Submitted() && w.tab == 1 {
 				a.NextMatch()
@@ -555,6 +561,9 @@ func (a *App) findBoxes(c *ui.Context, k tokens, locked bool) {
 				Grow(1).MinWidth(0).TextColor(Ink)
 			if fo.modeIdx == 1 {
 				rep.TextRanges(templateRanges(k, fo.opts.Replace)...)
+			}
+			if rep.Focused() || rep.Changed() {
+				w.editing = false
 			}
 		})
 	})

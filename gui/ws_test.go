@@ -699,3 +699,79 @@ func TestCmdSWritesTheFileWithoutAsking(t *testing.T) {
 		t.Fatalf("the clipboard has no file and must ask: %d", dialogs)
 	}
 }
+
+func TestActivationKeepsTheFileYouAreOn(t *testing.T) {
+	a, tt := newApp(t, "")
+	a.LoadClipboard("clip")
+	p := filepath.Join(t.TempDir(), "b.txt")
+	if err := os.WriteFile(p, []byte("file b"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	a.openedAt = time.Now().Add(-time.Minute)
+	settle(tt, 2)
+	// A Dock click with the clipboard unchanged stays on the file.
+	if a.ActivateClipboard("clip"); a.cur != 1 || a.Text != "file b" {
+		t.Fatalf("jumped away: cur=%d %q", a.cur, a.Text)
+	}
+	// New text on the clipboard brings the 剪贴板 tab forward with it.
+	if !a.ActivateClipboard("something new") || a.cur != 0 || a.Text != "something new" {
+		t.Fatalf("new clipboard: cur=%d %q", a.cur, a.Text)
+	}
+	// The menu bar icon and the shortcut ask for the clipboard on purpose.
+	a.switchDoc(1)
+	if a.LoadClipboard("something new"); a.cur != 0 {
+		t.Fatalf("explicit open stayed on the file: cur=%d", a.cur)
+	}
+}
+
+func TestTextStaysEditableWhileFindHasMatches(t *testing.T) {
+	a, tt := newApp(t, "alpha beta alpha")
+	a.setTab(1)
+	a.find.opts.Find, a.find.opts.Replace = "alpha", "A"
+	settle(tt, 3)
+	if pv, _ := a.shownPreview(); pv == nil {
+		t.Fatal("no preview while searching")
+	}
+	// Clicking into the preview hands the click to the text itself, where
+	// the caret lands at the same place.
+	pv, _ := a.shownPreview()
+	r, ok := tt.Find("剪贴板文本")
+	if !ok {
+		t.Fatalf("no editor: %q", tt.Texts())
+	}
+	tt.ClickAt(r.X+90, r.Y+12)
+	merged := a.ws.pvEd.st.Selection().Head
+	want := pv.origOffset(merged)
+	settle(tt, 3)
+	if !a.ws.editing {
+		t.Fatal("clicking into the preview did not switch to the editable text")
+	}
+	if s := a.ed.Selection(); s.Head != want {
+		t.Fatalf("caret at %d, want %d", s.Head, want)
+	}
+	if !tt.Focused("剪贴板文本") {
+		t.Fatalf("the text does not have the focus")
+	}
+	tt.Type("X")
+	settle(tt, 2)
+	if len(a.Text) != len("alpha beta alpha")+1 || !strings.Contains(a.Text, "X") {
+		t.Fatalf("typed: %q", a.Text)
+	}
+	// Matches stay marked in the editable text, and using the find box
+	// brings the preview back.
+	n := 0
+	for _, h := range a.ed.Highlights {
+		if h.Underline.A > 0 {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Fatalf("matches marked while editing: %d", n)
+	}
+	a.jumpTo(1)
+	settle(tt, 2)
+	if a.ws.editing {
+		t.Fatal("jumping should show the preview again")
+	}
+}

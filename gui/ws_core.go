@@ -238,4 +238,14 @@ type workspace struct {
 	rowHov   string // the row the pointer is on
 	headHov  bool   // the pointer is on a section heading
 	focusFnd bool   // ⌘F: put the caret in the find box
+
+	// editing is set once the user clicks into the text while find/replace
+	// has matches: the text then shows as itself, editable, with the matches
+	// marked, instead of the read-only preview, until the find boxes are
+	// used again.
+	editing     bool
+	focusEditor bool
+	// the preview editor's caret as of the last frame, to see a click
+	pvSelKey               string
+	pvSelHead, pvSelAnchor int
 }

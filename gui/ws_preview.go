@@ -41,7 +41,17 @@ const (
 	markHit
 )
 
+// pvSeg ties a stretch of the merged text to the original text: an unchanged
+// stretch maps byte for byte; a struck, inserted or matched one maps to where
+// the match begins.
+type pvSeg struct {
+	mStart, mEnd int
+	oStart       int
+	same         bool
+}
+
 type preview struct {
+	segs    []pvSeg
 	key     string
 	label   string // the name in the status bar
 	delta   string // "−3 行" / "5 处"
@@ -55,12 +65,27 @@ type preview struct {
 	at      time.Time // when it began showing
 }
 
+// origOffset maps a byte offset of the merged text to the original text.
+func (pv *preview) origOffset(m int) int {
+	for _, s := range pv.segs {
+		if m >= s.mStart && m <= s.mEnd {
+			if s.same {
+				return s.oStart + (m - s.mStart)
+			}
+			return s.oStart
+		}
+	}
+	return 0
+}
+
 // visibleDel makes what a deleted run held visible: spaces as ·, line breaks
 // as ⏎, tabs as →.
 var visibleDel = strings.NewReplacer("\n", "⏎", " ", "·", "\t", "→")
 
 // pvBuilder builds the merged text of a preview.
 type pvBuilder struct {
+	segs      []pvSeg
+	orig      int // bytes of the original text passed so far
 	b         strings.Builder
 	line      int
 	spans     []pvSpan
@@ -80,11 +105,17 @@ func (p *pvBuilder) mark(line int, k markKind) {
 }
 
 func (p *pvBuilder) same(s string) {
+	if s != "" {
+		p.segs = append(p.segs, pvSeg{mStart: p.b.Len(), mEnd: p.b.Len() + len(s), oStart: p.orig, same: true})
+	}
 	p.b.WriteString(s)
+	p.orig += len(s)
 	p.line += strings.Count(s, "\n")
 }
 
-func (p *pvBuilder) add(s string, k spanKind, cur bool, mk markKind) {
+// add writes a struck, inserted, matched or skipped stretch; orig is the text
+// it stands for in the original (empty for an insertion).
+func (p *pvBuilder) add(s string, k spanKind, cur bool, mk markKind, orig string) {
 	if s == "" {
 		return
 	}
@@ -92,6 +123,8 @@ func (p *pvBuilder) add(s string, k spanKind, cur bool, mk markKind) {
 		s = visibleDel.Replace(s)
 	}
 	start := p.b.Len()
+	p.segs = append(p.segs, pvSeg{mStart: start, mEnd: start + len(s), oStart: p.orig})
+	p.orig += len(orig)
 	p.b.WriteString(s)
 	p.spans = append(p.spans, pvSpan{start: start, end: p.b.Len(), kind: k, cur: cur})
 	if mk != 0 {
@@ -103,7 +136,7 @@ func (p *pvBuilder) add(s string, k spanKind, cur bool, mk markKind) {
 }
 
 func (p *pvBuilder) finish(key string) *preview {
-	pv := &preview{key: key, merged: p.b.String(), spans: p.spans, marks: p.marks, curLine: -1, lines: p.line + 1}
+	pv := &preview{segs: p.segs, key: key, merged: p.b.String(), spans: p.spans, marks: p.marks, curLine: -1, lines: p.line + 1}
 	return pv
 }
 
@@ -115,9 +148,9 @@ func diffPreview(key string, segs []engine.Seg) *preview {
 		case '=':
 			p.same(s.Text)
 		case '-':
-			p.add(s.Text, spDel, false, markDel)
+			p.add(s.Text, spDel, false, markDel, s.Text)
 		case '+':
-			p.add(s.Text, spIns, false, markAdd)
+			p.add(s.Text, spIns, false, markAdd, "")
 		}
 	}
 	pv := p.finish(key)
@@ -145,12 +178,12 @@ func findPreview(key, text string, ms []engine.Match, skip func(int) bool, hitOn
 		startLine := p.line
 		switch {
 		case skip != nil && skip(i):
-			p.add(old, spSkip, isCur, 0)
+			p.add(old, spSkip, isCur, 0, old)
 		case hitOnly:
-			p.add(old, spHit, isCur, markHit)
+			p.add(old, spHit, isCur, markHit, old)
 		default:
-			p.add(old, spDel, isCur, markDel)
-			p.add(m.Result, spIns, isCur, markDel)
+			p.add(old, spDel, isCur, markDel, old)
+			p.add(m.Result, spIns, isCur, markDel, "")
 		}
 		p.ticks(startLine, i, cur)
 		last = m.End

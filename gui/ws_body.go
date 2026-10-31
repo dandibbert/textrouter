@@ -188,6 +188,9 @@ func (a *App) bodyCard(c *ui.Context, k tokens) {
 	c.OnShortcut(ui.Cmd|ui.Alt, ui.KeyI, func() { a.view.invisibles = !a.view.invisibles })
 
 	pv, _ := a.shownPreview()
+	if pv != nil && w.tab == 1 && w.editing && w.applyFx == nil {
+		pv = nil // the user is editing the text: show it, not the preview
+	}
 	if pv != nil && w.pvShown != pv.key+fmt.Sprint(w.textKey) {
 		// A preview begins (or changes to another): its entrance plays again.
 		w.pvShown, w.pvAt = pv.key+fmt.Sprint(w.textKey), time.Now()
@@ -204,6 +207,20 @@ func (a *App) bodyCard(c *ui.Context, k tokens) {
 	if pv != nil {
 		st = a.pvState(pv)
 		a.configureState(c, k, st, true)
+		sel := st.Selection()
+		key := pv.key + fmt.Sprint(w.textKey, len(pv.merged))
+		moved := w.pvSelKey == key && (sel.Head != w.pvSelHead || sel.Anchor != w.pvSelAnchor)
+		w.pvSelKey, w.pvSelHead, w.pvSelAnchor = key, sel.Head, sel.Anchor
+		if w.tab == 1 && w.applyFx == nil && moved {
+			// A click into the preview (it puts the caret somewhere) goes to
+			// the text itself, at the same place, so that it can be edited.
+			off := pv.origOffset(sel.Head)
+			a.syncEditor()
+			off = min(off, len(a.Text))
+			a.ed.Select(off, off)
+			w.editing, w.focusEditor = true, true
+			c.Invalidate()
+		}
 		fx := w.applyFx
 		p := entered
 		if fx != nil {
@@ -239,6 +256,10 @@ func (a *App) bodyCard(c *ui.Context, k tokens) {
 			ev := editor.View(c, st).Absolute().Top(0).Left(0).Right(0).Bottom(0)
 			if pv == nil {
 				ev.AutoFocus()
+				if w.focusEditor {
+					ev.Focus()
+					w.focusEditor = false
+				}
 			}
 			a.ticksView(c, st, pv, curLine)
 		})

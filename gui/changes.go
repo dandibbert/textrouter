@@ -154,6 +154,20 @@ func (a *App) updateHighlights(c *ui.Context, k tokens) {
 	} else if len(a.changes) > 0 {
 		a.changes = nil // edited since: drop it
 	}
+	if w := &a.ws; w.tab == 1 && w.editing {
+		// Editing the text while find/replace has matches: mark them in place.
+		if o := a.find.options(); o.Find != "" {
+			if fi := a.findNow(); fi.res.err == nil {
+				for i, m := range byteMatches(a.Text, fi.res.matches, 0) {
+					h := editor.Highlight{Start: m[0], End: m[1], Color: Hit, Underline: Ink}
+					if i == w.find.cur {
+						h.Outline = Ink
+					}
+					hs = append(hs, h)
+				}
+			}
+		}
+	}
 	st.Highlights, st.HighlightVersion = hs, ver
 }
 
