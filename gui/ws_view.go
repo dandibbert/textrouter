@@ -47,6 +47,7 @@ func (a *App) View(c *ui.Context) {
 	c.OnShortcut(ui.Cmd, ui.KeyZ, a.Undo)
 	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyZ, a.Redo)
 	c.OnShortcut(ui.Cmd, ui.KeyComma, func() { a.Page = PageSettings })
+	c.OnShortcut(ui.Cmd, ui.KeyW, a.CloseCurrentTab) // the File menu takes ⌘W; this is the same action
 	if a.Page != PageClipboard && a.Page != "" && !a.paletteOpen {
 		c.OnShortcut(0, ui.KeyEscape, func() { a.Page = PageClipboard })
 	}
@@ -70,6 +71,7 @@ func (a *App) View(c *ui.Context) {
 	}
 	a.paletteView(c)
 	a.toastView(c)
+	a.closePromptView(c)
 }
 
 // ---------------------------------------------------------------- title bar
@@ -101,6 +103,7 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 		} else if d := a.doc(); !d.clip {
 			ui.Icon(c, ic("file-text")).FontSize(16).TextColor(Ink)
 			ui.Text(c, d.name).FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
+			a.unsavedDot(c, a.cur)
 		} else {
 			t := ui.ButtonBase(c.Key("cliptitle")).Height(30).Gap(10).AlignItems(ui.Center).Label("剪贴板").
 				Tooltip("拖出标题栏，或右键，在新窗口中打开副本")
