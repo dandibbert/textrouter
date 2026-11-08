@@ -540,17 +540,35 @@ func TestFileOpenedBySystemStaysOpenThroughActivation(t *testing.T) {
 
 type windowRecorder struct {
 	NopPlatform
-	name, path, text *string
+	name, path, text, saved *string
 }
 
-func (r windowRecorder) OpenWindow(name, path, text string) {
-	*r.name, *r.path, *r.text = name, path, text
+func (r windowRecorder) OpenWindow(name, path, text, saved string) {
+	if r.name != nil {
+		*r.name = name
+	}
+	if r.path != nil {
+		*r.path = path
+	}
+	if r.text != nil {
+		*r.text = text
+	}
+	if r.saved != nil {
+		*r.saved = saved
+	}
 }
+
+type closeRecorder struct {
+	NopPlatform
+	closes int
+}
+
+func (r *closeRecorder) CloseWindow() { r.closes++ }
 
 func TestTearingOffATabOpensAWindow(t *testing.T) {
 	a, tt := newApp(t, "clip")
-	var name, path, text string
-	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	var name, path, text, saved string
+	a.Platform = windowRecorder{name: &name, path: &path, text: &text, saved: &saved}
 	p := filepath.Join(t.TempDir(), "notes.txt")
 	if err := os.WriteFile(p, []byte("file body"), 0o644); err != nil {
 		t.Fatal(err)
@@ -564,8 +582,8 @@ func TestTearingOffATabOpensAWindow(t *testing.T) {
 	}
 	a.detachDoc(1)
 	settle(tt, 2)
-	if name != "notes.txt" || path != p || text != "file body!" {
-		t.Fatalf("window for %q %q %q", name, path, text)
+	if name != "notes.txt" || path != p || text != "file body!" || saved != "file body" {
+		t.Fatalf("window for %q %q %q saved %q", name, path, text, saved)
 	}
 	if len(a.docs) != 1 || a.cur != 0 || a.Text != "clip" {
 		t.Fatalf("main window kept docs=%d cur=%d %q", len(a.docs), a.cur, a.Text)
@@ -574,7 +592,7 @@ func TestTearingOffATabOpensAWindow(t *testing.T) {
 
 func TestDetachedWindowHoldsOneFile(t *testing.T) {
 	lib := engine.LoadLibrary(filepath.Join(t.TempDir(), "library.json"))
-	a := NewDetached(lib, nil, "notes.txt", "/x/notes.txt", "hello")
+	a := NewDetached(lib, nil, "notes.txt", "/x/notes.txt", "hello", "hello")
 	tt := ui.NewTester(a.View, 1100, 700)
 	settle(tt, 3)
 	if !tt.HasText("notes.txt") || tt.HasText("复制并完成") || a.Text != "hello" {
@@ -591,7 +609,7 @@ func TestDetachedWindowHoldsOneFile(t *testing.T) {
 func TestDraggingATabDownTearsItOff(t *testing.T) {
 	a, tt := newApp(t, "clip")
 	var name, path, text string
-	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	a.Platform = windowRecorder{name: &name, path: &path, text: &text}
 	p := filepath.Join(t.TempDir(), "drag.txt")
 	if err := os.WriteFile(p, []byte("body"), 0o644); err != nil {
 		t.Fatal(err)
@@ -618,7 +636,7 @@ func TestDraggingATabDownTearsItOff(t *testing.T) {
 func TestShortDragOfATabIsNoTearOff(t *testing.T) {
 	a, tt := newApp(t, "clip")
 	var name, path, text string
-	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	a.Platform = windowRecorder{name: &name, path: &path, text: &text}
 	p := filepath.Join(t.TempDir(), "wobble.txt")
 	if err := os.WriteFile(p, []byte("body"), 0o644); err != nil {
 		t.Fatal(err)
@@ -773,5 +791,209 @@ func TestTextStaysEditableWhileFindHasMatches(t *testing.T) {
 	settle(tt, 2)
 	if a.ws.editing {
 		t.Fatal("jumping should show the preview again")
+	}
+}
+
+func openNotes(t *testing.T, a *App, body string) string {
+	t.Helper()
+	p := filepath.Join(t.TempDir(), "notes.txt")
+	if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.loadFile(p)
+	return p
+}
+
+func TestCmdWClosesTheFileTabNotTheWindow(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	rec := &closeRecorder{}
+	a.Platform = rec
+	openNotes(t, a, "file body")
+	settle(tt, 2)
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 0 {
+		t.Fatal("⌘W closed the window")
+	}
+	if tt.HasText("未存储的更改") {
+		t.Fatal("a clean file asked")
+	}
+	if len(a.docs) != 1 || a.cur != 0 || a.Text != "clip" {
+		t.Fatalf("docs %d cur %d %q", len(a.docs), a.cur, a.Text)
+	}
+}
+
+func TestCmdWAsksBeforeDroppingUnsavedEdits(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	rec := &closeRecorder{}
+	a.Platform = rec
+	p := openNotes(t, a, "file body")
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 9, End: 9, Text: "!"})
+	a.syncEditor()
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 0 || len(a.docs) != 2 || !tt.HasText("关闭这个标签前要存储吗") {
+		t.Fatalf("closes %d docs %d texts %q", rec.closes, len(a.docs), tt.Texts())
+	}
+	if err := tt.Click("取消"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	if len(a.docs) != 2 || a.Text != "file body!" || tt.HasText("关闭这个标签前要存储吗") {
+		t.Fatalf("cancel: docs %d %q prompt %v", len(a.docs), a.Text, tt.HasText("关闭这个标签前要存储吗"))
+	}
+	// Escape cancels too.
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	tt.Key(0, ui.KeyEscape)
+	settle(tt, 2)
+	if len(a.docs) != 2 || a.Text != "file body!" {
+		t.Fatalf("escape: docs %d %q", len(a.docs), a.Text)
+	}
+	// Don't save drops the tab and leaves the file alone.
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if err := tt.Click("不存储"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	got, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "file body" || len(a.docs) != 1 || a.Text != "clip" || rec.closes != 0 {
+		t.Fatalf("discard: file %q docs %d %q closes %d", got, len(a.docs), a.Text, rec.closes)
+	}
+}
+
+func TestCmdWSavesThenClosesTheTab(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	rec := &closeRecorder{}
+	a.Platform = rec
+	p := openNotes(t, a, "file body")
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 9, End: 9, Text: "!"})
+	a.syncEditor()
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if err := tt.Click("存储"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	got, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "file body!" || len(a.docs) != 1 || a.cur != 0 || rec.closes != 0 {
+		t.Fatalf("save: file %q docs %d cur %d closes %d", got, len(a.docs), a.cur, rec.closes)
+	}
+}
+
+func TestCmdSThenCmdWClosesWithoutAsking(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	a.Platform = &closeRecorder{}
+	p := openNotes(t, a, "old")
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 3, End: 3, Text: " and new"})
+	a.syncEditor()
+	tt.Key(ui.Cmd, ui.KeyS)
+	settle(tt, 2)
+	got, err := os.ReadFile(p)
+	if err != nil || string(got) != "old and new" {
+		t.Fatalf("saved %q err %v", got, err)
+	}
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if tt.HasText("关闭这个标签前要存储吗") || len(a.docs) != 1 {
+		t.Fatalf("asked after save: docs %d", len(a.docs))
+	}
+}
+
+func TestCmdWOnTheClipboardHidesTheWindow(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	rec := &closeRecorder{}
+	a.Platform = rec
+	settle(tt, 2)
+	a.Text = "edited and not copied"
+	a.syncEditor()
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 1 || tt.HasText("关闭这个标签前要存储吗") || a.Text != "edited and not copied" {
+		t.Fatalf("closes %d text %q", rec.closes, a.Text)
+	}
+	// A file tab stays open: ⌘W on the 剪贴板 hides the window, it does not
+	// throw the file away.
+	openNotes(t, a, "keep me")
+	a.switchDoc(0)
+	settle(tt, 2)
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 2 || len(a.docs) != 2 || a.docs[1].text != "keep me" {
+		t.Fatalf("closes %d docs %d", rec.closes, len(a.docs))
+	}
+}
+
+func TestTabCloseButtonAsksToo(t *testing.T) {
+	a, tt := newApp(t, "clip")
+	a.Platform = &closeRecorder{}
+	openNotes(t, a, "file body")
+	settle(tt, 2)
+	a.ed.Buffer.Edit(editor.Edit{Start: 0, End: 0, Text: "x"})
+	a.syncEditor()
+	settle(tt, 2)
+	if err := tt.Click("关闭 notes.txt"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	if !tt.HasText("关闭这个标签前要存储吗") || len(a.docs) != 2 {
+		t.Fatalf("docs %d texts %q", len(a.docs), tt.Texts())
+	}
+	if err := tt.Click("不存储"); err != nil {
+		t.Fatal(err)
+	}
+	settle(tt, 2)
+	if len(a.docs) != 1 || a.Text != "clip" {
+		t.Fatalf("docs %d %q", len(a.docs), a.Text)
+	}
+}
+
+func TestDetachedCmdWAsksThenClosesTheWindow(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "notes.txt")
+	if err := os.WriteFile(p, []byte("hello"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	lib := engine.LoadLibrary(filepath.Join(dir, "library.json"))
+	rec := &closeRecorder{}
+	a := NewDetached(lib, rec, "notes.txt", p, "hello!", "hello")
+	tt := ui.NewTester(a.View, 1100, 700)
+	settle(tt, 2)
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 0 || !tt.HasText("关闭这个标签前要存储吗") {
+		t.Fatalf("closes %d prompt %v", rec.closes, tt.HasText("关闭这个标签前要存储吗"))
+	}
+	tt.Key(0, ui.KeyEnter) // 存储 is the default button
+	settle(tt, 2)
+	got, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "hello!" || rec.closes != 1 {
+		t.Fatalf("file %q closes %d", got, rec.closes)
+	}
+}
+
+func TestCleanDetachedTabClosesTheWindow(t *testing.T) {
+	lib := engine.LoadLibrary(filepath.Join(t.TempDir(), "library.json"))
+	rec := &closeRecorder{}
+	a := NewDetached(lib, rec, "notes.txt", "/x/notes.txt", "hello", "hello")
+	tt := ui.NewTester(a.View, 1100, 700)
+	settle(tt, 2)
+	tt.Key(ui.Cmd, ui.KeyW)
+	settle(tt, 2)
+	if rec.closes != 1 || tt.HasText("关闭这个标签前要存储吗") {
+		t.Fatalf("closes %d", rec.closes)
 	}
 }

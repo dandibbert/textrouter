@@ -23,12 +23,18 @@ import (
 
 // desktop implements gui.Platform with MyGo's desktop APIs.
 type desktop struct {
-	win    *mygo.Window
-	hotkey string
-	show   func()
-	lib    *engine.Library
-	parent *desktop // the main window's, for the windows made by tearing off a tab
+	win        *mygo.Window
+	hotkey     string
+	show       func()
+	lib        *engine.Library
+	app        *gui.App
+	parent     *desktop // the main window's, for the windows made by tearing off a tab
+	quitting   *bool
+	allowClose bool // a torn-off window may close; set after unsaved edits are dealt with
 }
+
+// desks finds the window ⌘W was pressed in, including one torn off a tab.
+var desks = map[*mygo.Window]*desktop{}
 
 func (d *desktop) OpenFiles(title string, exts []string, multiple, dirs bool) []string {
 	opts := mygo.OpenDialogOptions{Parent: d.win, Title: title, Multiple: multiple, Directory: dirs}
@@ -54,7 +60,7 @@ func (d *desktop) SaveFile(title, name string) string {
 // previous app comes back to the front, ready for ⌘V.
 func (d *desktop) HideWindow() {
 	if d.parent != nil {
-		d.win.Close()
+		d.CloseWindow()
 		return
 	}
 	if runtime.GOOS == "darwin" {
@@ -62,6 +68,19 @@ func (d *desktop) HideWindow() {
 		return
 	}
 	d.win.Hide()
+}
+
+// CloseWindow is the close button. The main window hides and keeps its
+// tabs; a window torn off a tab closes once unsaved edits are dealt with.
+func (d *desktop) CloseWindow() {
+	if d.win == nil {
+		return
+	}
+	if d.parent != nil {
+		d.allowClose = true
+	}
+	w := d.win
+	w.Update(func() { w.Close() })
 }
 
 func (d *desktop) SetTheme(theme string) {
@@ -100,13 +119,14 @@ func (d *desktop) Update(fn func()) { d.win.Update(fn) }
 
 // OpenWindow opens a file document in a window of its own, a little below
 // and to the right of this one.
-func (d *desktop) OpenWindow(name, path, text string) {
+func (d *desktop) OpenWindow(name, path, text, saved string) {
 	root := d
 	if d.parent != nil {
 		root = d.parent
 	}
-	child := &desktop{parent: root, lib: root.lib}
-	ca := gui.NewDetached(root.lib, child, name, path, text)
+	child := &desktop{parent: root, lib: root.lib, quitting: root.quitting}
+	ca := gui.NewDetached(root.lib, child, name, path, text, saved)
+	child.app = ca
 	x, y := d.win.Position()
 	w, h := d.win.Size()
 	child.win = mygo.NewWindow(mygo.WindowOptions{
@@ -122,6 +142,17 @@ func (d *desktop) OpenWindow(name, path, text string) {
 		Vibrancy:       mygo.VibrancySidebar,
 		Content:        ui.View(ca.View),
 	})
+	desks[child.win] = child
+	child.win.OnClosed(func() { delete(desks, child.win) })
+	// The close button closes this one document. ⌘W does too; both ask
+	// first when the text differs from the file.
+	child.win.OnClose(func(e *mygo.CloseEvent) {
+		if child.quitting != nil && *child.quitting || child.allowClose {
+			return
+		}
+		e.PreventDefault()
+		child.win.Update(func() { ca.CloseCurrentTab() })
+	})
 	child.win.Show()
 	child.win.Focus()
 }
@@ -135,9 +166,10 @@ func (d *desktop) SetAppIcon(png []byte) {
 
 func main() {
 	lib := engine.LoadLibrary(engine.LibraryPath())
-	d := &desktop{lib: lib}
-	a := gui.New(lib, d)
 	quitting := false
+	d := &desktop{lib: lib, quitting: &quitting}
+	a := gui.New(lib, d)
+	d.app = a
 
 	// Files dropped on the Dock icon, "Open With" and the command line: held
 	// until the window exists, then opened as document tabs.
@@ -169,6 +201,8 @@ func main() {
 			Vibrancy:       mygo.VibrancySidebar,
 			Content:        ui.View(a.View),
 		})
+		desks[d.win] = d
+		d.win.OnClosed(func() { delete(desks, d.win) })
 		for _, p := range pendingFiles {
 			p := p
 			d.win.Update(func() { a.OpenPath(p) })
@@ -245,7 +279,21 @@ func main() {
 				{Label: "存储", Accelerator: "CmdOrCtrl+S", Click: run(a.SaveFileDialog)},
 				{Label: "存储为…", Accelerator: "CmdOrCtrl+Shift+S", Click: run(a.SaveFileAsDialog)},
 				mygo.Separator(),
-				{Role: mygo.RoleClose, Label: "关闭窗口"},
+				// Not RoleClose: that shortcut closes the window. ⌘W closes
+				// the current file tab, and asks when the file has unsaved edits.
+				{Label: "关闭标签", Accelerator: "CmdOrCtrl+W", Click: func(_ *mygo.MenuItem, w *mygo.Window) {
+					desk := d
+					if w != nil {
+						if got := desks[w]; got != nil && got.app != nil {
+							desk = got
+						}
+					}
+					if desk.win == nil || desk.app == nil {
+						return
+					}
+					app := desk.app
+					desk.win.Update(func() { app.CloseCurrentTab() })
+				}},
 			}},
 			{Label: "查找", Submenu: []*mygo.MenuItem{
 				{Label: "查找替换", Accelerator: "CmdOrCtrl+F", Click: run(a.ShowFind)},
