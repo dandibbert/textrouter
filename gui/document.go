@@ -14,6 +14,7 @@ type document struct {
 	name, path string
 	clip       bool
 	text       string
+	saved      string // text last read from or written to disk; files only
 	ed         *editor.State
 	edVer      uint64
 	edSynced   string
@@ -65,13 +66,130 @@ func (a *App) closeDoc(i int) {
 	}
 }
 
+// docDirty reports whether document i differs from what was last read from
+// or written to its file. The pinned 剪贴板 tab is not a file.
+func (a *App) docDirty(i int) bool {
+	if i < 0 || i >= len(a.docs) {
+		return false
+	}
+	d := a.docs[i]
+	if d.clip || d.path == "" {
+		return false
+	}
+	text := d.text
+	if i == a.cur {
+		a.syncEditor()
+		text = a.Text
+	}
+	return text != d.saved
+}
+
+// canCloseTab reports whether document i is a file tab ⌘W can close. The
+// pinned 剪贴板 stays; a torn-off window's only document can close, and
+// closing it closes that window.
+func (a *App) canCloseTab(i int) bool {
+	if i < 0 || i >= len(a.docs) || a.docs[i].clip {
+		return false
+	}
+	if a.detached {
+		return true
+	}
+	return i > 0
+}
+
+// CloseCurrentTab is ⌘W. A file tab closes; when it has unsaved edits a
+// dialog asks first. The pinned 剪贴板 tab cannot close, so ⌘W hides the
+// window instead, the same as its close button.
+func (a *App) CloseCurrentTab() { a.requestClose(a.cur) }
+
+func (a *App) requestClose(i int) {
+	if a.closeAsk {
+		return
+	}
+	a.syncEditor()
+	if !a.canCloseTab(i) {
+		if i == a.cur && i >= 0 && i < len(a.docs) && a.docs[i].clip {
+			a.Platform.CloseWindow()
+		}
+		return
+	}
+	if a.docDirty(i) {
+		a.closeAsk, a.closeOpen, a.closeIdx = true, true, i
+		return
+	}
+	a.finishClose(i)
+}
+
+func (a *App) finishClose(i int) {
+	a.closeAsk, a.closeOpen = false, false
+	if i < 0 || i >= len(a.docs) || a.docs[i].clip {
+		return
+	}
+	if a.detached {
+		a.Platform.CloseWindow()
+		return
+	}
+	a.closeDoc(i)
+}
+
+// unsavedDot is the mark on a file tab whose text is not what the file holds.
+func (a *App) unsavedDot(c *ui.Context, i int) {
+	if !a.docDirty(i) {
+		return
+	}
+	ui.Box(c).Size(7, 7).Radius(4).Background(Ink).Tooltip("未存储的更改")
+}
+
+// closePromptView asks before a dirty tab is closed. Escape and the
+// backdrop cancel; nothing is discarded unless 不存储 is chosen.
+func (a *App) closePromptView(c *ui.Context) {
+	if !a.closeAsk {
+		return
+	}
+	if a.closeIdx < 0 || a.closeIdx >= len(a.docs) || !a.canCloseTab(a.closeIdx) {
+		a.closeAsk, a.closeOpen = false, false
+		return
+	}
+	idx := a.closeIdx
+	name := a.docs[idx].name
+	dlg := ui.DialogBase(c, &a.closeOpen, func(back, panel ui.Element) {
+		back.Background(Ink.Alpha(0.35))
+		hard(boxed(panel.Width(440).Padding(22).Radius(radiusCtl).Background(Ground)), shadowLg)
+		panel.Label("未存储的更改")
+		ui.Column(c).Width(396).Gap(12).Children(func() {
+			ui.Text(c, "未存储的更改").FontSize(18).FontWeight(700).TextColor(Ink)
+			ui.Text(c, "「"+name+"」有未存储的更改。关闭这个标签前要存储吗？").FontSize(14).TextColor(Ink)
+			ui.Text(c, "不存储的话，这些更改会丢失。").FontSize(13).TextColor(Muted)
+			ui.Row(c).Gap(8).Justify(ui.End).Padding(8, 0, 0, 0).Children(func() {
+				if ghost(c, "close-discard", "不存储", "", false).Clicked() {
+					a.finishClose(idx)
+				}
+				if ghost(c, "close-cancel", "取消", "", false).Clicked() {
+					a.closeAsk, a.closeOpen = false, false
+				}
+				if primary(c, "close-save", "存储", "", "", false).AutoFocus().Clicked() {
+					if a.writeDoc(idx) {
+						a.finishClose(idx)
+					} else {
+						a.closeOpen = true
+					}
+				}
+			})
+		})
+	})
+	if dlg.Dismissed() {
+		a.closeAsk = false
+	}
+}
+
 // NewDetached is the interface of a window that holds one file document, as
 // made by dragging its tab out of the main window. It shares the library
-// (settings, action chains) with the main window.
-func NewDetached(lib *engine.Library, p Platform, name, path, text string) *App {
+// (settings, action chains) with the main window. saved is what the file
+// on disk was last known to hold.
+func NewDetached(lib *engine.Library, p Platform, name, path, text, saved string) *App {
 	a := New(lib, p)
 	a.detached = true
-	a.docs = []*document{{name: name, path: path, text: text}}
+	a.docs = []*document{{name: name, path: path, text: text, saved: saved}}
 	a.cur = 0
 	a.Text = text
 	return a
@@ -89,9 +207,9 @@ func (a *App) detachDoc(i int) {
 	if i == a.cur {
 		text = a.Text
 	}
-	name, path := d.name, d.path
+	name, path, saved := d.name, d.path, d.saved
 	a.closeDoc(i)
-	a.Platform.OpenWindow(name, path, text)
+	a.Platform.OpenWindow(name, path, text, saved)
 }
 
 // ShowClipboard makes the clipboard workspace current.
@@ -147,7 +265,7 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 				a.detachDoc(i)
 			}
 			if m.Item("关闭标签").Chosen() {
-				a.closeDoc(i)
+				a.requestClose(i)
 			}
 		})
 	}
@@ -158,6 +276,7 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 		}
 		ui.Icon(c, ic(icon)).FontSize(13).TextColor(Ink)
 		ui.Text(c, d.name).FontSize(sizeButton).FontWeight(map[bool]int{true: 700, false: 500}[sel]).TextColor(Ink).SingleLine()
+		a.unsavedDot(c, i)
 		if !d.clip {
 			x := ui.ButtonBase(c.Key("x")).Size(16, 16).Radius(radiusKey).Center().Label("关闭 " + d.name)
 			if x.Hovered() {
@@ -165,7 +284,7 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 			}
 			x.Children(func() { ui.Icon(c, ic("x")).FontSize(11).TextColor(Ink) })
 			if x.Clicked() {
-				a.closeDoc(i)
+				a.requestClose(i)
 			}
 		}
 	})

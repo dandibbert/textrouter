@@ -216,7 +216,8 @@ func (a *App) loadFile(path string) {
 			return
 		}
 	}
-	a.docs = append(a.docs, &document{name: filepath.Base(path), path: path, text: string(data)})
+	body := string(data)
+	a.docs = append(a.docs, &document{name: filepath.Base(path), path: path, text: body, saved: body})
 	a.switchDoc(len(a.docs) - 1)
 	a.status = "已打开 " + filepath.Base(path)
 }
@@ -244,17 +245,36 @@ func (a *App) openFile() {
 // only a document with no file yet (the clipboard) asks where to save.
 func (a *App) saveFile() {
 	a.syncEditor()
-	d := a.doc()
-	if d.path == "" {
+	if a.doc().path == "" {
 		a.saveFileAs()
 		return
 	}
-	if err := os.WriteFile(d.path, []byte(a.Text), 0o644); err != nil {
-		a.status = "存储失败：" + err.Error()
-		return
+	a.writeDoc(a.cur)
+}
+
+// writeDoc writes document i back to its file and remembers that text as
+// saved. It reports whether the write succeeded.
+func (a *App) writeDoc(i int) bool {
+	a.syncEditor()
+	if i < 0 || i >= len(a.docs) {
+		return false
 	}
+	d := a.docs[i]
+	if d.path == "" {
+		return false
+	}
+	text := d.text
+	if i == a.cur {
+		text = a.Text
+	}
+	if err := os.WriteFile(d.path, []byte(text), 0o644); err != nil {
+		a.status = "存储失败：" + err.Error()
+		return false
+	}
+	d.saved = text
 	a.status = "已存储 " + d.path
 	a.showToast("已存储", d.name)
+	return true
 }
 
 // saveFileAs is 存储为…（⇧⌘S）: it always asks where to save, and a file
@@ -279,6 +299,7 @@ func (a *App) saveFileAs() {
 			}
 			if d := a.doc(); !d.clip {
 				d.path, d.name = p, filepath.Base(p)
+				d.saved = text
 			}
 			a.status = "已存储到 " + p
 		})
