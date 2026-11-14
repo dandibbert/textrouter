@@ -558,10 +558,13 @@ func TestTearingOffATabOpensAWindow(t *testing.T) {
 	a.loadFile(p)
 	settle(tt, 2)
 	a.ed.Buffer.Edit(editor.Edit{Start: 9, End: 9, Text: "!"}) // an unsaved edit travels with it
-	a.detachDoc(0)                                             // the clipboard tab never leaves
-	if name != "" || len(a.docs) != 2 {
-		t.Fatal("the clipboard tab was torn off")
+	// The 剪贴板 tab opens a copy, with no file, and stays.
+	a.switchDoc(0)
+	a.detachDoc(0)
+	if name != clipCopyName || path != "" || text != "clip" || len(a.docs) != 2 || a.cur != 0 {
+		t.Fatalf("clipboard copy %q %q %q docs=%d", name, path, text, len(a.docs))
 	}
+	a.switchDoc(1)
 	a.detachDoc(1)
 	settle(tt, 2)
 	if name != "notes.txt" || path != p || text != "file body!" {
@@ -612,6 +615,31 @@ func TestDraggingATabDownTearsItOff(t *testing.T) {
 	settle(tt, 3)
 	if name != "drag.txt" || path != p || len(a.docs) != 1 {
 		t.Fatalf("drag did not tear the tab off: %q docs=%d", name, len(a.docs))
+	}
+}
+
+func TestDraggingTheClipboardTitleOpensACopy(t *testing.T) {
+	a, tt := newApp(t, "clip text")
+	var name, path, text string
+	a.Platform = windowRecorder{NopPlatform{}, &name, &path, &text}
+	settle(tt, 3)
+	r, ok := tt.Find("剪贴板")
+	if !ok {
+		t.Fatalf("no title: %q", tt.Texts())
+	}
+	x, y := r.X+r.W/2, r.Y+r.H/2
+	tt.Press(x, y)
+	for dy := float32(10); dy <= 90; dy += 20 {
+		tt.Move(x, y+dy)
+		settle(tt, 1)
+	}
+	tt.Release(x, y+90)
+	settle(tt, 3)
+	if name != clipCopyName || path != "" || text != "clip text" {
+		t.Fatalf("drag opened %q %q %q", name, path, text)
+	}
+	if len(a.docs) != 1 || a.cur != 0 || a.Text != "clip text" {
+		t.Fatalf("the 剪贴板 must stay: docs=%d cur=%d %q", len(a.docs), a.cur, a.Text)
 	}
 }
 
@@ -714,13 +742,31 @@ func TestActivationKeepsTheFileYouAreOn(t *testing.T) {
 	if a.ActivateClipboard("clip"); a.cur != 1 || a.Text != "file b" {
 		t.Fatalf("jumped away: cur=%d %q", a.cur, a.Text)
 	}
-	// New text on the clipboard brings the 剪贴板 tab forward with it.
-	if !a.ActivateClipboard("something new") || a.cur != 0 || a.Text != "something new" {
+	// New text on the clipboard replaces the unedited 剪贴板 document in the
+	// background; the file stays in front, as it was.
+	a.ed.Select(3, 5)
+	if !a.ActivateClipboard("something new") || a.cur != 1 || a.Text != "file b" {
 		t.Fatalf("new clipboard: cur=%d %q", a.cur, a.Text)
 	}
-	// The menu bar icon and the shortcut ask for the clipboard on purpose.
+	if s := a.ed.Selection(); s.Anchor != 3 || s.Head != 5 {
+		t.Fatalf("the file's selection moved: %+v", s)
+	}
+	if d := a.docs[0]; d.text != "something new" {
+		t.Fatalf("剪贴板 document: %q", d.text)
+	}
+	// Edited since it was loaded: kept as is, and the pill offers the new
+	// clipboard; still no jump.
+	a.switchDoc(0)
+	a.replaceAll("something new, edited")
 	a.switchDoc(1)
-	if a.LoadClipboard("something new"); a.cur != 0 {
+	if a.ActivateClipboard("third copy") || a.cur != 1 {
+		t.Fatalf("edited 剪贴板: cur=%d", a.cur)
+	}
+	if d := a.docs[0]; d.text != "something new, edited" || !a.clipHasPending || a.clipPending != "third copy" {
+		t.Fatalf("edited 剪贴板 replaced: %q pending=%v", d.text, a.clipHasPending)
+	}
+	// The menu bar icon and the shortcut ask for the clipboard on purpose.
+	if a.LoadClipboard("third copy"); a.cur != 0 {
 		t.Fatalf("explicit open stayed on the file: cur=%d", a.cur)
 	}
 }

@@ -78,10 +78,12 @@ func NewDetached(lib *engine.Library, p Platform, name, path, text string) *App 
 }
 
 // detachDoc moves file tab i into a window of its own, with its text as it
-// is now (unsaved edits included).
+// is now (unsaved edits included). The 剪贴板 tab stays where it is: its
+// window gets a copy of the text, with no file, that the clipboard never
+// replaces.
 func (a *App) detachDoc(i int) {
-	if i <= 0 || i >= len(a.docs) {
-		return // the clipboard workspace stays
+	if i < 0 || i >= len(a.docs) {
+		return
 	}
 	a.syncEditor()
 	d := a.docs[i]
@@ -89,10 +91,16 @@ func (a *App) detachDoc(i int) {
 	if i == a.cur {
 		text = a.Text
 	}
+	if d.clip {
+		a.Platform.OpenWindow(clipCopyName, "", text)
+		return
+	}
 	name, path := d.name, d.path
 	a.closeDoc(i)
 	a.Platform.OpenWindow(name, path, text)
 }
+
+const clipCopyName = "剪贴板副本"
 
 // ShowClipboard makes the clipboard workspace current.
 func (a *App) ShowClipboard() { a.switchDoc(0) }
@@ -126,30 +134,8 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 	}
 	b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 120e6})).Border(strokeW, bd)
 	focusRing(b)
-	if !d.clip && i > 0 {
-		// A file tab can be torn off: drag it down out of the title bar, or
-		// right-click it, to open it in a window of its own.
-		b.Draggable(nil, ui.DraggableOptions{Snap: func(ui.Point) ui.Point { return ui.Point{} }})
-		if b.Dragging() {
-			a.tabDrag = b.DragOffset()
-		}
-		if _, _, ended := b.DragEnded(); ended {
-			if off := a.tabDrag; off.Y > 36 || off.Y < -36 || off.X > 160 || off.X < -160 {
-				a.detachDoc(i)
-				return
-			}
-		}
-		if b.RightClicked() {
-			*a.menuFlag("tab" + d.path) = true
-		}
-		a.ctxMenu(c, "tab"+d.path, b, func(m *pm) {
-			if m.Item("在新窗口中打开").Chosen() {
-				a.detachDoc(i)
-			}
-			if m.Item("关闭标签").Chosen() {
-				a.closeDoc(i)
-			}
-		})
+	if a.tearOff(c, b, i, d) {
+		return
 	}
 	b.Children(func() {
 		icon := "file-text"
@@ -172,6 +158,41 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 	if b.Clicked() {
 		a.switchDoc(i)
 	}
+}
+
+// tearOff lets b, document i's tab (or the title standing for it), be torn
+// off: dragged down out of the title bar, or right-clicked, it opens the
+// document in a window of its own (the 剪贴板 as a copy). It reports
+// whether a drag took the document out of this window.
+func (a *App) tearOff(c *ui.Context, b ui.Element, i int, d *document) bool {
+	b.Draggable(nil, ui.DraggableOptions{Snap: func(ui.Point) ui.Point { return ui.Point{} }})
+	if b.Dragging() {
+		a.tabDrag = b.DragOffset()
+	}
+	if _, _, ended := b.DragEnded(); ended {
+		if off := a.tabDrag; off.Y > 36 || off.Y < -36 || off.X > 160 || off.X < -160 {
+			a.detachDoc(i)
+			return !d.clip
+		}
+	}
+	if b.RightClicked() {
+		*a.menuFlag("tab" + d.path) = true
+	}
+	a.ctxMenu(c, "tab"+d.path, b, func(m *pm) {
+		if d.clip {
+			if m.Item("在新窗口中打开副本").Chosen() {
+				a.detachDoc(i)
+			}
+			return
+		}
+		if m.Item("在新窗口中打开").Chosen() {
+			a.detachDoc(i)
+		}
+		if m.Item("关闭标签").Chosen() {
+			a.closeDoc(i)
+		}
+	})
+	return false
 }
 
 // toolsMenu is the Tools menu: every second-level feature.

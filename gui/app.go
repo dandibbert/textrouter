@@ -165,6 +165,16 @@ func (a *App) LoadClipboard(s string) bool {
 	if a.Lib.Settings.NoAutoReadClipboard {
 		return false
 	}
+	if a.readClipboard(s) {
+		a.status = "已读取剪贴板"
+		return true
+	}
+	return false
+}
+
+// readClipboard reads s into the 剪贴板 document, which must be current,
+// by the rules of LoadClipboard.
+func (a *App) readClipboard(s string) bool {
 	a.syncEditor()
 	if a.clipSeen && s == a.clipLoaded {
 		return false // nothing new on the clipboard
@@ -183,20 +193,41 @@ func (a *App) LoadClipboard(s string) bool {
 		return false
 	}
 	a.applyClipboard(s)
-	a.status = "已读取剪贴板"
 	return true
 }
 
-// ActivateClipboard is the same for what merely brings the window forward (a
-// Dock click, switching back to the app): when the clipboard has not changed
-// it leaves the document you are on alone, instead of jumping to the
-// clipboard tab. The menu bar icon and the global shortcut ask for the
-// clipboard on purpose, and use LoadClipboard.
+// ActivateClipboard is for what merely brings the window forward (a Dock
+// click, switching back to the app). It never leaves the document you are
+// on: on a file tab, something new on the clipboard replaces the 剪贴板
+// document in the background when that document is as it was loaded, and
+// is offered in the pill when it has edits. The menu bar icon and the
+// global shortcut ask for the clipboard on purpose, and use LoadClipboard.
 func (a *App) ActivateClipboard(s string) bool {
-	if a.cur != 0 && a.clipSeen && s == a.clipLoaded {
+	if a.cur == 0 {
+		return a.LoadClipboard(s)
+	}
+	if a.Lib.Settings.NoAutoReadClipboard || a.clipSeen && s == a.clipLoaded {
 		return false
 	}
-	return a.LoadClipboard(s)
+	var replaced bool
+	a.onClipDoc(func() { replaced = a.readClipboard(s) })
+	if replaced {
+		a.status = "剪贴板页签已换成新复制的内容"
+	}
+	return replaced
+}
+
+// onClipDoc runs fn with the 剪贴板 document current, then goes back to the
+// document you were on, as you left it.
+func (a *App) onClipDoc(fn func()) {
+	back := a.cur
+	changes, changesVer, changesAt := a.changes, a.changesVer, a.changesAt
+	selLines, applyFx, hov := a.ws.selLines, a.ws.applyFx, a.ws.hov
+	a.switchDoc(0)
+	fn()
+	a.switchDoc(back)
+	a.changes, a.changesVer, a.changesAt = changes, changesVer, changesAt
+	a.ws.selLines, a.ws.applyFx, a.ws.hov = selLines, applyFx, hov
 }
 
 // applyClipboard loads s into the 剪贴板 document as one undoable edit.
