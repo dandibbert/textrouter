@@ -59,15 +59,22 @@ jobs:
             build/*.zip
             build/**/*.dmg
           if-no-files-found: error
-      - name: Attach to release (version tags, or a manual run with release_tag)
-        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+
+  # Releases are built and signed (personal certificate) on the M1 of dandibbert/mac-build-hub,
+  # which publishes them to this repository's releases; the ad-hoc build above only checks.
+  release:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hand the release to the M1 build hub
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.M1_BUILD_HUB_TOKEN }}
           TAG: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
           NOTES: ${{ inputs.release_notes }}
         run: |
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            # A new tag is created at the commit being built.
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "TextRouter ${TAG#v}" --generate-notes --notes "$NOTES"
-          fi
-          gh release upload "$TAG" build/*.zip build/*/*.dmg --clobber
+          set -euo pipefail
+          [ -n "$GH_TOKEN" ] || { echo "::error::Add the M1_BUILD_HUB_TOKEN secret (the same value Paseo uses) to this repository"; exit 1; }
+          gh workflow run textrouter-macos.yml -R dandibbert/mac-build-hub \
+            -f source_sha="$GITHUB_SHA" -f tag="$TAG" -f release_notes="$NOTES"
+          echo "Started the M1 build of $GITHUB_SHA for $TAG: https://github.com/dandibbert/mac-build-hub/actions/workflows/textrouter-macos.yml" >> "$GITHUB_STEP_SUMMARY"

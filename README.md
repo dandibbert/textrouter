@@ -72,9 +72,11 @@
 
 ## 下载与安装（macOS）
 
-到 [Releases](../../releases) 下载：Apple 芯片选 `darwin-arm64`，Intel 选 `darwin-amd64`，各有 `.dmg` 和 `.app.zip`。也可以在 Actions → Build → 某次运行 → Artifacts → `TextRouter-macOS` 取开发中的版本（推送到 `main`、提 PR 或手动运行都会构建；打 `v*` 标签时自动发 Release）。
+到 [Releases](../../releases) 下载：Apple 芯片选 `darwin-arm64`，Intel 选 `darwin-amd64`，各有 `.dmg` 和 `.app.zip`。也可以在 Actions → Build → 某次运行 → Artifacts → `TextRouter-macOS` 取开发中的版本（推送到 `main`、提 PR 或手动运行都会构建，ad-hoc 签名）。
 
-包是 ad-hoc 签名、未经 Apple 公证，第一次打开前执行：
+Release 由 M1 构建机（`dandibbert/mac-build-hub` 的 `TextRouter macOS build`）构建：用个人证书签名，直接发到本仓库的 Releases。推 `v*` 标签，或手动运行 Build 并填 `release_tag`，都会把这次提交交给它（本仓库需要 `M1_BUILD_HUB_TOKEN` secret）。
+
+个人证书签名、未经 Apple 公证，第一次打开前执行：
 
 ```sh
 xattr -cr /Applications/TextRouter.app
