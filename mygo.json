@@ -18,5 +18,9 @@
         }
       ]
     }
+  },
+  "updates": {
+    "publicKey": "IruC8YGqgBp/79uV+YVjGzrT2mqU8QRE6C2n12MaPk0=",
+    "github": "dandibbert/textrouter"
   }
 }
