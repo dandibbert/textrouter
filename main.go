@@ -18,6 +18,8 @@ import (
 	"github.com/dandibbert/textrouter/engine"
 	"github.com/dandibbert/textrouter/gui"
 	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/plugins/updater"
+	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -153,6 +155,9 @@ func main() {
 		d.win.Show()
 	})
 
+	// Checks the GitHub releases once a day, in builds made with updates
+	// (mygo.json "updates" and the signing key: the M1 build hub).
+	mygo.Use(native.Plugin)
 	mygo.App.SetName("TextRouter")
 	d.SetTheme(lib.Settings.Theme)
 	mygo.App.OnBeforeQuit(func(*mygo.QuitEvent) { quitting = true })
@@ -279,6 +284,7 @@ func main() {
 				mygo.Separator(),
 				{Label: "全部动作…", Accelerator: "CmdOrCtrl+K", Click: run(a.OpenPalette)},
 				{Label: "设置…", Accelerator: "CmdOrCtrl+,", Click: goPage(gui.PageSettings)},
+				updater.MenuItem(),
 			}},
 			{Role: mygo.RoleWindowMenu},
 		}))
@@ -289,6 +295,7 @@ func main() {
 			menu := mygo.NewMenu([]*mygo.MenuItem{
 				{Label: "打开剪贴板", Click: func(*mygo.MenuItem, *mygo.Window) { d.show() }},
 				{Label: "批量替换…", Click: goPage(gui.PageBatch)},
+				updater.MenuItem(),
 				mygo.Separator(),
 				{Role: mygo.RoleQuit},
 			})
