@@ -27,7 +27,8 @@ type desktop struct {
 	hotkey string
 	show   func()
 	lib    *engine.Library
-	parent *desktop // the main window's, for the windows made by tearing off a tab
+	parent *desktop     // the main window's, for the windows made by tearing off a tab
+	front  *mygo.Window // main window's only: the app's window that last had the focus
 }
 
 func (d *desktop) OpenFiles(title string, exts []string, multiple, dirs bool) []string {
@@ -122,6 +123,7 @@ func (d *desktop) OpenWindow(name, path, text string) {
 		Vibrancy:       mygo.VibrancySidebar,
 		Content:        ui.View(ca.View),
 	})
+	child.win.OnFocus(func() { root.front = child.win })
 	child.win.Show()
 	child.win.Focus()
 }
@@ -192,11 +194,30 @@ func main() {
 			}
 		}
 		// show asks for the clipboard (menu bar icon, global shortcut): the
-		// window goes to the 剪贴板 tab. activate only brings the window
-		// forward (Dock click, switching back): it stays on the tab you were
-		// on, unless there is something new on the clipboard.
+		// window goes to the 剪贴板 tab. activate only brings the app
+		// forward (Dock click, switching back): something new on the
+		// clipboard goes into the 剪贴板 tab in the background, and the
+		// window you were in (a torn-off one too) stays in front, as macOS
+		// put it: only with no window showing does the main one come up.
+		d.win.OnFocus(func() { d.front = d.win })
 		d.show = func() { bringUp(func(t string) { a.LoadClipboard(t) }) }
-		activate := func() { bringUp(func(t string) { a.ActivateClipboard(t) }) }
+		activate := func(reopen bool) {
+			text := mygo.Clipboard.ReadText()
+			d.win.Update(func() { a.ActivateClipboard(text) })
+			w := d.front
+			if w == nil || w.IsDestroyed() || !w.IsVisible() {
+				w = d.win
+			}
+			if !w.IsVisible() {
+				w.Show()
+			} else if !reopen || mygo.FocusedWindow() != nil {
+				return
+			}
+			w.Focus()
+			if !appActive {
+				mygo.App.Focus()
+			}
+		}
 		// Remember the window size in the settings, once resizing settles.
 		var resizeTimer *time.Timer
 		d.win.OnResize(func() {
@@ -224,8 +245,8 @@ func main() {
 		//  - menu bar icon, global shortcut and launch call d.show directly.
 		// A Dock click on an inactive app fires both; the second finds the
 		// clipboard unchanged and leaves the document alone.
-		mygo.App.OnActivate(func(bool) { activate() })
-		mygo.App.OnDidBecomeActive(func() { appActive = true; activate() })
+		mygo.App.OnActivate(func(bool) { activate(true) })
+		mygo.App.OnDidBecomeActive(func() { appActive = true; activate(false) })
 		mygo.App.OnDidResignActive(func() { appActive = false })
 		goPage := func(p string) func(*mygo.MenuItem, *mygo.Window) {
 			return func(*mygo.MenuItem, *mygo.Window) {

@@ -102,10 +102,15 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 			ui.Icon(c, ic("file-text")).FontSize(16).TextColor(Ink)
 			ui.Text(c, d.name).FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
 		} else {
-			ui.Text(c, "剪贴板").FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
-			if age := a.clipAge(); age != "" && a.doc().clip {
-				ui.Text(c, age).FontSize(12).TextColor(Muted).SingleLine()
-			}
+			t := ui.ButtonBase(c.Key("cliptitle")).Height(30).Gap(10).AlignItems(ui.Center).Label("剪贴板").
+				Tooltip("拖出标题栏，或右键，在新窗口中打开副本")
+			a.tearOff(c, t, 0, d)
+			t.Children(func() {
+				ui.Text(c, "剪贴板").FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
+				if age := a.clipAge(); age != "" {
+					ui.Text(c, age).FontSize(12).TextColor(Muted).SingleLine()
+				}
+			})
 		}
 		if b := iconButton(c, "opendoc", "plus", "打开文件", "打开文件 ⌘O").Size(28, 28); b.Clicked() {
 			a.openFile()
