@@ -1059,3 +1059,110 @@ func TestClosingAnEditedClipboardCopyAsks(t *testing.T) {
 		t.Fatalf("an edited copy closed without asking: ask=%v closes=%d", a.closeAsk, rec.closes)
 	}
 }
+
+func TestTitleBarCrumbsDoNotOverlapControls(t *testing.T) {
+	for _, w := range []int{1200, 1024, 900} {
+		t.Run(fmt.Sprint("w=", w), func(t *testing.T) {
+			lib := engine.LoadLibrary(filepath.Join(t.TempDir(), "library.json"))
+			a := New(lib, nil)
+			a.LoadClipboard("hello  world\n\nfoo")
+			tt := ui.NewTester(a.View, w, 700)
+			tt.SetTitleBar(ui.TitleBar{Height: 42, Left: 78})
+			settle(tt, 2)
+
+			a.clipAt = time.Now().Add(-time.Hour)
+			a.applyAction("Remove Extra Spaces")
+			a.pushStep("编辑", nil)
+			a.applyAction("Uppercase")
+			a.pushStep("新动作链 1", &engine.Step{Kind: engine.KindCleaner, Cleaner: "Uppercase"})
+			a.pushStep("编辑", nil)
+			a.pushStep("新动作链 1", &engine.Step{Kind: engine.KindCleaner, Cleaner: "Trim Lines"})
+			a.pushStep("载入新剪贴板", nil)
+			a.pushStep("替换「Ny」", &engine.Step{Kind: engine.KindFind})
+			a.clipHasPending = true
+			a.clipPending = "newer clip"
+			settle(tt, 4)
+
+			mustFind := func(label string) ui.Rect {
+				t.Helper()
+				r, ok := tt.Find(label)
+				if !ok {
+					t.Fatalf("missing %q in %q", label, tt.Texts())
+				}
+				if r.X < 0 || r.X+r.W > float32(w)+0.5 {
+					t.Fatalf("%q out of window [0, %d]: %+v", label, w, r)
+				}
+				return r
+			}
+			clipR := mustFind("剪贴板")
+			openR := mustFind("打开文件")
+			saveR := mustFind("存为动作链")
+			pendR := mustFind("剪贴板有新内容 · 载入")
+			toolR := mustFind("工具")
+			undoR := mustFind("撤销")
+			redoR := mustFind("重做")
+			doneR := mustFind("复制并完成")
+
+			ordered := []struct {
+				name string
+				r    ui.Rect
+			}{
+				{"剪贴板", clipR},
+				{"打开文件", openR},
+				{"存为动作链", saveR},
+				{"剪贴板有新内容 · 载入", pendR},
+				{"工具", toolR},
+				{"撤销", undoR},
+				{"重做", redoR},
+				{"复制并完成", doneR},
+			}
+			for i := 1; i < len(ordered); i++ {
+				prev, cur := ordered[i-1], ordered[i]
+				if prev.r.X+prev.r.W > cur.r.X+0.5 {
+					t.Fatalf("%s (%+v) overlaps %s (%+v)", prev.name, prev.r, cur.name, cur.r)
+				}
+			}
+
+			// The active step must stay visible when width allows crumbs, and never cross into saveR.
+			if curR, ok := tt.Find("替换「Ny」"); ok {
+				if curR.X < openR.X+openR.W-0.5 {
+					t.Fatalf("current crumb %+v overlaps open button %+v", curR, openR)
+				}
+				if curR.X+curR.W > saveR.X+0.5 {
+					t.Fatalf("current crumb %+v overlaps savechain %+v", curR, saveR)
+				}
+			}
+		})
+	}
+}
+
+func TestTitleBarManyTabsDoNotOverflow(t *testing.T) {
+	for _, w := range []int{1180, 820} {
+		t.Run(fmt.Sprint("w=", w), func(t *testing.T) {
+			lib := engine.LoadLibrary(filepath.Join(t.TempDir(), "library.json"))
+			a := New(lib, nil)
+			a.Text = "clip"
+			tt := ui.NewTester(a.View, w, 700)
+			tt.SetTitleBar(ui.TitleBar{Height: 42, Left: 78})
+			dir := t.TempDir()
+			for i := 0; i < 6; i++ {
+				p := filepath.Join(dir, fmt.Sprintf("long-document-file-name-%d.txt", i))
+				if err := os.WriteFile(p, []byte("body"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				a.loadFile(p)
+			}
+			settle(tt, 3)
+			for _, label := range []string{"打开文件", "工具", "撤销", "重做"} {
+				r, ok := tt.Find(label)
+				if !ok {
+					t.Fatalf("missing %q", label)
+				}
+				if r.X+r.W > float32(w)+0.5 {
+					t.Fatalf("%q overflowed window %d: %+v", label, w, r)
+				}
+			}
+		})
+	}
+}
+

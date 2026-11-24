@@ -348,24 +348,24 @@ func (a *App) statusBarView(c *ui.Context, k tokens, pv *preview) {
 	w := &a.ws
 	ui.Row(c.Key("status")).Height(statusBarH).MinHeight(statusBarH).Padding(0, 12, 0, 18).Gap(10).AlignItems(ui.Center).
 		Background(Paper).BorderWidth(strokeW, 0, 0, 0).BorderColor(Ink).Children(func() {
-		ui.Row(c).Grow(1).MinWidth(0).Gap(10).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).Grow(1).MinWidth(0).Gap(10).AlignItems(ui.Center).ClipX().Children(func() {
 			switch {
 			case pv != nil && w.applyFx == nil && w.tab == 0:
 				p := anim(c, w.pvAt, dFlip, EaseOut)
 				ui.Text(c, "预览").FontSize(11).FontWeight(700).TextColor(Accent).Background(Ink).Radius(radiusPill).Padding(1, 8).SingleLine()
-				ui.Text(c, pv.label).FontSize(sizeButton).FontWeight(700).TextColor(Ink).SingleLine().Translate(0, 6*(1-p)).Opacity(p)
+				ui.Text(c, pv.label).FontSize(sizeButton).FontWeight(700).TextColor(Ink).SingleLine().MinWidth(0).Shrink(1).Translate(0, 6*(1-p)).Opacity(p)
 				ui.Text(c, pv.delta).Font(monoFont).FontSize(11.5).TextColor(Ink).SingleLine()
 				a.legend(c)
 				ui.Spacer(c)
 				ui.Text(c, "点击应用 · 移开即恢复").FontSize(sizeButton).TextColor(Muted).SingleLine()
 			case pv != nil && w.applyFx == nil && w.find.pat.hover != "":
 				ui.Text(c, "预览").FontSize(11).FontWeight(700).TextColor(Accent).Background(Ink).Radius(radiusPill).Padding(1, 8).SingleLine()
-				ui.Text(c, "模式「"+pv.label+"」").FontSize(sizeButton).FontWeight(700).TextColor(Ink).SingleLine()
+				ui.Text(c, "模式「"+pv.label+"」").FontSize(sizeButton).FontWeight(700).TextColor(Ink).SingleLine().MinWidth(0).Shrink(1)
 				ui.Text(c, pv.delta).Font(monoFont).FontSize(11.5).TextColor(Ink).SingleLine()
 				ui.Spacer(c)
 				ui.Text(c, "点击使用 · 移开即恢复").FontSize(sizeButton).TextColor(Muted).SingleLine()
 			case w.tab == 1:
-				ui.Text(c, a.findStatus()).Font(monoFont).FontSize(11.5).TextColor(Ink).SingleLine().Shrink(1)
+				ui.Text(c, a.findStatus()).Font(monoFont).FontSize(11.5).TextColor(Ink).SingleLine().MinWidth(0).Shrink(1)
 				ui.Spacer(c)
 				ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
 					kbd(c, "⌘G")
@@ -388,7 +388,7 @@ func (a *App) statusBarView(c *ui.Context, k tokens, pv *preview) {
 				if strings.Contains(msg, "失败") || strings.Contains(msg, "错误") {
 					col = Danger
 				}
-				ui.Text(c, msg).FontSize(sizeButton).TextColor(col).SingleLine()
+				ui.Text(c, msg).FontSize(sizeButton).TextColor(col).SingleLine().MinWidth(0).Shrink(1)
 			}
 		})
 		toggle := func(key, glyph, tip string, on bool, font string) bool {
@@ -415,7 +415,7 @@ func (a *App) statusBarView(c *ui.Context, k tokens, pv *preview) {
 		if a.Text == "" {
 			lines = 0
 		}
-		ui.Textf(c, "%d 字 · %d 行", engine.RuneLen(a.Text), lines).Font(monoFont).FontSize(11).TextColor(Muted).SingleLine()
+		ui.Textf(c, "%d 字 · %d 行", engine.RuneLen(a.Text), lines).Font(monoFont).FontSize(11).TextColor(Muted).SingleLine().Shrink(0)
 	})
 }
 

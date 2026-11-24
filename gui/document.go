@@ -247,7 +247,7 @@ func (a *App) OpenTool(page string) { a.Page = page }
 // docTab is a document's tab in the title bar (shown once a file is open).
 func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 	sel := i == a.cur
-	b := ui.ButtonBase(c.Key(fmt.Sprintf("doc%d:%s", i, d.path))).Height(30).Padding(0, 8, 0, 10).Radius(radiusCtl).Gap(6).AlignItems(ui.Center).Label(d.name).Selected(sel).MaxWidth(200)
+	b := ui.ButtonBase(c.Key(fmt.Sprintf("doc%d:%s", i, d.path))).Height(30).Padding(0, 8, 0, 10).Radius(radiusCtl).Gap(6).AlignItems(ui.Center).Label(d.name).Selected(sel).MaxWidth(200).Shrink(1).MinWidth(68)
 	bg, bd := ui.Transparent, ui.Transparent
 	switch {
 	case sel:
@@ -266,7 +266,7 @@ func (a *App) docTab(c *ui.Context, k tokens, i int, d *document) {
 			icon = "clipboard-paste"
 		}
 		ui.Icon(c, ic(icon)).FontSize(13).TextColor(Ink)
-		ui.Text(c, d.name).FontSize(sizeButton).FontWeight(map[bool]int{true: 700, false: 500}[sel]).TextColor(Ink).SingleLine()
+		ui.Text(c, d.name).FontSize(sizeButton).FontWeight(map[bool]int{true: 700, false: 500}[sel]).TextColor(Ink).SingleLine().MinWidth(0).Shrink(1)
 		a.unsavedDot(c, i)
 		if !d.clip {
 			x := ui.ButtonBase(c.Key("x")).Size(16, 16).Radius(radiusKey).Center().Label("关闭 " + d.name)
@@ -329,7 +329,7 @@ func (a *App) toolsMenu(c *ui.Context, k tokens) {
 	b.Background(bg).Border(strokeW, bd)
 	focusRing(b)
 	b.Children(func() {
-		ui.Text(c, "工具").FontSize(sizeButton).FontWeight(500).TextColor(Ink)
+		ui.Text(c, "工具").FontSize(sizeButton).FontWeight(500).TextColor(Ink).SingleLine()
 		ui.Icon(c, ic("chevron-down")).FontSize(12).TextColor(Ink)
 	})
 	a.popMenu(c, "tools", b, func(m *pm) { a.toolsMenuItems(c, m) })
@@ -445,7 +445,7 @@ func (a *App) pendingClipPill(c *ui.Context, k tokens) {
 		return
 	}
 	b := ui.ButtonBase(c.Key("clip-pending")).Height(28).Padding(0, 10).Radius(radiusPill).Gap(6).AlignItems(ui.Center).
-		Label("剪贴板有新内容 · 载入").Tooltip("载入后仍可 ⌘Z 找回当前的编辑")
+		Label("剪贴板有新内容 · 载入").Tooltip("载入后仍可 ⌘Z 找回当前的编辑").Shrink(1).MinWidth(90)
 	bg := AccentSoft
 	if b.Hovered() {
 		bg = Accent
@@ -453,8 +453,8 @@ func (a *App) pendingClipPill(c *ui.Context, k tokens) {
 	b.Background(bg).Border(strokeW, Ink)
 	focusRing(b)
 	b.Children(func() {
-		ui.Box(c).Size(6, 6).Radius(3).Background(Ink)
-		ui.Text(c, "剪贴板有新内容 · 载入").FontSize(11.5).FontWeight(700).TextColor(Ink)
+		ui.Box(c).Size(6, 6).Radius(3).Background(Ink).Shrink(0)
+		ui.Text(c, "剪贴板有新内容 · 载入").FontSize(11.5).FontWeight(700).TextColor(Ink).SingleLine().MinWidth(0).Shrink(1)
 	})
 	if b.Clicked() {
 		a.LoadPendingClipboard()

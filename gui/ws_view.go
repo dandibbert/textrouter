@@ -97,12 +97,14 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 	ui.Row(c).Height(titleBarH).MinHeight(titleBarH).Padding(0, 14, 0, max(bar.Left, 0)+18).Gap(10).AlignItems(ui.Center).
 		Background(Ground).BorderWidth(0, 0, strokeW, 0).BorderColor(Ink).DragWindow().Children(func() {
 		if len(a.docs) > 1 {
-			for i, d := range a.docs {
-				a.docTab(c, k, i, d)
-			}
+			ui.Row(c.Key("doctabs")).Gap(6).AlignItems(ui.Center).Shrink(1).MinWidth(0).ClipX().Children(func() {
+				for i, d := range a.docs {
+					a.docTab(c, k, i, d)
+				}
+			})
 		} else if d := a.doc(); !d.clip {
 			ui.Icon(c, ic("file-text")).FontSize(16).TextColor(Ink)
-			ui.Text(c, d.name).FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine()
+			ui.Text(c, d.name).FontSize(16).FontWeight(700).TextColor(Ink).LetterSpacing(-0.3).SingleLine().MaxWidth(240).MinWidth(0).Shrink(1)
 			a.unsavedDot(c, a.cur)
 		} else {
 			t := ui.ButtonBase(c.Key("cliptitle")).Height(30).Gap(10).AlignItems(ui.Center).Label("剪贴板").
@@ -138,45 +140,77 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 // goes to that step without losing the others.
 func (a *App) crumbs(c *ui.Context, k tokens) {
 	t := a.trail()
-	ui.Row(c.Key("crumbs")).Grow(1).MinWidth(0).Gap(2).AlignItems(ui.Center).Justify(ui.Center).Children(func() {
-		from := 0
-		if len(t.steps) > 7 {
-			from = max(0, min(t.pos-3, len(t.steps)-7))
+	saveChain := a.canSaveChain()
+	row := ui.Row(c.Key("crumbs")).Grow(1).MinWidth(0).Gap(2).AlignItems(ui.Center).Justify(ui.Center).ClipX()
+	lb := row.LayoutBounds()
+	avail := lb.W
+	if lb.H == 0 {
+		avail = 480
+		if len(t.steps) > 1 || saveChain {
+			c.Invalidate()
 		}
-		if from > 0 {
-			ui.Text(c, "…").FontSize(12).TextColor(Faint).Padding(0, 4)
+	} else {
+		if avail != a.ws.crumbsW {
+			a.ws.crumbsW = avail
+			c.Invalidate()
 		}
-		for i := from; i < len(t.steps) && i < from+7; i++ {
-			s := t.steps[i]
-			if i > from {
-				ui.Text(c, "→").FontSize(12).TextColor(Faint).Padding(0, 2)
-			}
-			p := anim(c, s.at, dPop, EaseSpring)
-			b := ui.ButtonBase(c.Key(fmt.Sprint("crumb", i, s.label))).Height(26).Padding(0, 9).Radius(radiusCtl).Center().Label(s.label).MaxWidth(150)
-			col, bg, bd := Muted, ui.Transparent, ui.Transparent
-			strike := false
-			switch {
-			case i == t.pos:
-				col, bg, bd = Ink, Accent, Ink
-			case i > t.pos:
-				col, strike = Faint, true
-			}
-			if b.Hovered() && i != t.pos {
-				bg = AccentSoft
-			}
-			b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 150e6})).Border(strokeW, bd).Scale(0.6+0.4*p, 0.6+0.4*p).Opacity(p)
-			focusRing(b)
-			b.Children(func() {
-				tx := ui.Text(c, s.label).FontSize(12).FontWeight(map[bool]int{true: 700, false: 400}[i == t.pos]).TextColor(col).SingleLine()
-				if strike {
-					tx.Strikethrough()
+	}
+	const saveChainW = float32(98) // button width (~88) + 10px left margin
+	row.Children(func() {
+		if lb.H > 0 && avail < 44 {
+			return
+		}
+		showSave := saveChain && avail >= saveChainW
+		crumbAvail := avail
+		if showSave {
+			crumbAvail -= saveChainW
+		}
+		if !showSave || crumbAvail >= 44 {
+			from, to := crumbRange(t.steps, t.pos, crumbAvail)
+			if from <= to {
+				if from > 0 {
+					ui.Text(c, "…").FontSize(12).TextColor(Faint).Padding(0, 4).SingleLine()
 				}
-			})
-			if b.Clicked() {
-				a.goStep(i)
+				single := from == to
+				for i := from; i <= to; i++ {
+					s := t.steps[i]
+					if i > from {
+						ui.Text(c, "→").FontSize(12).TextColor(Faint).Padding(0, 2).SingleLine()
+					}
+					p := anim(c, s.at, dPop, EaseSpring)
+					b := ui.ButtonBase(c.Key(fmt.Sprint("crumb", i, s.label))).Height(26).Padding(0, 9).Radius(radiusCtl).Center().Label(s.label).MaxWidth(150)
+					if single && crumbAvail-8 < crumbWidthEst(s.label) {
+						b.Shrink(1).MinWidth(0)
+					}
+					col, bg, bd := Muted, ui.Transparent, ui.Transparent
+					strike := false
+					switch {
+					case i == t.pos:
+						col, bg, bd = Ink, Accent, Ink
+					case i > t.pos:
+						col, strike = Faint, true
+					}
+					if b.Hovered() && i != t.pos {
+						bg = AccentSoft
+					}
+					b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 150e6})).Border(strokeW, bd).Scale(0.6+0.4*p, 0.6+0.4*p).Opacity(p)
+					focusRing(b)
+					b.Children(func() {
+						tx := ui.Text(c, s.label).FontSize(12).FontWeight(map[bool]int{true: 700, false: 400}[i == t.pos]).TextColor(col).SingleLine().MinWidth(0).Shrink(1)
+						if strike {
+							tx.Strikethrough()
+						}
+					})
+					if b.Clicked() {
+						a.goStep(i)
+					}
+				}
+				if to < len(t.steps)-1 {
+					ui.Text(c, "…").FontSize(12).TextColor(Faint).Padding(0, 4).SingleLine()
+				}
 			}
 		}
-		if a.canSaveChain() {
+		if showSave {
 			b := ui.ButtonBase(c.Key("savechain")).Height(28).Padding(0, 10).Radius(radiusCtl).Center().Margin(0, 0, 0, 10).Label("存为动作链")
 			b.Background(Paper)
 			boxed(b)
@@ -187,6 +221,81 @@ func (a *App) crumbs(c *ui.Context, k tokens) {
 			}
 		}
 	})
+}
+
+func crumbWidthEst(label string) float32 {
+	var w float32
+	for _, r := range label {
+		switch {
+		case r >= 0x1100:
+			w += 12.5
+		case r >= 'A' && r <= 'Z':
+			w += 8.5
+		default:
+			w += 7.5
+		}
+	}
+	return min(150, w+24)
+}
+
+func crumbRange(steps []step, pos int, avail float32) (int, int) {
+	n := len(steps)
+	if n == 0 {
+		return 0, -1
+	}
+	if pos < 0 {
+		pos = 0
+	} else if pos >= n {
+		pos = n - 1
+	}
+	const (
+		maxCrumbs = 7
+		arrowW    = float32(22)
+		ellipsisW = float32(24)
+	)
+	budget := avail - 8
+	totalW := func(f, t int) float32 {
+		w := float32(0)
+		for i := f; i <= t; i++ {
+			if i > f {
+				w += arrowW
+			}
+			w += crumbWidthEst(steps[i].label)
+		}
+		if f > 0 {
+			w += ellipsisW
+		}
+		if t < n-1 {
+			w += ellipsisW
+		}
+		return w
+	}
+	from, to := pos, pos
+	if totalW(from, to) > budget {
+		return from, to
+	}
+	if to < n-1 && totalW(from, to+1) <= budget {
+		to++
+	}
+	for to-from+1 < maxCrumbs {
+		grew := false
+		if from > 0 && totalW(from-1, to) <= budget {
+			from--
+			grew = true
+		}
+		if to-from+1 < maxCrumbs && to < n-1 && to-pos < 3 && totalW(from, to+1) <= budget {
+			to++
+			grew = true
+		}
+		if !grew && to < n-1 && totalW(from, to+1) <= budget {
+			to++
+			grew = true
+		}
+		if !grew {
+			break
+		}
+	}
+	return from, to
 }
 
 // canSaveChain is true once two or more cleaner steps stand on the trail.

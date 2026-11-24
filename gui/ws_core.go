@@ -248,4 +248,5 @@ type workspace struct {
 	// the preview editor's caret as of the last frame, to see a click
 	pvSelKey               string
 	pvSelHead, pvSelAnchor int
+	crumbsW                float32
 }
