@@ -760,17 +760,25 @@ func TestActivationKeepsTheFileYouAreOn(t *testing.T) {
 	if a.ActivateClipboard("clip"); a.cur != 1 || a.Text != "file b" {
 		t.Fatalf("jumped away: cur=%d %q", a.cur, a.Text)
 	}
-	// New text on the clipboard replaces the unedited 剪贴板 document in the
-	// background; the file stays in front, as it was.
+	// New text on the clipboard never replaces a non-empty 剪贴板 document in
+	// the background; it offers the pill instead, and the file stays in front.
 	a.ed.Select(3, 5)
-	if !a.ActivateClipboard("something new") || a.cur != 1 || a.Text != "file b" {
+	if a.ActivateClipboard("something new") || a.cur != 1 || a.Text != "file b" {
 		t.Fatalf("new clipboard: cur=%d %q", a.cur, a.Text)
 	}
 	if s := a.ed.Selection(); s.Anchor != 3 || s.Head != 5 {
 		t.Fatalf("the file's selection moved: %+v", s)
 	}
-	if d := a.docs[0]; d.text != "something new" {
-		t.Fatalf("剪贴板 document: %q", d.text)
+	if d := a.docs[0]; d.text != "clip" || !a.clipHasPending || a.clipPending != "something new" {
+		t.Fatalf("non-empty 剪贴板 replaced: %q pending=%v/%q", d.text, a.clipHasPending, a.clipPending)
+	}
+	// An empty 剪贴板 document still fills quietly in the background.
+	a.onClipDoc(func() { a.replaceAll("") })
+	if !a.ActivateClipboard("fresh fill") || a.cur != 1 || a.Text != "file b" {
+		t.Fatalf("empty 剪贴板 fill: cur=%d %q", a.cur, a.Text)
+	}
+	if d := a.docs[0]; d.text != "fresh fill" || a.clipHasPending {
+		t.Fatalf("剪贴板 document: %q pending=%v", d.text, a.clipHasPending)
 	}
 	// Edited since it was loaded: kept as is, and the pill offers the new
 	// clipboard; still no jump.
@@ -783,9 +791,10 @@ func TestActivationKeepsTheFileYouAreOn(t *testing.T) {
 	if d := a.docs[0]; d.text != "something new, edited" || !a.clipHasPending || a.clipPending != "third copy" {
 		t.Fatalf("edited 剪贴板 replaced: %q pending=%v", d.text, a.clipHasPending)
 	}
-	// The menu bar icon and the shortcut ask for the clipboard on purpose.
-	if a.LoadClipboard("third copy"); a.cur != 0 {
-		t.Fatalf("explicit open stayed on the file: cur=%d", a.cur)
+	// The menu bar icon and the shortcut ask for the clipboard on purpose,
+	// switching to it and offering the pill without overwriting it.
+	if a.LoadClipboard("third copy"); a.cur != 0 || a.Text != "something new, edited" || !a.clipHasPending {
+		t.Fatalf("explicit open: cur=%d text=%q pending=%v", a.cur, a.Text, a.clipHasPending)
 	}
 }
 

@@ -438,14 +438,15 @@ func (a *App) SaveFileAsDialog() { a.saveFileAs() }
 func (a *App) ShowFind()         { a.showFind() }
 func (a *App) OpenPalette()      { a.openPalette() }
 
-// pendingClipPill offers a newer clipboard that was not loaded because the
-// 剪贴板 document has edits. Subtle and non-blocking; loads on click.
+// pendingClipPill offers a newer clipboard that was not loaded automatically
+// because the 剪贴板 document already has content. Subtle and non-blocking;
+// loads on click.
 func (a *App) pendingClipPill(c *ui.Context, k tokens) {
 	if !a.clipHasPending || a.cur != 0 {
 		return
 	}
 	b := ui.ButtonBase(c.Key("clip-pending")).Height(28).Padding(0, 10).Radius(radiusPill).Gap(6).AlignItems(ui.Center).
-		Label("剪贴板有新内容 · 载入").Tooltip("载入后仍可 ⌘Z 找回当前的编辑").Shrink(1).MinWidth(90)
+		Label("剪贴板有新内容 · 载入").Tooltip("载入后仍可 ⌘Z 找回当前内容").Shrink(1).MinWidth(90)
 	bg := AccentSoft
 	if b.Hovered() {
 		bg = Accent

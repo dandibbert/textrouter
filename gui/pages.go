@@ -366,7 +366,7 @@ func (a *App) settingsView(c *ui.Context) {
 			})
 			a.fontSettings(c, k, row, group)
 			group("行为", func() {
-				row("激活时自动读取剪贴板", "启动、点 Dock 图标、切回本应用、点菜单栏图标或按全局快捷键时，切到「剪贴板」并读入最新内容；内容没变就不动文档", false, func() {
+				row("激活时自动读取剪贴板", "剪贴板工作区为空时自动载入；已有内容时在标题栏提示「剪贴板有新内容 · 载入」，点击才替换（可 ⌘Z 找回）", false, func() {
 					on := !st.NoAutoReadClipboard
 					if ui.Switch(c, &on).Label("激活时自动读取剪贴板").Changed() {
 						st.NoAutoReadClipboard = !on

@@ -115,12 +115,11 @@ type App struct {
 	monoEdit  bool
 	writeClip func(string)
 	// clipLoaded is the clipboard text last loaded into (or copied from)
-	// the 剪贴板 document; clipPrev is that document's text right after.
+	// the 剪贴板 document.
 	clipSeen   bool
 	clipLoaded string
-	clipPrev   string
-	// clipPending is a newer clipboard not loaded because the document
-	// had edits; the toolbar offers it.
+	// clipPending is a newer clipboard not loaded automatically because the
+	// 剪贴板 document already has content; the toolbar offers it.
 	clipPending    string
 	clipHasPending bool
 }
@@ -152,16 +151,16 @@ func New(lib *engine.Library, p Platform) *App {
 	return a
 }
 
-// LoadClipboard is what every activation calls (launch, Dock icon, app
-// activation, menu bar icon, global shortcut) with the clipboard's text:
-// it switches to the 剪贴板 document and reads the clipboard into it.
+// LoadClipboard is what explicit clipboard activations call (launch, menu bar
+// icon, global shortcut) with the clipboard's text: it switches to the 剪贴板
+// document and checks the clipboard against it.
 //
-//   - Clipboard unchanged since it was last loaded or copied from here:
-//     the document is left alone (carets, undo history, edits).
-//   - Changed, document unedited: replaced silently (one undoable edit).
-//   - Changed, document has edits not yet copied out: the document is
-//     kept exactly as is (text, carets, undo); a pill in the toolbar,
-//     「剪贴板有新内容 · 载入」, loads it on click as an undoable edit.
+//   - Clipboard unchanged since it was last loaded or copied from here, or
+//     clipboard has no text: the document is left alone (carets, undo, edits).
+//   - Workspace empty: loaded directly.
+//   - Workspace already has content: kept as is (text, carets, undo); a pill
+//     in the toolbar, 「剪贴板有新内容 · 载入」, loads it on click as an
+//     undoable edit.
 //   - Auto-read off in the settings: only switches to the document.
 //
 // It reports whether the document was replaced.
@@ -180,23 +179,21 @@ func (a *App) LoadClipboard(s string) bool {
 	return false
 }
 
-// readClipboard reads s into the 剪贴板 document, which must be current,
+// readClipboard checks s against the 剪贴板 document, which must be current,
 // by the rules of LoadClipboard.
 func (a *App) readClipboard(s string) bool {
 	a.syncEditor()
 	if a.clipSeen && s == a.clipLoaded {
 		return false // nothing new on the clipboard
 	}
-	first := !a.clipSeen
 	a.clipSeen, a.clipLoaded = true, s
-	if s == a.Text {
+	if s == "" || s == a.Text {
 		a.clipHasPending, a.clipPending = false, ""
 		return false
 	}
-	edited := !first && a.Text != a.clipPrev && a.Text != ""
-	if edited {
-		// Edits not yet copied out: keep the document exactly as it is and
-		// offer the new clipboard in a pill instead.
+	if a.Text != "" {
+		// Workspace already displays content: keep it as is and offer the
+		// new clipboard in a pill instead so replacing requires a click.
 		a.clipPending, a.clipHasPending = s, true
 		return false
 	}
@@ -206,10 +203,10 @@ func (a *App) readClipboard(s string) bool {
 
 // ActivateClipboard is for what merely brings the window forward (a Dock
 // click, switching back to the app). It never leaves the document you are
-// on: on a file tab, something new on the clipboard replaces the 剪贴板
-// document in the background when that document is as it was loaded, and
-// is offered in the pill when it has edits. The menu bar icon and the
-// global shortcut ask for the clipboard on purpose, and use LoadClipboard.
+// on: on a file tab, something new on the clipboard fills an empty 剪贴板
+// document in the background, and is offered in the pill when it already has
+// content. The menu bar icon and the global shortcut ask for the clipboard on
+// purpose, and use LoadClipboard.
 func (a *App) ActivateClipboard(s string) bool {
 	if a.cur == 0 {
 		return a.LoadClipboard(s)
@@ -242,7 +239,6 @@ func (a *App) onClipDoc(fn func()) {
 func (a *App) applyClipboard(s string) {
 	a.clipHasPending, a.clipPending = false, ""
 	a.replaceAll(s)
-	a.clipPrev = a.Text
 	a.clearDiffBase()
 	a.changes = nil
 	a.last = nil
@@ -259,10 +255,11 @@ func (a *App) LoadPendingClipboard() {
 	a.catchUp()
 	old, before := a.tr, a.Text
 	a.applyClipboard(a.clipPending)
-	a.tr = old // the load is a step of the same trail, so ⌘Z finds the edits again
+	a.ws.editing = false
+	a.tr = old // the load is a step of the same trail, so ⌘Z finds the prior content again
 	a.pushStep("载入新剪贴板", nil)
 	a.last = &lastOp{label: "载入新剪贴板", before: before, after: a.Text, scope: "全文"}
-	a.status = "已载入新剪贴板（⌘Z 可找回之前的编辑）"
+	a.status = "已载入新剪贴板（⌘Z 可找回当前内容）"
 }
 
 // noteCopied records text this app put on the clipboard, so the next
@@ -270,10 +267,6 @@ func (a *App) LoadPendingClipboard() {
 func (a *App) noteCopied(s string) {
 	a.clipSeen, a.clipLoaded = true, s
 	a.clipHasPending, a.clipPending = false, ""
-	if a.cur == 0 {
-		a.syncEditor()
-		a.clipPrev = a.Text
-	}
 }
 
 // Transform applies fn as one step of the trail: to each selection of the
