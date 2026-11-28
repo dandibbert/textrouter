@@ -15,7 +15,7 @@ import (
 
 // DefaultAppVersion is the fallback version used when the binary was not built
 // with mygo build (tests and mygo dev). Kept in sync with mygo.json.
-const DefaultAppVersion = "0.2.7"
+const DefaultAppVersion = "0.2.8"
 
 // UpdateInfo describes the desktop updater's current state for the settings UI.
 type UpdateInfo struct {
