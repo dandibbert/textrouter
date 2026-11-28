@@ -39,6 +39,8 @@ func actionIcon(id string) string {
 		return "arrow-right"
 	case strings.HasPrefix(id, "cmd:"):
 		return "type"
+	case id == "sys:check-updates":
+		return "download"
 	}
 	l := strings.ToLower(id)
 	switch {
@@ -131,6 +133,7 @@ func (a *App) paletteItems() []paletteItem {
 	for _, it := range tools {
 		add("page:"+it.id, it.label+"…", "工具", "")
 	}
+	add("sys:check-updates", "检查更新…", "软件更新 · 主动检查并下载新版本", "")
 	for i := range a.Lib.RuleSets {
 		add("rules:"+a.Lib.RuleSets[i].ID, a.Lib.RuleSets[i].Name, "批量替换规则", "")
 	}
@@ -175,6 +178,10 @@ func (a *App) openPalette() {
 
 func (a *App) runPaletteItem(it paletteItem) {
 	a.paletteOpen = false
+	if it.id == "sys:check-updates" {
+		a.Platform.CheckForUpdates()
+		return
+	}
 	if strings.HasPrefix(it.id, "page:") {
 		a.Page = strings.TrimPrefix(it.id, "page:")
 		return

@@ -1055,9 +1055,9 @@ func (a *App) patternRow(c *ui.Context, it patItem, idx int) {
 		ui.Text(c, chk).FontSize(sizeBody).FontWeight(700).TextColor(Ink).Width(14)
 		ui.Column(c).Grow(1).MinWidth(0).Children(func() {
 			ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, it.name).FontSize(sizeBody).FontWeight(500).TextColor(Ink).SingleLine()
+				ui.Text(c, it.name).FontSize(sizeBody).FontWeight(700).TextColor(Ink).SingleLine().Shrink(0)
 				if it.desc != "" {
-					ui.Text(c, cut(it.desc, 14)).FontSize(sizeSmall).TextColor(Muted).SingleLine()
+					ui.Text(c, it.desc).FontSize(sizeSmall).TextColor(Muted).SingleLine().MinWidth(0).Shrink(1)
 				}
 			})
 			ui.Text(c, it.pattern).Font(monoFont).FontSize(10.5).TextColor(Muted).SingleLine()

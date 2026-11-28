@@ -168,6 +168,24 @@ func (d *desktop) SetAppIcon(png []byte) {
 	}
 }
 
+func (d *desktop) UpdateInfo() gui.UpdateInfo {
+	ver := mygo.App.Version()
+	if ver == "" {
+		ver = gui.DefaultAppVersion
+	}
+	return gui.UpdateInfo{
+		Version:      ver,
+		Enabled:      mygo.Updater.Enabled(),
+		AutoCheck:    updater.AutomaticChecks(),
+		AutoDownload: updater.AutomaticDownloads(),
+		LastCheck:    updater.LastCheck(),
+	}
+}
+
+func (d *desktop) CheckForUpdates()              { updater.CheckForUpdates() }
+func (d *desktop) SetAutoCheckUpdates(on bool)   { updater.SetAutomaticChecks(on) }
+func (d *desktop) SetAutoDownloadUpdates(on bool) { updater.SetAutomaticDownloads(on) }
+
 func main() {
 	lib := engine.LoadLibrary(engine.LibraryPath())
 	quitting := false
@@ -210,6 +228,11 @@ func main() {
 		})
 		desks[d.win] = d
 		d.win.OnClosed(func() { delete(desks, d.win) })
+		updater.OnChange(func() {
+			if d.win != nil && !d.win.IsDestroyed() {
+				d.win.Invalidate()
+			}
+		})
 		for _, p := range pendingFiles {
 			p := p
 			d.win.Update(func() { a.OpenPath(p) })

@@ -13,6 +13,19 @@ import (
 	"github.com/egoist/mygo/ui/editor"
 )
 
+// DefaultAppVersion is the fallback version used when the binary was not built
+// with mygo build (tests and mygo dev). Kept in sync with mygo.json.
+const DefaultAppVersion = "0.2.7"
+
+// UpdateInfo describes the desktop updater's current state for the settings UI.
+type UpdateInfo struct {
+	Version      string
+	Enabled      bool
+	AutoCheck    bool
+	AutoDownload bool
+	LastCheck    time.Time
+}
+
 // Platform is what the interface needs from the desktop. All methods may
 // be no-ops (tests use NopPlatform).
 type Platform interface {
@@ -33,6 +46,15 @@ type Platform interface {
 	// Update runs fn on the UI thread and redraws (used after dialogs,
 	// which block and so run on goroutines).
 	Update(fn func())
+	// UpdateInfo returns the app version and in-app updater preferences.
+	UpdateInfo() UpdateInfo
+	// CheckForUpdates actively checks for updates and opens the update window
+	// to download and install when a newer version is available.
+	CheckForUpdates()
+	// SetAutoCheckUpdates toggles daily background update checks.
+	SetAutoCheckUpdates(on bool)
+	// SetAutoDownloadUpdates toggles automatic background downloads/installs.
+	SetAutoDownloadUpdates(on bool)
 }
 
 // NopPlatform does nothing; used by tests.
@@ -47,6 +69,12 @@ func (NopPlatform) SetAppIcon([]byte)                               {}
 func (NopPlatform) OpenWindow(string, string, string, string)       {}
 func (NopPlatform) CloseWindow()                                    {}
 func (NopPlatform) Update(fn func())                                { fn() }
+func (NopPlatform) UpdateInfo() UpdateInfo {
+	return UpdateInfo{Version: DefaultAppVersion, AutoCheck: true}
+}
+func (NopPlatform) CheckForUpdates()            {}
+func (NopPlatform) SetAutoCheckUpdates(bool)    {}
+func (NopPlatform) SetAutoDownloadUpdates(bool) {}
 
 // Page ids of the sidebar.
 const (

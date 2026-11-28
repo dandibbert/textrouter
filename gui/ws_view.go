@@ -131,6 +131,8 @@ func (a *App) titleBar(c *ui.Context, k tokens) {
 		}
 		if a.doc().clip {
 			a.copyButton(c, k)
+		} else {
+			a.saveButton(c, k)
 		}
 	})
 }
@@ -337,6 +339,36 @@ func (a *App) copyButton(c *ui.Context, k tokens) {
 	})
 	if b.Clicked() {
 		a.done()
+	}
+}
+
+// saveButton is 存储 ⌘S on file tabs: highlighted in yellow while the file
+// has unsaved edits, calm white once saved.
+func (a *App) saveButton(c *ui.Context, k tokens) {
+	dirty := a.docDirty(a.cur)
+	tip := "存储文件 ⌘S"
+	if a.doc().path == "" {
+		tip = "存储为文件 ⌘S"
+	}
+	b := ui.ButtonBase(c.Key("savefile")).Height(36).Padding(0, 12).Gap(7).Radius(radiusCtl).Center().Label("保存文件").Tooltip(tip)
+	bg := Paper
+	switch {
+	case dirty && b.Hovered():
+		bg = AccentHover
+	case dirty:
+		bg = Accent
+	case b.Hovered():
+		bg = AccentWash
+	}
+	b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 120e6}))
+	boxed(b)
+	lift(b, shadowSm)
+	b.Children(func() {
+		ui.Text(c, "保存").FontSize(13).FontWeight(700).TextColor(Ink).SingleLine()
+		kbd(c, "⌘S")
+	})
+	if b.Clicked() {
+		a.saveFile()
 	}
 }
 

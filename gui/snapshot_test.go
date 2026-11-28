@@ -133,11 +133,16 @@ func TestSnapshots(t *testing.T) {
 			a.done()
 		}},
 		{"settings-icons", func(a *App, tt *ui.Tester) {
+			a.setting.section = "icon"
 			a.OpenTool(PageSettings)
 			settle(tt, 3)
-			tt.Scroll(500, 400, 0, -3000)
+		}},
+		{"settings-updates", func(a *App, tt *ui.Tester) {
+			a.setting.section = "update"
+			a.OpenTool(PageSettings)
 			settle(tt, 3)
 		}},
+		{"files-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageFiles) }},
 		{"cleaners-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageCleaners); a.clean.selected = "Scrub" }},
 		{"chains-sheet", func(a *App, tt *ui.Tester) { a.OpenTool(PageChains) }},
 		{"palette", func(a *App, tt *ui.Tester) { a.openPalette(); a.paletteQuery = "替换" }},

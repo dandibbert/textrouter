@@ -321,8 +321,6 @@ type editorCommand struct {
 }
 
 var editorCommands = []editorCommand{
-	{"find", "查找", "⌘F", editor.Find},
-	{"replace", "查找并替换", "⌥⌘F", editor.FindReplace},
 	{"goto", "转到行…", "⌘L", editor.GoToLine},
 	{"dup", "复制当前行", "⇧⌥↓", editor.DuplicateLinesDown},
 	{"up", "上移行", "⌥↑", editor.MoveLinesUp},

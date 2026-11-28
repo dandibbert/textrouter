@@ -367,6 +367,9 @@ func (a *App) toolsMenuItems(c *ui.Context, m *pm) {
 	if m.Item("设置…").Chosen() {
 		a.OpenTool(PageSettings)
 	}
+	if m.Item("检查更新…").Chosen() {
+		a.Platform.CheckForUpdates()
+	}
 }
 
 // replaceWithUndo replaces the whole document as one step of the trail.
@@ -396,7 +399,7 @@ func (a *App) sheetView(c *ui.Context, k tokens) {
 		if scrim.Clicked() {
 			a.Page = PageClipboard
 		}
-		card := ui.Column(c.Key("sheet")).Absolute().Top(44).Left(48).Right(48).Bottom(36).Radius(radiusCtl).Background(Ground).Clip()
+		card := ui.Column(c.Key("sheet")).Absolute().Top(36).Left(36).Right(36).Bottom(28).Radius(radiusCtl).Background(Ground).Clip()
 		boxed(card)
 		hard(card, shadowLg)
 		card.OnShortcut(0, ui.KeyEscape, func() { a.Page = PageClipboard })

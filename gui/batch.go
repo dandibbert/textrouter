@@ -64,7 +64,7 @@ func (a *App) batchView(c *ui.Context) {
 		}
 	})
 	// Rule set bar.
-	ui.Row(c).Padding(0, sp5, sp3, sp5).Gap(6).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Padding(sp3, sp5, sp3, sp5).Gap(6).AlignItems(ui.Center).Children(func() {
 		var names []string
 		sel := ""
 		for _, r := range a.Lib.RuleSets {
@@ -73,7 +73,7 @@ func (a *App) batchView(c *ui.Context) {
 				sel = r.Name
 			}
 		}
-		if len(names) > 0 && ui.Select(c, &sel, names).Label("规则集").Width(220).Height(30).Changed() {
+		if len(names) > 0 && ui.Select(c, &sel, names).Label("规则集").Width(220).Height(32).Changed() {
 			for _, r := range a.Lib.RuleSets {
 				if r.Name == sel {
 					b.setID = r.ID
@@ -131,13 +131,13 @@ func (a *App) batchView(c *ui.Context) {
 	ui.Column(c).Grow(1).Padding(0, sp5, sp4, sp5).Gap(sp3).MinHeight(0).Children(func() {
 		// The rule table.
 		panel(c).Padding(0).Gap(0).Clip().Children(func() {
-			ui.Row(c).Height(34).Gap(sp2).Padding(0, sp3, 0, sp3).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
+			ui.Row(c).Height(36).Gap(sp2).Padding(0, sp3, 0, sp3).AlignItems(ui.Center).BorderWidth(0, 0, strokeW, 0).BorderColor(Ink).Background(Ground).Children(func() {
 				ui.Box(c).Width(14 + 22 + 22)
 				eyebrow(c, "查找").Grow(1).Basis(0)
 				ui.Box(c).Width(18)
 				eyebrow(c, "替换为").Grow(1).Basis(0)
-				eyebrow(c, "选项").Width(62)
-				eyebrow(c, "命中").Width(56)
+				eyebrow(c, "选项").Width(78)
+				eyebrow(c, "命中").Width(64)
 				ui.Box(c).Width(28)
 			})
 			b.list.Reorder = func(rows []int, to int) {
@@ -147,13 +147,13 @@ func (a *App) batchView(c *ui.Context) {
 			b.list.Key = func(i int) any { return fmt.Sprintf("%p", &rs.Rules[i]) }
 			ui.List(c, &b.list, len(rs.Rules), func(i int) {
 				a.ruleRow(c, rs, i, res)
-			}).Height(min(float32(len(rs.Rules))*45, 315))
-			ui.Row(c).Height(42).Padding(0, sp3).Gap(sp2).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(k.hair).Children(func() {
-				add := ui.ButtonBase(c.Key("addrule")).Height(28).Padding(0, 10, 0, 8).Radius(rSm).Gap(6).AlignItems(ui.Center).Label("添加规则")
+			}).Height(min(float32(len(rs.Rules))*46, 322))
+			ui.Row(c).Height(42).Padding(0, sp3).Gap(sp2).AlignItems(ui.Center).BorderWidth(strokeW, 0, 0, 0).BorderColor(Ink).Children(func() {
+				add := ui.ButtonBase(c.Key("addrule")).Height(28).Padding(0, 10, 0, 8).Radius(radiusCtl).Gap(6).AlignItems(ui.Center).Label("添加规则")
 				pressable(c, add, k, ui.Transparent)
 				add.Children(func() {
-					ui.Icon(c, ic("plus")).FontSize(14).TextColor(k.accent)
-					ui.Text(c, "添加规则").FontSize(12.5).FontWeight(600).TextColor(k.accent)
+					ui.Icon(c, ic("plus")).FontSize(14).TextColor(Ink)
+					ui.Text(c, "添加规则").FontSize(12.5).FontWeight(700).TextColor(Ink)
 				})
 				if add.Clicked() {
 					rs.Rules = append(rs.Rules, engine.Rule{MatchCase: true})
@@ -164,13 +164,13 @@ func (a *App) batchView(c *ui.Context) {
 				for _, n := range res.counts {
 					total += n
 				}
-				ui.Textf(c, "%d 条规则 · 共替换 %d 处 · 拖动左侧把手调整顺序", len(rs.Rules), total).FontSize(11.5).TextColor(k.faint)
+				ui.Textf(c, "%d 条规则 · 共替换 %d 处 · 拖动左侧把手调整顺序", len(rs.Rules), total).FontSize(11.5).TextColor(Muted)
 			})
 		})
 		// Result preview.
 		canvasCard(c).Grow(1).MinHeight(0).Clip().Children(func() {
-			ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(k.hair).Children(func() {
-				ui.Text(c, "结果预览").FontSize(13).FontWeight(600).TextColor(k.text)
+			ui.Row(c).Height(44).Padding(0, sp3, 0, sp5).Gap(sp2).AlignItems(ui.Center).BorderWidth(0, 0, strokeW, 0).BorderColor(Ink).Children(func() {
+				ui.Text(c, "结果预览").FontSize(13).FontWeight(700).TextColor(Ink)
 				diffBadge(c, a.scopeText(), res.out)
 				ui.Spacer(c)
 				idx := map[bool]int{false: 0, true: 1}[b.showDiff]
@@ -182,15 +182,18 @@ func (a *App) batchView(c *ui.Context) {
 				if b.showDiff {
 					diffView(c, a.scopeText(), res.out)
 				} else {
-					ui.Text(c, res.out).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(k.text)
+					ui.Text(c, res.out).Selectable().Font(editorFont).FontSize(15).LineHeight(1.65).TextColor(Ink)
 				}
 			})
 		})
 	})
 	ui.Modal(c, &b.renaming, func() {
-		ui.Text(c, "重命名规则集").FontSize(15).FontWeight(650)
-		in := field(c, ui.TextInput(c, &b.name).AutoFocus().Width(320))
+		ui.Text(c, "重命名规则集").FontSize(15).FontWeight(700).TextColor(Ink)
+		in := field(c, ui.TextInputBase(c, &b.name).AutoFocus().Width(320).TextColor(Ink))
 		ui.Row(c).Gap(8).Justify(ui.End).FillWidth().Children(func() {
+			if ghost(c, "renamecancel", "取消", "", false).Clicked() {
+				b.renaming = false
+			}
 			if in.Submitted() || primary(c, "renameok", "确定", "", "", false).Clicked() {
 				rs.Name, b.renaming = b.name, false
 				a.save()
@@ -198,7 +201,7 @@ func (a *App) batchView(c *ui.Context) {
 		})
 	})
 	ui.Modal(c, &b.pasteOpen, func() {
-		ui.Text(c, "粘贴表格").FontSize(15).FontWeight(650)
+		ui.Text(c, "粘贴表格").FontSize(15).FontWeight(700).TextColor(Ink)
 		hint(c, "每行一条：查找<Tab>替换<Tab>正则(1/0)<Tab>区分大小写(1/0)。也接受 CSV。可以直接从 Excel / Numbers 复制。")
 		field(c, ui.TextArea(c, &b.pasteText).Size(540, 220).Font(monoFont).AutoFocus())
 		ui.Row(c).Gap(8).Justify(ui.End).FillWidth().Children(func() {
@@ -233,7 +236,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 			valid = false
 		}
 	}
-	row := ui.Row(c).Height(45).Gap(sp2).Padding(0, sp3).AlignItems(ui.Center)
+	row := ui.Row(c).Height(46).Gap(sp2).Padding(0, sp3).AlignItems(ui.Center)
 	if i > 0 {
 		row.BorderWidth(1, 0, 0, 0).BorderColor(k.hair)
 	}
@@ -251,7 +254,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 			r.Disabled = !enabled
 			a.save()
 		}
-		ui.Textf(c, "%d", i+1).FontSize(11).FontWeight(600).TextColor(k.faint).Width(22).FontFeatures("tnum")
+		ui.Textf(c, "%d", i+1).FontSize(11).FontWeight(700).TextColor(Muted).Width(22).FontFeatures("tnum")
 		in := ruleField(c, ui.TextInputBase(c, &r.Find).Placeholder("查找").Label(fmt.Sprintf("第 %d 条 查找", i+1)), !valid)
 		if r.Regex && valid {
 			in.TextRanges(patternRanges(k, r.Find)...)
@@ -259,7 +262,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 		if in.Changed() {
 			a.save()
 		}
-		ui.Icon(c, ic("arrow-right")).FontSize(13).TextColor(k.faint).Width(18)
+		ui.Icon(c, ic("arrow-right")).FontSize(13).TextColor(Muted).Width(18)
 		rep := ruleField(c, ui.TextInputBase(c, &r.Replace).Placeholder("（删除）").Label(fmt.Sprintf("第 %d 条 替换", i+1)), false)
 		if r.Regex {
 			rep.TextRanges(templateRanges(k, r.Replace)...)
@@ -267,7 +270,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 		if rep.Changed() {
 			a.save()
 		}
-		ui.Row(c).Width(62).Gap(2).Children(func() {
+		ui.Row(c).Width(78).Gap(4).AlignItems(ui.Center).Children(func() {
 			if flag(c, "re", ".*", "按正则表达式匹配", &r.Regex) {
 				a.save()
 			}
@@ -275,7 +278,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 				a.save()
 			}
 		})
-		ui.Row(c).Width(56).Children(func() {
+		ui.Row(c).Width(64).AlignItems(ui.Center).Children(func() {
 			switch {
 			case !valid:
 				badge(c, "错误", toneRed).Tooltip("正则有误")
@@ -287,7 +290,7 @@ func (a *App) ruleRow(c *ui.Context, rs *engine.RuleSet, i int, res batchResult)
 		})
 		del := iconButton(c, "del", "trash-2", fmt.Sprintf("删除第 %d 条", i+1), "删除这条规则").Size(28, 28)
 		if !hov {
-			del.Opacity(0.35)
+			del.Opacity(0.45)
 		}
 		if del.Clicked() {
 			rs.Rules = append(rs.Rules[:i], rs.Rules[i+1:]...)

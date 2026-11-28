@@ -103,10 +103,11 @@ func appIconBitmap(id string) *ui.Bitmap {
 // appIconPicker is the row of icon tiles in the settings.
 func (a *App) appIconPicker(c *ui.Context) {
 	cur := a.currentAppIcon()
-	ui.Row(c).Gap(sp3).Wrap().Padding(sp3, 0).Children(func() {
-		for _, ic := range AppIcons {
-			sel := ic.ID == cur
-			b := ui.ButtonBase(c.Key("appicon-" + ic.ID)).Padding(sp2).Gap(sp1).Radius(radiusCtl).AlignItems(ui.Center).Label("应用图标 " + ic.Name).Tooltip(ic.Name).Selected(sel)
+	ui.Row(c).Gap(10).Wrap().Padding(sp2, 0, sp3, 0).Children(func() {
+		for _, icn := range AppIcons {
+			sel := icn.ID == cur
+			b := ui.ButtonBase(c.Key("appicon-"+icn.ID)).Width(114).Padding(10, 6).Radius(radiusCtl).Center().
+				Label("应用图标 " + icn.Name).Tooltip(icn.Name).Selected(sel)
 			bg := Paper
 			switch {
 			case sel:
@@ -118,13 +119,20 @@ func (a *App) appIconPicker(c *ui.Context) {
 			boxed(b)
 			lift(b, shadowSm)
 			b.Children(func() {
-				if bm := appIconBitmap(ic.ID); bm != nil {
-					ui.Image(c, bm).Size(64, 64)
-				}
-				ui.Text(c, ic.Name).FontSize(11).FontWeight(map[bool]int{true: 700, false: 500}[sel]).TextColor(Ink).SingleLine()
+				ui.Column(c).Gap(6).AlignItems(ui.Center).Children(func() {
+					if bm := appIconBitmap(icn.ID); bm != nil {
+						ui.Image(c, bm).Size(56, 56).Radius(12)
+					}
+					ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
+						if sel {
+							ui.Icon(c, ic("check")).FontSize(11).TextColor(Ink)
+						}
+						ui.Text(c, icn.Name).FontSize(11.5).FontWeight(map[bool]int{true: 700, false: 500}[sel]).TextColor(Ink).SingleLine()
+					})
+				})
 			})
 			if b.Clicked() {
-				a.chooseAppIcon(ic.ID)
+				a.chooseAppIcon(icn.ID)
 			}
 		}
 	})
